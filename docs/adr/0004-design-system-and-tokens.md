@@ -496,7 +496,15 @@ data in 2023, so it has collected nothing for three years — and Clicky
 `100850507`. Neither has a ticket, a fog entry, or an ADR. Recorded here because
 it was found while reading the existing site's `<head>`, and it is a genuine gap
 in a map whose destination is that nothing is left to decide.
-*(Ticketed 2026-08-03 as [AWK-24](https://linear.app/awkale/issue/AWK-24).)*
+
+> **Resolved 2026-08-03 by [ADR-0010](0010-no-analytics.md).** The answer is
+> **none** — no analytics, and no third-party client-side beacons at all,
+> enforced by a CSP rather than merely stated. Two details above are wrong and
+> corrected there: the tags were at the **end of `<body>`**, not in `<head>`
+> (`_layouts/default.html:19`); and Universal Analytics is **deleted**, not
+> merely dormant, so there was never any history to export. One consequence lands
+> back on this record: the CSP hashes this ADR's blocking inline theme script, so
+> changing that script invalidates the policy.
 
 ## Amendment — AWK-22 (2026-08-03)
 
