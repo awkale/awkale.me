@@ -10,9 +10,9 @@ architecture and the page structures are settled; the values are not.
 
 ## What is decided, and where
 
-The spec lives in the repo this replaces — `awkale/awkale.github.io`, under
-`docs/adr/`. Nine records, tracked in Linear as [AWK-5][map]. The ones that bind
-this scaffold:
+The spec lives in `docs/adr/` — **eight records**, moved here from the repo this
+replaces (`awkale/awkale.github.io`) so they are not stranded when it is archived.
+Tracked in Linear as [AWK-5][map]. The ones that bind this scaffold:
 
 | Record | Binds |
 | --- | --- |
