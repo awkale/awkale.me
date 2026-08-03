@@ -30,12 +30,29 @@ gap off the URL surface entirely.
 > The ~650 and ~870 figures here describe the full in-scope archive and remain
 > valid as the comparison that justified facets over routes.
 
-## `/music` is reserved
+## Reserved paths
 
-`/music` is permanently reserved for original work Alex creates himself, and the
-performance history must never occupy it. This is the reason the section is at
-`/concerts` rather than the obvious `/music`, and it is not inferable from the
-code — hence this record.
+Two paths are spoken for and route nothing. Neither is inferable from the code,
+which is why they are recorded here, and both were reserved on the same
+reasoning: reserving costs nothing before cutover, while retrofitting a path
+afterwards means touching a committed redirect set and a live URL space.
+
+A reserved path ships **nothing** — no route entry, no prerender path, no
+redirect, and no placeholder page. It 404s exactly like any other unknown path,
+which
+[AWK-17](https://linear.app/awkale/issue/AWK-17/spike-the-637-route-prerender-build)
+verified is the real production behaviour, and which holds only so long as no
+catch-all redirect is ever added.
+
+**`/music`** is permanently reserved for original work Alex creates himself, and
+the performance history must never occupy it. This is the reason that section is
+at `/concerts` rather than the obvious `/music`.
+
+**`/2-or-3-things`** is permanently reserved for the blog, whose title — after
+Godard — it carries verbatim. Added by
+[AWK-25](https://linear.app/awkale/issue/AWK-25/reserve-the-route-for-the-blog),
+which also generalized this section from the single `/music` reservation it
+originally held.
 
 ## Considered options
 
@@ -45,6 +62,19 @@ metrics. `/performances` is accurate but makes `/performances/concerts/`
 redundant. `/repertoire` is the most precise term for a composer-and-work index
 but is jargon outside music. `/concerts` won on brevity, and because it lets the
 section landing double as the concert index with no wasted segment.
+
+**Blog path.** `/notes` was rejected on this record's own rule — a `note` is as
+overloaded as a `work` on a site whose second section is 322 musical
+compositions, and unlike `work` it is not a typed entity, so there is no glossary
+entry to disambiguate it. `/musings` was rejected for sharing its first four
+characters with reserved `/music`: two neighbouring paths, one live and one
+permanently 404, is a typo collision built in on purpose. `/writing` and `/blog`
+are both clean, and `/writing` is the better of the two — `/projects` and
+`/concerts` name bodies of work, while `/blog` names the software pattern that
+publishes them and implies a reverse-chronological feed the title resists.
+`/2-or-3-things` won anyway: it cannot collide with anything, ever, and its
+opacity is the point — the reference is for people who get it. The cost is that
+it welds the URL to the title, accepted below.
 
 **Work URLs.** A flat composer-prefixed slug (`/concerts/works/brahms-johannes-violin-concerto-in-d-major`)
 is equally collision-proof and was the alternative; nesting won for shorter
@@ -99,6 +129,18 @@ portfolio would have left "the work page" permanently ambiguous. `/projects`
 removes the collision at the source rather than papering over it in the
 glossary. Portfolio items are *Projects* everywhere: routes, prose, and
 `CONTEXT.md`.
+
+**`/2-or-3-things` welds a URL to a title.** A route named after the section's
+name is stranded if the name changes, and titles drift more readily than URLs do.
+Taken knowingly: the title is treated as permanent, on the same footing as the
+`/music` reservation itself.
+
+**Three namespaces are separated by kind, not by topic.** `/concerts/*` is the
+record — structured, Contentful-backed, asserting "I played this";
+`/2-or-3-things` is prose; `/music` is the original work itself. An essay about a
+concert and that concert's page cross-link, and neither absorbs the other. An
+opaque blog route is what makes this hold: claiming no topic, it cannot compete
+with `/music` or `/concerts` over who owns writing about music.
 
 **Twelve URLs need redirects.** `/portfolio/` to `/projects/`, the two
 `/portfolios/*` entries to their case studies, and nine `/cheatsheets/*` URLs to

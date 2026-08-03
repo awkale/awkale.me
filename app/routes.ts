@@ -17,8 +17,10 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
  * replaced it with a build assertion, Contentful being unable to express a scoped
  * unique.
  *
- * `/music` is deliberately absent and permanently reserved for Alex's own original
- * work. Do not route it.
+ * Two paths are deliberately absent and permanently reserved — see ADR-0001,
+ * "Reserved paths". `/music` is Alex's own original work; `/2-or-3-things` is the
+ * blog. Route neither, and give neither a placeholder: a reserved path 404s, which
+ * is only true while no catch-all redirect exists.
  *
  * Ordering note: `/concerts/composers` and `/concerts/:date` both match
  * "/concerts/composers". React Router ranks static segments above dynamic ones, so
