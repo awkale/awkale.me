@@ -24,11 +24,11 @@
 
    ← YOURS. sand because it is the warm neutral that suits Fraunces. Stock
    alternatives: slate · gray · mauve · olive · sage.                        */
-@import url("https://cdn.jsdelivr.net/npm/@radix-ui/colors@3/sand.css");
-@import url("https://cdn.jsdelivr.net/npm/@radix-ui/colors@3/sand-dark.css");
-/* Replace both lines with a local import once deps are installed:
-   @import "@radix-ui/colors/sand.css";
-   @import "@radix-ui/colors/sand-dark.css";                                 */
+@import "@radix-ui/colors/sand.css";
+@import "@radix-ui/colors/sand-dark.css";
+/* preview/tokens.html cannot resolve a bare package specifier, so it declares its
+   own CDN copies of whichever pair is active here. Swap the scale in BOTH places
+   or the specimen silently shows the old neutral. */
 
 /* The bespoke accent ramp, generated to Radix's 12-step shape from #E05822 —
    the old site's accent — which sits at step 9 EXACTLY

@@ -1,0 +1,43 @@
+import { type RouteConfig, index, route } from "@react-router/dev/routes";
+
+/**
+ * URL structure is ADR-0001, not a preference. The shape that matters:
+ *
+ *   /projects                                        index
+ *   /projects/<slug>                                 case study (only if body)
+ *   /concerts                                        index
+ *   /concerts/<date>                                 keyed by date, e.g. 2008-12-13
+ *   /concerts/composers                              A–Z index
+ *   /concerts/composers/<composer>                   composer page
+ *   /concerts/composers/<composer>/works/<work>      work page, canonical
+ *
+ * Works nest under their composer deliberately. A flat composer-prefixed slug was
+ * considered and dropped, and the nesting is what makes `work.slug` need only be
+ * unique PER COMPOSER — which is why ADR-0008 removed `unique: true` from it and
+ * replaced it with a build assertion, Contentful being unable to express a scoped
+ * unique.
+ *
+ * `/music` is deliberately absent and permanently reserved for Alex's own original
+ * work. Do not route it.
+ *
+ * Ordering note: `/concerts/composers` and `/concerts/:date` both match
+ * "/concerts/composers". React Router ranks static segments above dynamic ones, so
+ * the static route wins — but do not reorder these on the assumption that source
+ * order decides it.
+ *
+ * Facets are NOT routes. Soloist, conductor, hall, period and form filter via the
+ * query string on the indexes, which is the decision that keeps this section at
+ * ~590 pages instead of ~870.
+ */
+export default [
+  index("routes/home.tsx"),
+
+  route("projects", "routes/projects.tsx"),
+  route("projects/:slug", "routes/project.tsx"),
+
+  route("concerts", "routes/concerts.tsx"),
+  route("concerts/composers", "routes/composers.tsx"),
+  route("concerts/composers/:composer", "routes/composer.tsx"),
+  route("concerts/composers/:composer/works/:work", "routes/work.tsx"),
+  route("concerts/:date", "routes/concert.tsx"),
+] satisfies RouteConfig;

@@ -15,6 +15,15 @@
   typeset presets, and the link states, at the densities the real site has. Judge
   values here, then design the pages in app/routes/.
 -->
+<!--
+  tokens.css imports the Radix scale as a BARE PACKAGE SPECIFIER
+  (@radix-ui/colors/sand.css), which Vite resolves and a browser cannot. So the
+  specimen loads the same scale from a CDN first. This is the only duplication
+  between the app and the specimen — if you swap the neutral in tokens.css, swap
+  it here too, or this page silently keeps showing sand.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@3/sand.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@radix-ui/colors@3/sand-dark.css">
 <link rel="stylesheet" href="../app/tokens.css">
 
 <style>

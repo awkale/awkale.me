@@ -506,7 +506,7 @@ are **`U+0000-00FF` subsets**, and
 [ADR-0007](0007-period-and-form-taxonomy.md)'s IMSLP pass restores diacritics
 (`ř`, `á`, `ó`, `ë`) that fall **outside** that range. The subsets must be re-cut
 before that pass ships, or restored names render in a fallback face. Recorded in
-`public/fonts/README.md`.
+`docs/fonts.md`.
 
 **The old site's identity splits.** The warmth carries forward — the accent ramp
 is bespoke, generated to Radix's twelve-step shape from `#E05822` with step 9

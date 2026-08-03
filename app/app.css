@@ -52,7 +52,7 @@
 }
 
 /* --- self-hosted faces ---------------------------------------------------- */
-/* Latin-subset variable builds — see public/fonts/README.md for provenance and
+/* Latin-subset variable builds — see docs/fonts.md for provenance and
    licences. Paths are absolute from the served root; preview/tokens.html
    declares its own copies with relative paths, which is the one duplication
    between the app and the specimen. */
