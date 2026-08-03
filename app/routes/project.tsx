@@ -2,7 +2,9 @@ import { PROJECTS } from "../data/sample";
 
 /**
  * A case study — the one surface driven by `.typeset-reading` rather than
- * `.typeset-compact`, and the reason two presets exist at all.
+ * `.typeset-compact`, and the reason two presets exist at all. Note the `typeset`
+ * base class is required alongside the preset; the preset is variable overrides
+ * only, so on its own it renders nothing.
  *
  * The body is RichText with embedded Assets in Contentful (ADR-0003). Rendered
  * here as static markup so the typographic rhythm is judgeable; swap in the
@@ -51,7 +53,8 @@ export default function Project() {
           </dl>
         </header>
 
-        <div className="typeset-reading mt-10 max-w-[var(--measure)]">
+        {/* Base `typeset` class plus our preset — the preset alone is inert. */}
+        <div className="typeset typeset-reading mt-10 max-w-[var(--measure)]">
           <h2>The problem was never the components</h2>
           <p>
             When I joined, dv01 had four button implementations and no shared vocabulary for

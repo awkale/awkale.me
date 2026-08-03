@@ -163,6 +163,18 @@
 }
 
 /* --- typeset presets ------------------------------------------------------ */
+/* These are OUR presets, and they are only variable overrides — which is the
+   extension mechanism shadcn/typeset intends. The shipped app/typeset.css defines
+   `.typeset`, `.not-typeset` and `.typeset-scroll` and nothing else.
+
+   So the base class is REQUIRED and a preset alone does nothing:
+       <div class="typeset typeset-reading">     ✅
+       <div class="typeset-reading">             ❌ silently unstyled
+
+   Two more classes the shipped file gives us, worth knowing before hand-rolling
+   anything: `.not-typeset` opts a subtree out (useful for an imageGroup or a table
+   embedded in a case-study body), and `.typeset-scroll` makes a wide table scroll
+   horizontally rather than blow out the measure. */
 /* Two presets because the site has two genuinely different typographic needs:
    long-form case-study prose, and 322 rows of dense reference data.
 

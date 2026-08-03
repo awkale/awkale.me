@@ -10,6 +10,7 @@
    =========================================================================== */
 
 @import "tailwindcss";
+@import "./typeset.css";
 @import "./tokens.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -104,58 +105,6 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-  }
-
-  /* typeset's own rules would normally arrive from the shadcn-generated file.
-     These are the minimum needed for .typeset-* to mean something before that
-     is installed — replace with the real thing at `shadcn add typeset`.
-     Note :where(), which keeps specificity at zero so any Tailwind utility
-     overrides it without !important. That is precisely what
-     @tailwindcss/typography's `prose` cannot do. */
-  .typeset-reading,
-  .typeset-compact {
-    font-family: var(--typeset-font-body);
-    font-size: var(--typeset-size);
-    line-height: var(--typeset-leading);
-  }
-
-  :where(.typeset-reading, .typeset-compact) > * + * {
-    margin-top: var(--typeset-flow);
-  }
-
-  :where(.typeset-reading, .typeset-compact) :is(h1, h2, h3, h4) {
-    font-family: var(--typeset-font-heading);
-    line-height: 1.2;
-    letter-spacing: -0.012em;
-    margin-bottom: 0.2em;
-  }
-
-  :where(.typeset-reading) h2 {
-    font-size: 1.5em;
-  }
-
-  :where(.typeset-reading) h3 {
-    font-size: 1.18em;
-  }
-
-  :where(.typeset-reading, .typeset-compact) :is(p, ul, ol) {
-    margin: 0;
-  }
-
-  :where(.typeset-reading) blockquote {
-    margin: 0;
-    padding-left: 1.1em;
-    border-left: 3px solid var(--primary);
-    font-style: italic;
-    color: var(--muted-foreground);
-  }
-
-  :where(.typeset-reading, .typeset-compact) code {
-    font-family: var(--face-mono);
-    font-size: 0.88em;
-    background: var(--muted);
-    padding: 0.1em 0.34em;
-    border-radius: calc(var(--radius) * 0.5);
   }
 
   /* Dates and counts line up down a column of 121 rows. */
