@@ -1,0 +1,95 @@
+/* ===========================================================================
+   facet-chip — an on/off filter for conductor or hall.
+   ---------------------------------------------------------------------------
+   A ToggleButton, not a Button: each chip is independently on or off, so React
+   Aria gives it `aria-pressed` and a selection state. `.facet-chips` is the row.
+
+   Conductor and hall are the only two facets that ship (ADR-0006). Soloist was cut
+   because 256 of the 404 programme occasions carry no soloist at all, and season
+   was dropped as an institutional artifact.
+   =========================================================================== */
+
+.facet-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+}
+
+.facet-chips-label {
+  margin-right: 0.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.facet-chip {
+  --chip-bg: var(--card);
+  --chip-text: var(--foreground);
+  --chip-border: var(--border);
+  --chip-count: var(--muted-foreground);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.24rem 0.6rem;
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.facet-chip[data-hovered] {
+  --chip-bg: var(--muted);
+}
+
+.facet-chip[data-selected] {
+  --chip-bg: var(--primary);
+  --chip-text: var(--primary-foreground);
+  --chip-border: var(--primary);
+  /* The count sits inside the chip, so it has to follow the fill or it vanishes. */
+  --chip-count: var(--primary-foreground);
+}
+
+.facet-chip[data-selected][data-hovered] {
+  --chip-bg: var(--primary-hover);
+  --chip-border: var(--primary-hover);
+}
+
+.facet-chip[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.facet-chip[data-pressed] {
+  /* Momentary, so it reads as a press rather than a state change. */
+  transform: translateY(0.5px);
+}
+
+.facet-chip[data-disabled] {
+  --chip-text: var(--border);
+  --chip-border: var(--border-subtle);
+  cursor: not-allowed;
+}
+
+.facet-chip-count {
+  font-family: var(--face-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72em;
+  color: var(--chip-count);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .facet-chip {
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease,
+      color 0.12s ease;
+  }
+}

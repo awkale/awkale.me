@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { ToggleButton } from "react-aria-components";
 import { COUNTS, CONCERTS, FACETS } from "../data/sample";
 
 /**
@@ -66,22 +67,24 @@ export default function Concerts() {
   );
 }
 
+/**
+ * Facet chips are `ToggleButton`s, not `Button`s — each one is an independently
+ * on/off filter, so React Aria gives it `aria-pressed` and selection state rather
+ * than the fire-and-forget semantics of a button. Conductor and hall are the only
+ * two facets that ship (ADR-0006).
+ *
+ * Filtering itself is not wired: ADR-0001 puts facet state in the query string so a
+ * filtered view stays linkable, which is what keeps these off the route table.
+ */
 function FacetRow({ label, items }: { label: string; items: { name: string; n: number }[] }) {
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-1.5">
-      <span className="mr-1 text-[0.7rem] uppercase tracking-[0.1em] text-muted-foreground">
-        {label}
-      </span>
+    <div className="facet-chips">
+      <span className="facet-chips-label">{label}</span>
       {items.map((f) => (
-        <button
-          key={f.name}
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border
-                     bg-card px-2.5 py-1 text-xs hover:bg-muted"
-        >
+        <ToggleButton key={f.name} className="facet-chip">
           {f.name}
-          <span className="tabular text-[0.72em] text-muted-foreground">{f.n}</span>
-        </button>
+          <span className="facet-chip-count">{f.n}</span>
+        </ToggleButton>
       ))}
     </div>
   );

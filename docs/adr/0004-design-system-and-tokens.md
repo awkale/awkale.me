@@ -58,10 +58,13 @@ What is decided here is *how much* of it is in play. `shadcn init` runs, so
 utilities. Individual components are then added only as a page needs one.
 Nothing is installed speculatively.
 
-> **Amended 2026-08-03: `shadcn init` does not run.** The `@theme inline` block and
-> the token contract are hand-authored instead. The reasoning that made shadcn "a
-> component source rather than a framework" turned out to argue against running
-> `init` at all — see [the amendment](#amendment--shadcn-is-not-initialised-2026-08-03).
+> **Amended 2026-08-03, twice.** First: `shadcn init` does not run; the
+> `@theme inline` block and token contract are hand-authored — see
+> [that amendment](#amendment--shadcn-is-not-initialised-2026-08-03).
+> Then, more fundamentally: **shadcn is not the component source at all.**
+> Components come from `react-aria-components` directly and are styled in plain CSS
+> keyed on data attributes, with Tailwind kept for layout only. See
+> [the second amendment](#amendment--react-aria-plus-plain-css-2026-08-03).
 
 The interactive inventory is small and worth recording, because it is what
 justifies this being a component *source*. [ADR-0001](0001-url-structure.md)
@@ -635,3 +638,100 @@ If a component ever earns its place — realistically only a combobox, and only 
 [AWK-26](https://linear.app/awkale/issue/AWK-26) decides archive search happens —
 run `init` in a throwaway directory, copy the component source across, and point it
 at this repo's tokens. Never run it here.
+
+## Amendment — React Aria plus plain CSS (2026-08-03)
+
+**shadcn/ui is no longer the component source.** Components come from
+`react-aria-components` directly, and are styled in **plain CSS keyed on data
+attributes**, in a file beside each component. Tailwind is kept for **layout only** —
+flex, grid, gap, max-width, padding in route files.
+
+This reverses this record's opening sentence, not a detail of it. The token
+architecture is untouched: three layers, Radix Colors primitives, self-swapping
+scales, two `typeset` presets, three colour modes. What changes is what consumes
+them.
+
+### Why
+
+The instruction was plain CSS and data attributes, "like waterfall-ui", with minimal
+Tailwind. That system is the author's own, and reading it settles what the phrase
+means concretely:
+
+```css
+/* waterfall-ui: src/button/button.css */
+.btn                       { background-color: var(--btn-bg); }
+.btn:hover:not(:disabled)  { background-color: var(--btn-bg-hover, var(--btn-bg)); }
+.btn[data-variant='primary']      { --btn-bg: …; }
+.toggle-btn[data-selected]        { --btn-bg: …; }
+```
+
+A semantic class *consumes* local component variables; data attributes and
+pseudo-classes *set* them, with fallbacks so a state that defines nothing inherits
+the resting value. `ToggleButton.tsx` supplies `base: 'btn toggle-btn'` and
+`data-variant={variant}`, and nothing else.
+
+Note waterfall-ui uses **both** idioms: component internals in CSS, and
+`className="flex gap-4"` for layout. So "minimal Tailwind" is a split, not a
+removal, and this record follows the same split.
+
+**The combination is more coherent than what it replaces.** React Aria emits
+`data-selected`, `data-hovered`, `data-pressed`, `data-focus-visible` and
+`data-disabled` itself, so CSS keys straight off the component's real state with no
+JavaScript deciding classes. shadcn's components express the same states as long
+`cva` class strings — which is the same information, spent on utilities. Dropping
+that layer removes `class-variance-authority` and roughly forty utilities per
+component, and leaves the accessibility, which was the reason to want React Aria.
+
+`clsx` and `tailwind-merge` stay for the layout classes; `cn()` is in
+`app/lib/utils.ts`, hand-written.
+
+### What this cost
+
+`shadcn add button radio-group` had already generated two components. Both were
+deleted along with `components.json`. They are recoverable in one command if this
+is ever reversed, so the cost is small — but it was real work discarded, and the
+sequencing is the lesson: the styling idiom should have been settled before pulling
+components.
+
+### The API correction that came free
+
+shadcn's generated radio group used `Radio`, which **React Aria has deprecated** in
+favour of `RadioField` + `RadioButton`. Building on the primitives directly surfaced
+that immediately.
+
+The two compose deliberately: `RadioField` carries the `value` and exposes only
+`[data-selected]` and validity state; `RadioButton` is the visible control and
+inherits the full interaction set — `[data-hovered]`, `[data-pressed]`,
+`[data-focused]`, `[data-focus-visible]`, `[data-disabled]`. So **all styling keys
+off the button, and the value lives on the field.** The field is `display: contents`
+so segments remain flex children of the group.
+
+### Two things worth knowing before writing more component CSS
+
+**Selected must be restated after hovered.** `[data-selected]` and `[data-hovered]`
+are independent, so a bare `[data-hovered]` rule later in the file steals the fill
+from the active segment the moment a pointer crosses it. Every stateful component
+here needs the `[data-selected][data-hovered]` pair.
+
+**Prefer React Aria's `[data-hovered]` to `:hover`.** It excludes touch, and it does
+not fire while disabled — so `:hover:not(:disabled)`, which waterfall-ui needs
+because it styles native elements, is unnecessary here.
+
+### Verified
+
+`role="radiogroup"` on the mode control with three segments and a single tab stop;
+facet chips are real `<button aria-pressed>` flipping `false` → `true`; clicking a
+segment stamps `html.dark` and the selected segment resolves to `--primary-hover`
+while the pointer remains over it, which is `[data-selected][data-hovered]` working.
+Build and `tsc --noEmit` both clean.
+
+### The naming trap this introduced
+
+Ten tokens were added to layer 2 so the React Aria components resolve — `secondary`,
+`accent`, `input`, `destructive`, `popover`, `card-foreground` and their foregrounds
+— mapped onto the Radix primitives rather than taken as shadcn's literal oklch
+values. A `red` scale was imported solely so `--destructive` points somewhere honest.
+
+**`--accent` is shadcn's neutral hover surface. `--accent-9` … `--accent-12` is this
+site's brand ramp.** They differ by one hyphen and mean unrelated things. `--accent`
+must stay neutral or every hovered surface turns orange.

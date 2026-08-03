@@ -26,6 +26,12 @@
    alternatives: slate · gray · mauve · olive · sage.                        */
 @import "@radix-ui/colors/sand.css";
 @import "@radix-ui/colors/sand-dark.css";
+
+/* A red scale, solely so shadcn's `--destructive` has somewhere honest to point.
+   Nothing on this site destroys anything yet, but React Aria's Button ships a
+   destructive variant and would otherwise resolve to an undefined variable. */
+@import "@radix-ui/colors/red.css";
+@import "@radix-ui/colors/red-dark.css";
 /* preview/tokens.html cannot resolve a bare package specifier, so it declares its
    own CDN copies of whichever pair is active here. Swap the scale in BOTH places
    or the specimen silently shows the old neutral. */
@@ -111,6 +117,28 @@
   --primary-foreground: #fff;
   --muted-foreground: var(--n-11);
   --foreground: var(--n-12);
+
+  /* --- the rest of shadcn's contract, mapped onto the primitives ------------
+     Added because the React Aria components reference these directly. `shadcn
+     init` would have supplied them as literal oklch values in a second `:root`
+     block appended below this one — which, being later in the cascade, would have
+     silently replaced everything above. Mapping them onto layer 1 instead keeps
+     one source of colour and keeps the mode axis inside the primitives.
+
+     ⚠ NAMING TRAP: shadcn's `--accent` is a NEUTRAL hover surface, not this site's
+     brand colour. The brand ramp is `--accent-9` … `--accent-12` above. They are
+     different things whose names differ by one hyphen. `--accent` must stay
+     neutral, or every hovered menu item turns orange. */
+  --card-foreground: var(--n-12);
+  --popover: var(--n-2);
+  --popover-foreground: var(--n-12);
+  --secondary: var(--n-3);
+  --secondary-foreground: var(--n-12);
+  --accent: var(--n-4);
+  --accent-foreground: var(--n-12);
+  --input: var(--n-7);
+  --destructive: var(--red-9);
+  --destructive-foreground: #fff;
 
   /* --- extensions: NOT part of shadcn's contract ---------------------------
      ADR-0004 is the authority on this distinction. These are the tokens you

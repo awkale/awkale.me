@@ -1,0 +1,88 @@
+/* ===========================================================================
+   mode-toggle — a segmented three-way colour-mode control.
+   ---------------------------------------------------------------------------
+   Follows waterfall-ui's convention: a semantic class consumes local component
+   variables, and data attributes SET those variables. State comes from React
+   Aria's own attributes, so nothing here needs a JS-driven class.
+
+   Attributes React Aria puts on RadioButton, and what they mean here:
+     [data-selected]        this is the active mode
+     [data-hovered]         pointer over it (RAC's, not :hover — it excludes
+                            touch and respects disabled)
+     [data-focus-visible]   keyboard focus specifically
+     [data-disabled]        unused today, styled so it cannot look active
+   =========================================================================== */
+
+.mode-toggle {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* RadioField is a wrapper div carrying the value. Removed from the box tree so the
+   segments themselves are the flex children of .mode-toggle. */
+.mode-toggle-field {
+  display: contents;
+}
+
+.mode-toggle-segment {
+  /* Local vars, with the resting values. Every state below only remaps these. */
+  --seg-bg: transparent;
+  --seg-text: var(--muted-foreground);
+
+  padding: 0.3rem 0.6rem;
+  border: 0;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--seg-bg);
+  color: var(--seg-text);
+  font: inherit;
+  font-size: 0.74rem;
+  text-transform: capitalize;
+  cursor: pointer;
+  outline: none;
+  /* RadioButton renders a <label>, so the text is not selectable-draggable. */
+  user-select: none;
+}
+
+.mode-toggle-segment:first-child {
+  border-left: 0;
+}
+
+.mode-toggle-segment[data-hovered] {
+  --seg-bg: var(--muted);
+  --seg-text: var(--foreground);
+}
+
+.mode-toggle-segment[data-selected] {
+  --seg-bg: var(--primary);
+  --seg-text: var(--primary-foreground);
+}
+
+/* Selected wins over hovered, so restate it after. Without this the active
+   segment loses its fill the moment the pointer crosses it. */
+.mode-toggle-segment[data-selected][data-hovered] {
+  --seg-bg: var(--primary-hover);
+  --seg-text: var(--primary-foreground);
+}
+
+.mode-toggle-segment[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.mode-toggle-segment[data-disabled] {
+  --seg-text: var(--border);
+  cursor: not-allowed;
+}
+
+/* Before hydration no segment is selected — see the component's comment on why
+   that is deliberate. Keep the control the same height so nothing shifts when the
+   inline theme script's choice is reflected on mount. */
+@media (prefers-reduced-motion: no-preference) {
+  .mode-toggle-segment {
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease;
+  }
+}

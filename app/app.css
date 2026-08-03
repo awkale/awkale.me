@@ -9,9 +9,26 @@
    small base layer.
    =========================================================================== */
 
+/* Tailwind is kept for LAYOUT ONLY — flex, grid, gap, max-width, padding in route
+   files. Component internals are plain CSS keyed on React Aria's data attributes,
+   in a file beside each component. That split is waterfall-ui's, and it is the one
+   this site follows.
+
+   So: no utility soup for state. `[data-selected]`, `[data-hovered]`,
+   `[data-focus-visible]`, `[data-disabled]` are the styling surface, and they come
+   from React Aria for free. */
 @import "tailwindcss";
+
 @import "./typeset.css";
+
+/* tokens.css comes LAST of the package imports on purpose: it must win over
+   anything they declare. */
 @import "./tokens.css";
+
+/* Component CSS. One file per component, imported here so ordering is explicit
+   rather than dependent on module graph traversal. */
+@import "./components/mode-toggle.css";
+@import "./components/facet-chip.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -35,6 +52,29 @@
   --color-link: var(--link);
   --color-link-hover: var(--link-hover);
   --color-link-visited: var(--link-visited);
+
+  /* The rest of shadcn's contract, needed by the React Aria components. Note
+     --color-accent is shadcn's NEUTRAL hover surface, not the brand ramp. */
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  /* typeset reaches for --font-heading; bind it to the display face so a
+     `.typeset` block with no preset still sets headings correctly. */
+  --font-heading: var(--face-display);
+
+  /* shadcn components use radius-sm/md/lg/xl. Derived from the one knob. */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
 
   /* Bound from tokens.css's --face-*, so `font-display` / `font-sans` /
      `font-mono` utilities exist and there is still one source of truth. */
