@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en" class="light" data-theme="ember">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>awkale.me — token specimen</title>
+<meta name="robots" content="noindex">
+
+<!--
+  Loads ../app/tokens.css DIRECTLY, so this page and the app cannot drift.
+  Edit tokens.css, refresh, see it. No build step, no install, no server needed
+  beyond opening the file.
+
+  Deliberately NOT a design. It is a specimen: ramps, semantic mappings, the two
+  typeset presets, and the link states, at the densities the real site has. Judge
+  values here, then design the pages in app/routes/.
+-->
+<link rel="stylesheet" href="../app/tokens.css">
+
+<style>
+  /* Font paths only — the one thing that differs from app.css, which serves
+     these from the root. Values all come from tokens.css. */
+  @font-face { font-family:"Fraunces"; src:url("../public/fonts/fraunces-latin-var.woff2") format("woff2");
+               font-weight:100 900; font-display:swap }
+  @font-face { font-family:"Inter"; src:url("../public/fonts/inter-latin-var.woff2") format("woff2");
+               font-weight:100 900; font-display:swap }
+  @font-face { font-family:"JetBrains Mono"; src:url("../public/fonts/jetbrains-mono-latin-var.woff2") format("woff2");
+               font-weight:100 800; font-display:swap }
+
+  *,*::before,*::after { box-sizing:border-box }
+  body { margin:0; background:var(--background); color:var(--foreground);
+         font-family:var(--face-sans); padding:var(--gutter) }
+  .wrap { max-width:var(--width-wide); margin:0 auto }
+  h1 { font-family:var(--face-display); font-size:1.9rem; letter-spacing:-.02em; margin:0 0 .3rem }
+  h2 { font-family:var(--face-display); font-size:1.15rem; margin:2.5rem 0 .8rem;
+       padding-bottom:.35rem; border-bottom:1px solid var(--border) }
+  .sub { color:var(--muted-foreground); font-size:.88rem; margin:0 0 .4rem; max-width:70ch; line-height:1.6 }
+  .tabular { font-family:var(--face-mono); font-variant-numeric:tabular-nums }
+  a { color:var(--link); text-underline-offset:.18em }
+  a:hover { color:var(--link-hover) }
+  a:visited { color:var(--link-visited) }
+
+  /* ramps */
+  .ramp { display:grid; grid-template-columns:repeat(12,1fr); gap:3px; margin:.5rem 0 .2rem }
+  .step { height:3.4rem; border-radius:calc(var(--radius) * .6); display:flex;
+          align-items:flex-end; justify-content:center; font-size:9px; padding-bottom:3px;
+          font-family:var(--face-mono); border:1px solid var(--border-subtle) }
+  .alias { outline:2px solid var(--accent-9); outline-offset:1px }
+  .rlabel { font-size:.7rem; letter-spacing:.1em; text-transform:uppercase;
+            color:var(--muted-foreground); margin-top:.8rem }
+
+  /* semantic swatches */
+  .sem { display:grid; grid-template-columns:repeat(auto-fill,minmax(11rem,1fr)); gap:.6rem }
+  .semcell { border:1px solid var(--border-subtle); border-radius:var(--radius); overflow:hidden }
+  .semchip { height:2.6rem }
+  .semname { font-family:var(--face-mono); font-size:.66rem; padding:.35rem .5rem;
+             color:var(--muted-foreground); background:var(--card) }
+
+  /* the dense table, at real density */
+  table { width:100%; border-collapse:collapse; font-size:.8rem }
+  th { text-align:left; font-size:.66rem; letter-spacing:.09em; text-transform:uppercase;
+       color:var(--muted-foreground); font-weight:500; padding:.4rem .55rem;
+       border-bottom:1px solid var(--border) }
+  td { padding:.4rem .55rem; border-bottom:1px solid var(--border-subtle); vertical-align:baseline }
+  tbody tr:hover { background:var(--muted) }
+  .num { text-align:right }
+
+  .cols { columns:17rem; column-gap:2.5rem }
+  .idx { list-style:none; margin:0; padding:0; font-size:.9rem }
+  .idx li { display:flex; justify-content:space-between; gap:.6rem; padding:.18rem 0 }
+  .idx a { text-decoration:none }
+  .idx a:hover { text-decoration:underline }
+  .letter { font-family:var(--face-display); color:var(--accent-11); font-size:1.2rem;
+            margin:0 0 .3rem; padding-bottom:.2rem; border-bottom:1px solid var(--border-subtle) }
+  .lblock { break-inside:avoid; margin-bottom:1.4rem }
+
+  .bar { display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; margin:.6rem 0 1.2rem }
+  button { font:inherit; font-size:.78rem; padding:.3rem .65rem; cursor:pointer;
+           border:1px solid var(--border); border-radius:var(--radius);
+           background:var(--card); color:var(--foreground) }
+  button:hover { background:var(--muted) }
+  button[aria-pressed="true"] { background:var(--primary); color:var(--primary-foreground);
+                                border-color:var(--primary) }
+  .measure-demo { max-width:var(--measure); outline:1px dashed var(--border);
+                  outline-offset:.6rem }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Token specimen</h1>
+  <p class="sub">
+    Reads <code class="tabular">app/tokens.css</code> directly — edit that file and refresh.
+    Everything marked <strong>← YOURS</strong> in it is a seed, not a decision.
+  </p>
+
+  <div class="bar">
+    <span class="rlabel" style="margin:0">Mode</span>
+    <button type="button" data-mode="light" aria-pressed="true">light</button>
+    <button type="button" data-mode="dark" aria-pressed="false">dark</button>
+    <span class="rlabel" style="margin:0 0 0 1rem">Visited</span>
+    <button type="button" data-vis="" aria-pressed="true">seeded (neutral-11)</button>
+    <button type="button" data-vis="var(--accent-10)" aria-pressed="false">accent-10</button>
+    <button type="button" data-vis="var(--accent-12)" aria-pressed="false">accent-12</button>
+  </div>
+
+  <h2>Layer 1 — primitives</h2>
+  <p class="sub">
+    Both scales are self-swapping: the same variable names resolve to different values under
+    <code class="tabular">.dark</code>. Flip the mode above and watch the numbers stay put.
+    Step&nbsp;9 is the solid; 11 is low-contrast text; 12 is high-contrast.
+  </p>
+
+  <p class="rlabel">Neutral — <span id="nname">sand</span></p>
+  <div class="ramp" id="nramp"></div>
+
+  <p class="rlabel">
+    Accent — bespoke <span id="aname">ember</span>, step 9 = #E05822 exactly
+  </p>
+  <div class="ramp" id="aramp"></div>
+
+  <p class="sub" style="margin-top:.6rem">
+    Outlined steps are the ones layer 2 currently aliases — eight of the neutral, five of the
+    accent. The rest are deliberately unaliased: an unused token is worse than a missing one,
+    because it looks like something depends on it.
+  </p>
+
+  <h2>Layer 2 — semantic contract</h2>
+  <p class="sub">
+    Authored once. These are what components reach for; the primitives above are not referenced
+    directly by any component.
+  </p>
+  <div class="sem" id="sem"></div>
+
+  <h2>Type — the two typeset presets</h2>
+  <p class="sub">
+    <code class="tabular">.typeset-reading</code> is the case-study body;
+    <code class="tabular">.typeset-compact</code> is archive reference data. The dashed rule marks
+    <code class="tabular">--measure</code>.
+  </p>
+
+  <div class="typeset-reading measure-demo" style="font-family:var(--typeset-font-body);
+       font-size:var(--typeset-size); line-height:var(--typeset-leading)">
+    <h3 style="font-family:var(--typeset-font-heading); font-size:1.18em; margin:0 0 .3em;
+        line-height:1.2">Tokens came before components</h3>
+    <p style="margin:0">
+      The first shipped artifact was not a component at all — it was a three-layer token contract.
+      Primitives, semantic aliases, then framework bindings. Product engineers reached for
+      <code>bg-surface-raised</code> instead of a hex value, and the hex value became something the
+      system could change without a migration.
+    </p>
+    <p style="margin:var(--typeset-flow) 0 0">
+      Judge the leading and the flow here, not in a paragraph of lorem ipsum — this is roughly the
+      length a real case-study paragraph runs.
+    </p>
+  </div>
+
+  <h2>Density — 121 concerts, 322 works</h2>
+  <p class="sub">
+    The surface that decided the structure. Dates are tabular mono so a column of 121 lines up.
+    The last row is 2007-12-16, the one played concert with no conductor recorded.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Hall</th><th>Conductor</th><th class="num">Items</th><th>Programme</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <h2>Links — the reason <code class="tabular">--link-visited</code> exists</h2>
+  <p class="sub">
+    Click a few, then compare. <code class="tabular">:visited</code> can only be expressed in
+    <em>colour</em> — browsers restrict it to colour properties and lie in
+    <code class="tabular">getComputedStyle</code>, so weight, underline or a marker silently fail.
+    Note <em>Beethoven, Ludwig van</em> files under <strong>B</strong>: the particle is relocated,
+    not stripped.
+  </p>
+  <div class="cols" id="index"></div>
+
+</div>
+
+<script>
+/* Track the two scales chosen in tokens.css layer 1. The ramps below read the
+   UNDERLYING scales (--sand-N, --ember-N), not the --n-* / --accent-* aliases:
+   those alias only the steps layer 2 actually consumes, on ADR-0004's principle
+   that an unused token is worse than a missing one. Outlined steps are the
+   aliased ones, so you can see which of the twelve are load-bearing today. */
+const NEUTRAL = 'sand';
+const ACCENT = 'ember';
+const ALIASED_NEUTRAL = [1, 2, 3, 4, 6, 7, 11, 12];
+const ALIASED_ACCENT = [8, 9, 10, 11, 12];
+
+function ramp(el, scale, aliased) {
+  el.innerHTML = '';
+  for (let i = 1; i <= 12; i++) {
+    const d = document.createElement('div');
+    d.className = 'step' + (aliased.includes(i) ? ' alias' : '');
+    d.style.background = `var(--${scale}-${i})`;
+    d.style.color = i >= 9 ? '#fff' : 'var(--foreground)';
+    d.textContent = i;
+    d.title = `--${scale}-${i}${aliased.includes(i) ? ' (aliased)' : ' (not aliased)'}`;
+    el.appendChild(d);
+  }
+}
+
+const SEMANTIC = ['background','card','muted','muted-hover','border-subtle','border','ring',
+                  'primary','primary-hover','muted-foreground','foreground','link','link-visited'];
+function semantic() {
+  const wrap = document.getElementById('sem');
+  wrap.innerHTML = '';
+  for (const name of SEMANTIC) {
+    const cell = document.createElement('div');
+    cell.className = 'semcell';
+    const chip = document.createElement('div');
+    chip.className = 'semchip';
+    chip.style.background = `var(--${name})`;
+    const n = document.createElement('div');
+    n.className = 'semname';
+    n.textContent = '--' + name;
+    cell.append(chip, n);
+    wrap.appendChild(cell);
+  }
+}
+
+const CONCERTS = [
+  ['2026-04-26','Brooklyn Museum of Art','Felipe Tristan',3,'Coriolan Overture, Cello Concerto in A Minor'],
+  ['2025-12-14','Brooklyn Museum of Art','Felipe Tristan',3,'Festive Overture, Three Latin American Dances'],
+  ['2025-10-26','Brooklyn Museum of Art','Nicholas Armstrong',4,'The Chairman Dances, Trombone Concertino'],
+  ['2024-10-27','Brooklyn Museum of Art','David Hagy',3,'String Quartet No. 2, Symphony No. 8 in F'],
+  ['2023-10-29','Brooklyn Museum of Art','Felipe Tristan',2,'Symphony No. 7 in A Major, Romeo and Juliet'],
+  ['2019-12-15','Brooklyn Museum of Art','Nicholas Armstrong',6,'Childhood Scenes, Peter and the Wolf'],
+  ['2012-03-15','Walt Whitman Hall','Nicholas Armstrong',3,'Symphony No. 5 in C Minor, Bolero'],
+  ['2007-12-16','Church of St. Ann & the Holy Trinity',null,2,'Music for Film, Symphony No. 3 ("Scottish")'],
+];
+function rows() {
+  document.getElementById('rows').innerHTML = CONCERTS.map(([d,h,c,n,p]) => `
+    <tr>
+      <td class="tabular"><a href="#c-${d}">${d}</a></td>
+      <td>${h}</td>
+      <td${c ? '' : ' style="color:var(--muted-foreground)"'}>${c ?? '—'}</td>
+      <td class="tabular num">${n}</td>
+      <td style="color:var(--muted-foreground)">${p}</td>
+    </tr>`).join('');
+}
+
+const COMPOSERS = [
+  ['A',[['Adams, John',1],['Anderson, Douglas',1],['Anderson, Leroy',1],['Arnold, Malcolm',1]]],
+  ['B',[['Bach, Johann Sebastian',1],['Barber, Samuel',6],['Beethoven, Ludwig van',14],
+        ['Bologne, Joseph, Chevalier de Saint-Georges',1],['Brahms, Johannes',8]]],
+  ['F',[['Falla, Manuel de',1],['Faure, Gabriel',2],['Finzi, Gerald',1]]],
+  ['M',[['Mahler, Gustav',5],['Mendelssohn, Felix',8],['Mozart, Leopold',1],
+        ['Mozart, Wolfgang Amadeus',8],['Mussorgsky, Modest',3]]],
+  ['S',[['Sarasate, Pablo de',1],['Shostakovich, Dmitri',6],['Strauss, Johann II',4],
+        ['Strauss, Josef',1],['Strauss, Richard',6],['Sullivan, Arthur',1]]],
+  ['T',[['Tchaikovsky, Pyotr Ilyich',12],['Tippett, Michael',1]]],
+  ['V',[['Vaughan Williams, Ralph',6],['Verdi, Giuseppe',1],['Villa-Lobos, Heitor',1]]],
+  ['W',[['Walton, William',3],['Weber, Carl Maria von',2],['Weill, Kurt',1]]],
+];
+function index() {
+  document.getElementById('index').innerHTML = COMPOSERS.map(([l, people]) => `
+    <div class="lblock">
+      <h3 class="letter">${l}</h3>
+      <ul class="idx">${people.map(([n, w]) =>
+        `<li><a href="#p-${n.replace(/\W+/g,'-')}">${n}</a>
+           <span class="tabular" style="font-size:.74rem;color:var(--muted-foreground)">${w}</span></li>`
+      ).join('')}</ul>
+    </div>`).join('');
+}
+
+document.addEventListener('click', (e) => {
+  const m = e.target.closest('[data-mode]');
+  if (m) {
+    const dark = m.dataset.mode === 'dark';
+    document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.classList.toggle('light', !dark);
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    document.querySelectorAll('[data-mode]').forEach(b =>
+      b.setAttribute('aria-pressed', String(b === m)));
+  }
+  const v = e.target.closest('[data-vis]');
+  if (v) {
+    const val = v.dataset.vis;
+    if (val) document.documentElement.style.setProperty('--link-visited', val);
+    else document.documentElement.style.removeProperty('--link-visited');
+    document.querySelectorAll('[data-vis]').forEach(b =>
+      b.setAttribute('aria-pressed', String(b === v)));
+  }
+});
+
+document.getElementById('nname').textContent = NEUTRAL;
+document.getElementById('aname').textContent = ACCENT;
+ramp(document.getElementById('nramp'), NEUTRAL, ALIASED_NEUTRAL);
+ramp(document.getElementById('aramp'), ACCENT, ALIASED_ACCENT);
+semantic();
+rows();
+index();
+</script>
+</body>
+</html>

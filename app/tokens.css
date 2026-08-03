@@ -1,0 +1,195 @@
+/* ===========================================================================
+   awkale.me — TOKEN VALUES.  This is the file you design in.
+   ---------------------------------------------------------------------------
+   Deliberately plain CSS: no Tailwind, no @theme, no build step. That is what
+   lets preview/tokens.html load it directly, so this file is the single source
+   of truth and the specimen cannot drift from the app.
+
+   The ARCHITECTURE is fixed by docs/adr/0004-design-system-and-tokens.md.
+   The VALUES are yours. Everything marked  ← YOURS  is a seed, not a decision:
+   AWK-22 settled "structure B, typeface A, Alex authors the rest".
+
+   Layer 1 primitives → layer 2 semantic. Layer 3 (the Tailwind binding) lives
+   in app.css, because only Tailwind needs it.
+
+   Swap a palette by editing layer 1 ONLY. Reaching past --accent-* into layer 2
+   defeats the arrangement — see ADR-0004, "Adding a theme means one block".
+   =========================================================================== */
+
+/* --- layer 1: primitives -------------------------------------------------- */
+/* Radix scales are SELF-SWAPPING: --sand-1 is the light value under :root and
+   the dark value under .dark, under the SAME variable name. That is why layer 2
+   below is authored once instead of once per mode — N blocks for N themes
+   rather than 2N. Import pairs; the -dark file only defines the .dark case.
+
+   ← YOURS. sand because it is the warm neutral that suits Fraunces. Stock
+   alternatives: slate · gray · mauve · olive · sage.                        */
+@import url("https://cdn.jsdelivr.net/npm/@radix-ui/colors@3/sand.css");
+@import url("https://cdn.jsdelivr.net/npm/@radix-ui/colors@3/sand-dark.css");
+/* Replace both lines with a local import once deps are installed:
+   @import "@radix-ui/colors/sand.css";
+   @import "@radix-ui/colors/sand-dark.css";                                 */
+
+/* The bespoke accent ramp, generated to Radix's 12-step shape from #E05822 —
+   the old site's accent — which sits at step 9 EXACTLY
+   (OKLCH L 0.6313 C 0.1814 H 39.66). Radix's own custom-scale generator emits
+   this same shape, so replacing this with a stock scale, or regenerating it from
+   a different hue, is a layer-1-only change: layer 2 and every component above
+   it are untouched. That hedge is the entire reason the third layer exists.
+
+   Step roles are fixed by Radix and worth knowing before you retune:
+     1  app background        7  border / focus ring
+     2  subtle background     8  hover border
+     3  component background  9  SOLID  ← the brand colour lives here
+     4  hover component      10  hover solid
+     5  active component     11  low-contrast text (accessible on 1–3)
+     6  subtle border        12  high-contrast text                          */
+:root {
+  --ember-1:  #fffbf9;
+  --ember-2:  #fff6f2;
+  --ember-3:  #ffebe0;
+  --ember-4:  #ffddcb;
+  --ember-5:  #ffcfb7;
+  --ember-6:  #ffc1a5;
+  --ember-7:  #ffae8f;
+  --ember-8:  #fe916b;
+  --ember-9:  #e05822;
+  --ember-10: #d85118;
+  --ember-11: #c03d00;
+  --ember-12: #651b00;
+}
+
+.dark {
+  --ember-1:  #1d0c06;
+  --ember-2:  #290f06;
+  --ember-3:  #431000;
+  --ember-4:  #590e00;
+  --ember-5:  #6a1700;
+  --ember-6:  #7d2400;
+  --ember-7:  #993912;
+  --ember-8:  #c44f22;
+  --ember-9:  #e05822;
+  --ember-10: #f86e3c;
+  --ember-11: #ff9973;
+  --ember-12: #ffd6c7;
+}
+
+/* A theme is which hue fills the accent role — nothing more. A second theme is
+   another [data-theme] block of exactly these lines. */
+[data-theme="ember"] {
+  --accent-8:  var(--ember-8);
+  --accent-9:  var(--ember-9);
+  --accent-10: var(--ember-10);
+  --accent-11: var(--ember-11);
+  --accent-12: var(--ember-12);
+}
+
+/* The neutral role, aliased so swapping the scale touches one place. */
+:root {
+  --n-1:  var(--sand-1);
+  --n-2:  var(--sand-2);
+  --n-3:  var(--sand-3);
+  --n-4:  var(--sand-4);
+  --n-6:  var(--sand-6);
+  --n-7:  var(--sand-7);
+  --n-11: var(--sand-11);
+  --n-12: var(--sand-12);
+}
+
+/* --- layer 2: semantic contract ------------------------------------------- */
+/* Authored ONCE. Both modes fall out of layer 1's self-swapping above. */
+:root {
+  --background: var(--n-1);
+  --card: var(--n-2);
+  --muted: var(--n-3);
+  --muted-hover: var(--n-4);
+  --border-subtle: var(--n-6);
+  --border: var(--n-7);
+  --ring: var(--accent-8);
+  --primary: var(--accent-9);
+  --primary-hover: var(--accent-10);
+  --primary-foreground: #fff;
+  --muted-foreground: var(--n-11);
+  --foreground: var(--n-12);
+
+  /* --- extensions: NOT part of shadcn's contract ---------------------------
+     ADR-0004 is the authority on this distinction. These are the tokens you
+     may freely redefine; the ones above are shadcn's and are reached by every
+     component you add. */
+
+  /* --link is shadcn's real omission — it has no link token at all, because
+     apps navigate by buttons. This site is the opposite: a cross-reference
+     engine where every concert links its works and every work links its
+     composer. Link colour is a primary visual element here. */
+  --link: var(--accent-11);
+  --link-hover: var(--accent-12);
+
+  /* ← YOURS. AWK-22 item 7, deliberately left open.
+     :visited can ONLY be expressed in colour — browsers restrict it to colour
+     properties and lie in getComputedStyle to prevent history sniffing — so any
+     direction carrying it by weight, underline or marker SILENTLY FAILS.
+     Seeded greyed, which reads most clearly down a 147-entry index.
+     Alternatives:  var(--accent-10) subtle  ·  var(--accent-12) deepened   */
+  --link-visited: var(--n-11);
+
+  /* ← YOURS. --measure is the reading column for long-form prose; typeset sets
+     no max-width of its own. --width-wide gives imageGroup's fullWidth layout
+     something to mean. */
+  --measure: 66ch;
+  --width-content: 42rem;
+  --width-wide: 80rem;
+
+  /* ← YOURS. Named because they recur on every page, where a px-6 habit would
+     drift. Nothing else is named on purpose — naming spacing used once is
+     ceremony. */
+  --gutter: 1.5rem;
+  --space-section: 3rem;
+
+  /* ← YOURS. Single knob; sm/md/lg/xl derive from it. Seeded at direction B's
+     value. Direction C used 0 to say "print". */
+  --radius: 0.25rem;
+
+  /* Faces. Named --face-* rather than --font-* so app.css can bind them into
+     Tailwind's --font-* namespace without a circular reference, and so this
+     file stays the single source.
+
+     Self-hosted (ADR-0004): Adobe Fonts access does NOT confer self-hosting
+     rights, which is why harfang-pro is absent — it would be a purchase from
+     Coppers & Brasses. Fraunces / Inter / JetBrains Mono are all OFL. */
+  --face-display: "Fraunces", ui-serif, Georgia, serif;
+  --face-serif: "Fraunces", ui-serif, Georgia, serif;
+  --face-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --face-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* --- typeset presets ------------------------------------------------------ */
+/* Two presets because the site has two genuinely different typographic needs:
+   long-form case-study prose, and 322 rows of dense reference data.
+
+   Division of labour — typeset owns flowing prose, Tailwind's --text-* owns UI
+   chrome (nav, tables, badges). Two scales, one clear boundary, rather than two
+   competing scales drifting apart.
+
+   ← YOURS, all six numbers. Seeded as the hybrid AWK-22 landed on: direction
+   A's roomy reading measure with direction B's tight compact one.
+
+   Steps are FIXED, not fluid. Fluid body type fights two things this site
+   specifically has — a ch-based --measure, where sliding both column width and
+   text size means the characters-per-line you tuned stops holding; and dense
+   tables, where unpredictable size makes column widths unpredictable. clamp()
+   is permitted for DISPLAY sizes only. */
+.typeset-reading {
+  --typeset-font-body: var(--face-serif);
+  --typeset-font-heading: var(--face-display);
+  --typeset-size: 19px;
+  --typeset-leading: 1.75;
+  --typeset-flow: 1.6em;
+}
+
+.typeset-compact {
+  --typeset-font-body: var(--face-sans);
+  --typeset-font-heading: var(--face-sans);
+  --typeset-size: 13px;
+  --typeset-leading: 1.45;
+  --typeset-flow: 0.7em;
+}

@@ -1,0 +1,11 @@
+node_modules/
+.react-router/
+build/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+.cache/
+.netlify/
