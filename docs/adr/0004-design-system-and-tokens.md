@@ -591,11 +591,26 @@ is `app/components/mode-toggle.tsx`. `cn()` is five lines of `clsx` plus
 So `init` offered nothing this repo lacked, at the cost of the one file it could not
 afford to have rewritten.
 
-### `typeset` was never installable
+### `typeset` is announced but unobtainable
 
-`shadcn add typeset` returns 404. The registry lists only the `new-york` and
-`default` styles and resolves no `typeset` item under either; the CLI requests a
-`new-york-v4` style that does not appear in the styles index at all.
+This record was not wrong that `typeset` shipped — shadcn's changelog announces it
+under July 2026 as *"shadcn/typeset: a styling system for HTML and rendered
+markdown, in one CSS file."* It cannot be obtained. Checked on 2026-08-03, and
+worth listing so nobody repeats it:
+
+| Route | Result |
+| --- | --- |
+| `shadcn add typeset` | 404. The CLI requests a `new-york-v4` style that is not in the styles index |
+| `/r/styles/{new-york,default}/typeset.json` | 404, while `button`/`card`/`badge`/`table` all 200 — the path pattern works |
+| `/r/index.json` | 62 items, none named `typeset`, and no typography or prose item at all |
+| `shadcn search @shadcn --query typeset` | "No items found" |
+| `/docs/components/typeset` | 404 |
+| `shadcn` npm package v4.16.1 | ships `dist/tailwind.css` with **zero** `typeset` references |
+| presets | `shadcn preset` only decodes and resolves theme codes; not a CSS source |
+
+So it is announced-then-unshipped, or withdrawn, rather than misnamed. That
+distinction matters for whoever revisits: it may reappear, and the search terms
+above are the ones that will find it when it does.
 
 This record called `typeset` "the one early bet" and named the mitigation: it is
 generated CSS the repo owns outright, with no runtime and no API, so if it

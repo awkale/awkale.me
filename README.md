@@ -101,8 +101,12 @@ Radix or React Aria primitive anywhere. The entire interactive inventory is
 season as filters, so what remains is a theme control, facet chips and an A–Z jump
 — all built as plain JSX and Tailwind classes.
 
-**`typeset` is not installable.** `shadcn add typeset` 404s; the registry lists only
-the `new-york` and `default` styles and resolves no `typeset` item under either.
+**`typeset` is announced but unobtainable.** shadcn's changelog does list it under
+July 2026, so it is not a misremembering — but `shadcn add typeset` 404s, the
+registry index holds 62 items with no `typeset` among them, `shadcn search @shadcn
+--query typeset` finds nothing, and the `shadcn` npm package's `tailwind.css` has
+zero `typeset` references. ADR-0004's amendment has the full list of what was
+checked, so nobody repeats the search.
 ADR-0004 called typeset its one early bet and named the mitigation — the repo owns
 the CSS outright. It does: the `.typeset-*` rules are hand-written in `app/app.css`
 at zero specificity via `:where()`, which is the precise property
