@@ -34,7 +34,7 @@ See `docs/agents/domain.md`.
 | Path | Holds |
 | --- | --- |
 | `CONTEXT.md` | The ubiquitous language. Read before naming anything. |
-| `docs/adr/` | Eight accepted records. The spec. |
+| `docs/adr/` | Nine accepted records. The spec. |
 | `docs/research/` | Research output backing a decision — currently ADR-0002's rendering-layer comparison. |
 | `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. |
 | `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. |

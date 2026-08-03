@@ -43,11 +43,16 @@ Candidates evaluated: React Router framework mode with `prerender`, Vike, TanSta
 > than current. The 41× headroom is wide enough that this is unlikely to matter, but
 > it is unmeasured, not confirmed.
 >
-> **This decision has no ADR.** It lives in this research document, which by the
-> map's own convention holds findings rather than records. The rendering layer,
-> arguably the most consequential technical choice in the effort, is therefore
-> spec'd nowhere in `docs/adr/`. ADR-0004 compounds it by attributing the pin to
-> ADR-0002, which never mentions React Router at all — corrected there.
+> **This decision now has an ADR: [ADR-0009](../adr/0009-static-rendering-layer.md).**
+> It had none for the first two months of its life — the choice lived only in this
+> research document, which by the map's own convention holds findings rather than
+> records, so the most consequential technical choice in the effort was spec'd
+> nowhere in `docs/adr/`. ADR-0004 compounded it by attributing the version pin to
+> ADR-0002, which never mentions React Router at all; corrected there.
+>
+> **This document remains the reasoning and the evidence** — the ranking, the
+> measurements, the rejected candidates. ADR-0009 is the decision and its
+> consequences. Read that first; come here for why.
 
 Three reasons decided it:
 

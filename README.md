@@ -10,9 +10,9 @@ architecture and the page structures are settled; the values are not.
 
 ## What is decided, and where
 
-The spec lives in `docs/adr/` — **eight records**, moved here from the repo this
-replaces (`awkale/awkale.github.io`) so they are not stranded when it is archived.
-Tracked in Linear as [AWK-5][map]. The ones that bind this scaffold:
+The spec lives in `docs/adr/` — **nine records**, eight of them moved here from the
+repo this replaces (`awkale/awkale.github.io`) so they are not stranded when it is
+archived. Tracked in Linear as [AWK-5][map]. The ones that bind this scaffold:
 
 | Record | Binds |
 | --- | --- |
@@ -24,6 +24,7 @@ Tracked in Linear as [AWK-5][map]. The ones that bind this scaffold:
 | ADR-0006 | Participation. `attended` + `satOut`; the page set is what Alex played. Conductor and hall are the only filters. |
 | ADR-0007 | Period and form replace `genre`. Filters, never routes. |
 | ADR-0008 | Slugs stored in Contentful. Nobiliary particles relocated, honorifics stripped. |
+| ADR-0009 | **The rendering layer.** React Router framework mode, `ssr: false` + `prerender`, on 8.3.0. Read the Consequences before touching redirects or the prerender list. |
 
 [AWK-22][awk22] settled the visual direction as: **direction B's structure,
 direction A's typeface, and the remaining values authored here rather than

@@ -58,6 +58,11 @@ What is decided here is *how much* of it is in play. `shadcn init` runs, so
 utilities. Individual components are then added only as a page needs one.
 Nothing is installed speculatively.
 
+> **Amended 2026-08-03: `shadcn init` does not run.** The `@theme inline` block and
+> the token contract are hand-authored instead. The reasoning that made shadcn "a
+> component source rather than a framework" turned out to argue against running
+> `init` at all — see [the amendment](#amendment--shadcn-is-not-initialised-2026-08-03).
+
 The interactive inventory is small and worth recording, because it is what
 justifies this being a component *source*. [ADR-0001](0001-url-structure.md)
 made soloist, conductor, hall and genre **facets on the indexes rather
@@ -295,7 +300,7 @@ is generated CSS which the repo owns outright: no runtime, no API, nothing to
 break on a minor release. If it disappoints, the file is edited. That is a far
 smaller exposure than a framework pin — and that reasoning has since been
 vindicated twice over. The pin was *dropped* on 2026-08-03 (the build ships React
-Router 8.3.0, see `docs/research/0001-static-rendering-layer.md`), and `typeset`
+Router 8.3.0, see [ADR-0009](0009-static-rendering-layer.md)), and `typeset`
 turned out **not to be installable at all**: `shadcn add typeset` 404s against the
 registry, which lists only the `new-york` and `default` styles and resolves no
 `typeset` item under any of them. So the fallback this record named was needed
@@ -549,3 +554,69 @@ read as a bug. The fix was to render the underlying scales and *outline* the
 aliased ones, rather than to alias all twenty-four: this record's rule is that an
 unused token is worse than a missing one, because it looks like something depends
 on it.
+
+## Amendment — shadcn is not initialised (2026-08-03)
+
+`shadcn init` does not run, and no shadcn component is installed. The `@theme
+inline` block, the semantic contract and the `typeset` rules are hand-authored.
+Everything else in this record stands: three token layers, Radix Colors
+primitives, two typeset presets, three colour modes, self-hosted fonts.
+
+This reverses one sentence above, and it reverses it on this record's own logic
+rather than against it.
+
+### `init` would overwrite the third layer
+
+`shadcn init` writes `app.css`, including its own `:root` token block and its own
+`@theme inline`. That is precisely where layers 2 and 3 live. The generated block
+holds literal values, which is the two-layer shape this record inserted a primitive
+layer *beneath* in order to escape. Running `init` over it would replace the
+architecture with the thing the architecture was chosen to avoid, and the loss
+would be silent — the file still compiles, the site still renders, and the mode
+axis quietly stops being handled inside the primitive layer.
+
+### Nothing needed it
+
+The interactive inventory this record sized turned out to be smaller still.
+[ADR-0006](0006-performance-history-content-model.md) cut soloist and season as
+filters, leaving conductor and hall. What is actually built is a theme control,
+facet chips, an A–Z jump and a set of tables — all plain JSX over Tailwind
+utilities that read this record's semantic tokens.
+
+Measured rather than asserted: `app/` contains no `cn()`, no `@/components/ui`
+import, and no Radix or React Aria primitive. The whole client-interactive surface
+is `app/components/mode-toggle.tsx`. `cn()` is five lines of `clsx` plus
+`tailwind-merge` if it is ever wanted.
+
+So `init` offered nothing this repo lacked, at the cost of the one file it could not
+afford to have rewritten.
+
+### `typeset` was never installable
+
+`shadcn add typeset` returns 404. The registry lists only the `new-york` and
+`default` styles and resolves no `typeset` item under either; the CLI requests a
+`new-york-v4` style that does not appear in the styles index at all.
+
+This record called `typeset` "the one early bet" and named the mitigation: it is
+generated CSS the repo owns outright, with no runtime and no API, so if it
+disappoints the file is edited. That mitigation was needed immediately rather than
+eventually. The `.typeset-*` rules are hand-written in `app/app.css` through
+`:where()`, holding specificity at zero so any Tailwind utility overrides them
+without `!important` — the exact property `@tailwindcss/typography`'s `prose` lacks,
+and the stated reason it was not chosen. The fallback named here was therefore never
+needed either: the hand-rolled version *is* the shape this record wanted.
+
+The bet was correctly identified as a bet, and correctly hedged. It simply lost
+sooner than expected.
+
+### A trap left for whoever reaches for the CLI
+
+The current `shadcn` CLI asks for a **component library** — Radix UI, React Aria or
+Base UI — and a **preset**. This record's layering assumes shadcn's *Radix-based*
+contract. Choosing React Aria changes the primitive foundation, and a preset such
+as `Lyra` ships a competing palette that fights `app/tokens.css` directly.
+
+If a component ever earns its place — realistically only a combobox, and only if
+[AWK-26](https://linear.app/awkale/issue/AWK-26) decides archive search happens —
+run `init` in a throwaway directory, copy the component source across, and point it
+at this repo's tokens. Never run it here.
