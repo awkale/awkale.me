@@ -66,29 +66,62 @@ Three things in there are load-bearing and will bite if changed casually:
   properties and lie in `getComputedStyle`. Weight, underline and marker changes
   silently fail. The specimen has three candidate values to compare.
 
-## Not yet wired
-
-No dependencies are installed and there is no build — this is scaffolding, so
-the `.tsx` files will not typecheck until the toolchain exists. To make it
-runnable:
+## Running it
 
 ```bash
-bun create react-router@7.18 .     # answer no to overwriting app/
-bun add @radix-ui/colors
-bunx shadcn@latest init            # cssVariables: true
-bunx shadcn@latest add typeset     # replaces the stub rules in app.css
+bun install
+bun run build      # 35 prerendered pages -> build/client
+bun run dev
 ```
 
-Then swap the two CDN `@import`s at the top of `app/tokens.css` for the local
-package:
+The build works. Do **not** run `bun create react-router` in this directory — the
+toolchain is already wired, and that command's overwrite prompt is all-or-nothing:
+continuing replaces `.gitignore`, `app/app.css`, `app/root.tsx` and every route
+file at once.
 
-```css
-@import "@radix-ui/colors/sand.css";
-@import "@radix-ui/colors/sand-dark.css";
+Version note: this ships **React Router 8.3.0**, not the 7.18.x the research
+document originally pinned. See the superseded note in
+`docs/research/0001-static-rendering-layer.md` for what was re-verified on v8 and
+what was not.
+
+## shadcn is deliberately not initialised
+
+ADR-0004 says `shadcn init` runs so `components.json`, the `@theme inline` block
+and `cn()` exist. **Don't.** Two things changed after that record was written.
+
+**`init` would clobber the token layers.** It rewrites `app.css` with its own
+`:root` token block and `@theme inline`, which is exactly where layers 2 and 3
+live. The block it would generate is the thing this repo already hand-authors over
+Radix primitives — that third layer is the whole architecture.
+
+**Nothing here needs it.** Grep the tree: no `cn()`, no `@/components/ui`, no
+Radix or React Aria primitive anywhere. The entire interactive inventory is
+`app/components/mode-toggle.tsx`. ADR-0006 shrank it further by cutting soloist and
+season as filters, so what remains is a theme control, facet chips and an A–Z jump
+— all built as plain JSX and Tailwind classes.
+
+**`typeset` is not installable.** `shadcn add typeset` 404s; the registry lists only
+the `new-york` and `default` styles and resolves no `typeset` item under either.
+ADR-0004 called typeset its one early bet and named the mitigation — the repo owns
+the CSS outright. It does: the `.typeset-*` rules are hand-written in `app/app.css`
+at zero specificity via `:where()`, which is the precise property
+`@tailwindcss/typography` lacks and the reason it wasn't chosen.
+
+If a component genuinely earns its place later — a combobox for archive search, say,
+and only if [AWK-26](https://linear.app/awkale/issue/AWK-26) decides search happens
+— add it **without** `init`:
+
+```bash
+bunx shadcn@latest init    # in a THROWAWAY directory, never here
 ```
 
-The CDN form is only there so `preview/tokens.html` works with nothing
-installed.
+then copy the component source across and point it at this repo's tokens. `cn()` is
+five lines of `clsx` + `tailwind-merge` if it turns out to be wanted.
+
+Note also that the newer CLI asks for a component library (Radix UI / React Aria /
+Base UI) and a preset. ADR-0004's layering assumes shadcn's **Radix-based** contract;
+picking React Aria, or a preset like Lyra, brings a competing palette that fights
+`tokens.css`. That is an ADR-0004 amendment, not a prompt to answer quickly.
 
 Beyond that, and tracked outside the map as build work: creating the `project`
 and `imageGroup` content types, the composer merge, seeding participation, the
