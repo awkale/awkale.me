@@ -2,6 +2,20 @@ node_modules/
 .react-router/
 build/
 dist/
+
+# Contentful credentials. Never commit a token, regardless of repo visibility.
+*cma-token*
+.contentful-cma-token
+.contentful-cda-token
+
+# Derived/regenerable artifacts from scripts/contentful.
+# bso-graph.json is parser OUTPUT, not Contentful state — regenerate with
+#   python3 scripts/contentful/parse_archive.py   (needs openpyxl)
+# It was deliberately untracked in the repo this migrated from; kept that way.
+scripts/contentful/bso-graph.json
+scripts/contentful/import-state.json
+scripts/contentful/*.log
+
 .env
 .env.*
 !.env.example
