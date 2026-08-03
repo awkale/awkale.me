@@ -288,12 +288,21 @@ specificity is effectively zero and any Tailwind utility overrides it without
 escapes to override — the reason it was not chosen.
 
 **`typeset` is the one early bet in this record, and it is deliberate.** It
-shipped in shadcn's 2026-07 changelog, weeks before this decision, and
-[ADR-0002](0002-hosting-and-deploy-pipeline.md) pinned React Router to 7.18.x
-specifically to avoid riding new surface area. The mitigation is that `typeset`
+shipped in shadcn's 2026-07 changelog, weeks before this decision, and the
+rendering-layer research pinned React Router to 7.18.x specifically to avoid
+riding new surface area. The mitigation is that `typeset`
 is generated CSS which the repo owns outright: no runtime, no API, nothing to
 break on a minor release. If it disappoints, the file is edited. That is a far
-smaller exposure than a framework pin, which is why the instinct was overridden
+smaller exposure than a framework pin — and that reasoning has since been
+vindicated twice over. The pin was *dropped* on 2026-08-03 (the build ships React
+Router 8.3.0, see `docs/research/0001-static-rendering-layer.md`), and `typeset`
+turned out **not to be installable at all**: `shadcn add typeset` 404s against the
+registry, which lists only the `new-york` and `default` styles and resolves no
+`typeset` item under any of them. So the fallback this record named was needed
+immediately. The `.typeset-*` rules now live hand-written in `app/app.css`, at zero
+specificity via `:where()`, which is precisely the property `@tailwindcss/typography`
+lacks. The repo owning the CSS outright was the whole mitigation, and it held —
+which is why the instinct was overridden
 here and not there. `@tailwindcss/typography` remains the fallback, and
 hand-rolling was rejected as rebuilding what `typeset` gives free — vertical
 rhythm across headings, lists, blockquotes and figures is fiddly to get right.

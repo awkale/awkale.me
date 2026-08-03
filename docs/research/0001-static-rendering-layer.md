@@ -16,6 +16,39 @@ Candidates evaluated: React Router framework mode with `prerender`, Vike, TanSta
 
 **Use React Router framework mode with `ssr: false` + `prerender`, pinned to the v7.x line (7.18.x) for the initial build.**
 
+> **Superseded on the version only, 2026-08-03: the build ships React Router 8.3.0.**
+>
+> The framework choice, `ssr: false` + `prerender`, and every finding below stand.
+> Only the pin changed. `bun create react-router` now scaffolds `react-router: ^8`,
+> `@react-router/dev: ^8` and `vite: ^8` by default, so 7.18.x had become the
+> off-path choice — and the pin's stated rationale, avoiding new surface area, no
+> longer described reality once v8 was what the official template produced.
+>
+> The incremental `v8_*` future-flag sequence recommended below is therefore moot:
+> those flags *are* v8. `#15350` (base path + prerender) was never checked before
+> adopting, which is the one loose thread in this decision — it does not affect this
+> site, which has no base path, but the "move once #15350 closes" condition was
+> dropped rather than met.
+>
+> Re-verified on 8.3.0 rather than assumed: `prerender` with `ssr: false` emits real
+> HTML per route into `build/client`, and an unknown path returns a **real 404**
+> rather than an empty `HydrateFallback` shell — the finding this document calls the
+> most valuable one, and the reason a catch-all redirect must never be added.
+> `__spa-fallback.html` is still emitted and still unreferenced, which is the state
+> to preserve.
+>
+> **Not re-measured on v8:** the 22 s / 594-route build time, the peak-RSS figures,
+> the `concurrency` sweep, and the [#15255](https://github.com/remix-run/react-router/issues/15255)
+> non-reproduction. Those were all taken on 7.18.x and are now indicative rather
+> than current. The 41× headroom is wide enough that this is unlikely to matter, but
+> it is unmeasured, not confirmed.
+>
+> **This decision has no ADR.** It lives in this research document, which by the
+> map's own convention holds findings rather than records. The rendering layer,
+> arguably the most consequential technical choice in the effort, is therefore
+> spec'd nowhere in `docs/adr/`. ADR-0004 compounds it by attributing the pin to
+> ADR-0002, which never mentions React Router at all — corrected there.
+
 Three reasons decided it:
 
 1. **It is the only candidate that keeps "React + Vite + shadcn/ui" literally true.** The rendering layer is the React Router Vite plugin — no new page language, no framework-specific component model, no second build system. shadcn/ui ships a first-class React Router path (`pnpm dlx shadcn@latest init -t react-router`, listed as one of seven frameworks on shadcn's installation page) ([shadcn/ui installation](https://ui.shadcn.com/docs/installation), [React Router guide](https://ui.shadcn.com/docs/installation/react-router)). Nothing needs manual wiring.
