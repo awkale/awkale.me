@@ -1,0 +1,46 @@
+# Netlify configuration — awkale.me
+#
+# Kept in the repo rather than the dashboard deliberately. ADR-0002 chose Netlify
+# partly for config-as-code, and `docs/research/0001-static-rendering-layer.md`
+# records that Netlify's own React Router guide documents ONLY the server
+# deployment via @netlify/vite-plugin-react-router targeting Functions — the
+# static `ssr: false` route is not covered by any recipe. So a hand-written file
+# is the supported-in-practice path, not a shortcut.
+#
+# AWK-17 verified this live: Netlify auto-detected `framework: "react-router"`
+# and served build/client from a hand-written toml with zero functions.
+# 594 routes built in 22 s, which is 2.4% of the 900 s limit.
+
+[build]
+  # React Router framework mode with `ssr: false` + `prerender` emits real HTML
+  # per route into build/client — a plain static publish dir, which is what keeps
+  # _redirects and _headers working normally.
+  publish = "build/client"
+
+  # bun per project convention. NOTE: until package.json and bun.lockb exist,
+  # Netlify cannot detect the toolchain and this command fails. That is expected —
+  # the repo currently holds scaffolding only. See README.md for the wiring steps.
+  command = "bun run build"
+
+[build.environment]
+  # React Router 7.18.x needs Node 20+. Pinned so a Netlify default bump cannot
+  # move it underneath us; raise deliberately.
+  NODE_VERSION = "22"
+
+# --- notes for whoever wires this up -----------------------------------------
+#
+# _headers and _redirects must live in the PUBLISH directory to take effect, not
+# at the repo root. Vite copies public/* into build/client/, so they belong in
+# public/ — see public/_headers, which carries the staging noindex.
+#
+# Do NOT add a catch-all redirect to a SPA fallback. AWK-17's single most valuable
+# finding: with no catch-all, a missing page returns a real 404. Add one and every
+# unknown path silently serves an empty HydrateFallback shell instead — across the
+# whole archive. Verified live.
+#
+# Environment variables are set in the Netlify UI, never here — this file is
+# committed. ADR-0002 specifies CONTENTFUL_SPACE_ID (3iiyvj5u5c9h),
+# CONTENTFUL_ENVIRONMENT (master) and a read-only Delivery token. The CFPAT-…
+# Content Management token must NEVER enter CI; it stays local in
+# ~/.contentful-cma-token. None are needed yet — nothing reads the CDA, and none
+# of the decided schema exists in the space.
