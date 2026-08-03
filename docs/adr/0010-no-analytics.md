@@ -1,0 +1,183 @@
+---
+status: accepted
+---
+
+# No analytics, and no third-party client-side beacons
+
+`awkale.me` carries **no analytics**. The prohibition extends to **every
+third-party client-side beacon**, error monitoring included, and is **enforced by a
+Content-Security-Policy** in `public/_headers` rather than left as a convention.
+
+This is a decision, not an omission. [ADR-0004](0004-design-system-and-tokens.md)
+recorded analytics as *"a genuine gap in a map whose destination is that nothing is
+left to decide"*; this record closes it. Decided in
+[AWK-24](https://linear.app/awkale/issue/AWK-24/decide-whether-the-new-site-carries-analytics).
+
+## Why none
+
+**No decision traffic data would change.** That test came first and settled
+everything after it. `/concerts` is, by
+[ADR-0006](0006-performance-history-content-model.md)'s own framing, a personal
+repertoire — primarily a tool for its author. The portfolio half has a real outside
+audience, but "do recruiters reach the case studies" is not a question that would
+alter what gets built today.
+
+The corroboration, rather than the argument: **the site has collected nothing since
+2023 and nobody noticed.** Universal Analytics stopped processing data that year and
+no GA4 property was ever created. Three years of silence is evidence about how much
+the data was ever consulted.
+
+### The one argument that could have overturned it
+
+Not measurement — **diagnosis**. With `ssr: false` there is no server request log
+([ADR-0009](0009-static-rendering-layer.md)), so **nothing reports a 404 on an
+inbound URL nobody anticipated**, across ~598 pages and thirteen redirects.
+
+**Accepted, because analytics is the wrong instrument for it.** Two better ones
+already exist:
+
+- **Internal completeness** is covered by the CI page assertion AWK-17 built and
+  proved fails correctly. It derives the expected page set from
+  [ADR-0006](0006-performance-history-content-model.md)'s participation rules, so a
+  route silently vanishing is caught at build time, not by a visitor.
+- **Inbound coverage is a finite, known set** — [ADR-0001](0001-url-structure.md)'s
+  thirteen redirects plus the old site's URL inventory — testable deterministically
+  by a one-time `curl` sweep at cutover.
+
+Analytics would only surface URLs nobody *imagined*, and at this traffic level the
+sample cannot distinguish a broken deep link from an empty week.
+
+**Residual risk, taken knowingly:** an external link to a URL nobody enumerated stays
+broken silently and indefinitely.
+
+## Why the ban covers error monitoring too
+
+Ruled out in the same decision, deliberately, because **"different purpose" is the
+drift path an analytics-only prohibition leaves open.** Error monitoring is
+diagnosis rather than measurement, so a future reader could argue past a narrower
+record without technically violating it.
+
+It had the better case of the two.
+[ADR-0004](0004-design-system-and-tokens.md) commits every page to a **blocking
+inline theme script**, and [ADR-0009](0009-static-rendering-layer.md) carries a
+hydration landmine — both client-side failure modes that nothing currently reports.
+
+Ruled out anyway: ~598 near-static pages with minimal interactivity, and the real
+failure modes are build-time and already asserted. Note it would **not** have closed
+the 404 gap either way — a 404 is a server response, not a JS error.
+
+## Reopening trigger
+
+Two forms, both recorded so that adding analytics later is a conscious amendment to
+this record rather than a quiet fill-in.
+
+**Concrete: an active job search.** It makes `/projects` load-bearing, at which
+point "do recruiters reach the case studies" becomes a question that would change
+what is written and what is featured. Observable from outside the data, and
+self-limiting — it ends when the search does.
+
+**General: the purpose test.** A specific question the author would *act* on.
+
+**Rejected as circular: *"if the site starts getting real traffic."*** It cannot be
+observed without the analytics it would authorize. Any trigger has to be visible from
+outside the data.
+
+## The two existing installs
+
+`_includes/scripts.html` in the retired `awkale.github.io` shipped both — at the
+**end of `<body>`** (`_layouts/default.html:19`), not in `<head>` as
+[ADR-0004](0004-design-system-and-tokens.md) and AWK-24 both assumed.
+
+**Google Universal Analytics `UA-171213-13` — nothing to do, and nothing that could
+be done.** Google removed UA properties, their data **and** the API the week of
+2024-07-01, inaccessible even read-only, with no export path afterwards. So both
+halves of the question — delete the property, or export its history — were settled
+externally two years ago. `analytics.js` nonetheless still returns 200 (52 KB), so
+the old site ships a script that silently discards every hit: a no-op, not a broken
+request. The tag dies with the repo.
+
+**Clicky `100850507` — left alone.** Contrary to the assumption that it was defunct,
+the service is alive (`clicky.com` → 200, `static.getclicky.com/js` → 200), so the
+script still loads and the site id plausibly holds ~2016–2026 — **the only surviving
+analytics history for this domain**, precisely what GA lost. Export was weighed and
+**declined as inconsistent with this decision**: if the data would never be looked
+at, preserving it is sentiment. No export, no teardown, no login. Collection ends
+when the old site stops serving at cutover.
+
+## Consent needs nothing, by construction
+
+Not a preference — there is no decision left in it. With no beacons and no
+third-party origins, nothing tracks anyone.
+
+**The site's only client-side persistence is `localStorage`, and there are no
+cookies at all.** `app/lib/mode.ts` writes `theme` and `mode`; both are
+first-party, functional, and set by the user's own action.
+[ADR-0004](0004-design-system-and-tokens.md) already serves fonts from the site's
+own origin. **So: no consent banner, no cookie notice.**
+
+## Enforcement: a CSP, not a promise
+
+`public/_headers` exists and carried **no `Content-Security-Policy`** — verified
+repo-wide when this was decided. Every "no third-party origin" property this project
+asserts was therefore a convention any future edit could break silently.
+
+**Decided: `script-src 'self' 'sha256-…'`,** with the hash computed at build over
+[ADR-0004](0004-design-system-and-tokens.md)'s inline theme script. A future
+`<script src="…">` from another origin then fails **loudly** instead of shipping.
+
+The wrinkle that makes this non-trivial: that blocking inline script means
+`script-src` cannot be plain `'self'`, and **`ssr: false` makes a nonce impossible**
+— there is no server to mint one per request. The alternatives were:
+
+- **`'unsafe-inline'`** — blocks external origins but permits *any* injected inline
+  script, which would readmit exactly what this record bans. Rejected.
+- **A build-time hash** — strict, at the cost of regenerating it whenever the theme
+  script changes. Chosen.
+
+This is the **fifth invariant this project cannot express declaratively**, joining
+`sideBySide`'s two-image limit ([ADR-0004](0004-design-system-and-tokens.md)),
+`satOut ⊆ program` ([ADR-0006](0006-performance-history-content-model.md)),
+`(composer, slug)` uniqueness ([ADR-0008](0008-archive-slug-source.md)) and
+`featuredRank`-requires-`body` ([ADR-0003](0003-portfolio-content-model.md)).
+
+### `img-src` is deliberately unset here
+
+Writing the full policy requires knowing how Contentful assets are delivered, and
+[ADR-0003](0003-portfolio-content-model.md) **does not say**. Contentful serves
+assets from `images.ctfassets.net` by default, a third-party origin — so hotlinking
+would let a tracking surface in through the back door of the decision that just
+banned tracking, without violating its letter.
+
+That is an [ADR-0003](0003-portfolio-content-model.md) concern rather than an
+analytics one, so it was not half-specified here. Decided in
+[AWK-28](https://linear.app/awkale/issue/AWK-28/decide-how-contentful-asset-images-are-delivered);
+**this record's CSP cannot be written until it resolves.**
+
+## Consequences
+
+**Nothing is added to the document head or body for measurement.** The site ships no
+third-party script tags at all.
+
+**Writing the CSP and wiring the script hash is build work**, blocked on
+[AWK-28](https://linear.app/awkale/issue/AWK-28/decide-how-contentful-asset-images-are-delivered)
+for `img-src`. Note `public/_headers` also carries the staging `noindex` block marked
+*REMOVE AT CUTOVER* — the same edit touches both, so they want doing together.
+
+**The `curl` sweep is the accepted mitigation for having no request log.** One
+post-cutover pass over the thirteen redirects and the old URL inventory. It is
+tracked with redirect thirteen rather than separately, because it tests exactly that
+file's output.
+
+**The hash couples this record to the theme script.** Any change to
+[ADR-0004](0004-design-system-and-tokens.md)'s inline script invalidates the CSP and
+must regenerate it. That is the standing cost of choosing enforcement over a stated
+intention.
+
+**Netlify Analytics was never evaluated on its merits**, and deliberately so. AWK-16
+established the account is on a frozen **Legacy Free** plan where migrating to
+credit-based pricing is **irreversible**, so a paid server-side add-on was not a
+neutral option. Since the answer is "none", the question never had to be opened —
+but if the trigger ever fires, note that this path costs more than a subscription.
+
+**Requests are unmetered on legacy**, so nothing here was driven by cost. This is a
+preference about being measured, recorded as a decision.
