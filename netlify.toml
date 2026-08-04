@@ -17,14 +17,20 @@
   # _redirects and _headers working normally.
   publish = "build/client"
 
-  # bun per project convention. NOTE: until package.json and bun.lockb exist,
-  # Netlify cannot detect the toolchain and this command fails. That is expected —
-  # the repo currently holds scaffolding only. See README.md for the wiring steps.
+  # bun per project convention. `package.json` and `bun.lock` are both committed,
+  # so Netlify detects the toolchain and this command runs. (This previously
+  # warned that neither existed and the repo held scaffolding only — true when
+  # written, false since the AWK-22 scaffolding was wired up. Note the lockfile is
+  # `bun.lock`, not the `bun.lockb` the old comment named.)
   command = "bun run build"
 
 [build.environment]
-  # React Router 7.18.x needs Node 20+. Pinned so a Netlify default bump cannot
+  # React Router 8.x needs Node 20+. Pinned so a Netlify default bump cannot
   # move it underneath us; raise deliberately.
+  #
+  # This previously read "7.18.x". The pin was superseded rather than satisfied —
+  # `bun create react-router` now scaffolds v8, which ADR-0009 adopts. The Node
+  # floor is 20+ either way, so "22" was correct before and after.
   NODE_VERSION = "22"
 
 # --- notes for whoever wires this up -----------------------------------------
