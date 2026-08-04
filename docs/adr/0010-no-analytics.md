@@ -140,6 +140,27 @@ This is the **fifth invariant this project cannot express declaratively**, joini
 `(composer, slug)` uniqueness ([ADR-0008](0008-archive-slug-source.md)) and
 `featuredRank`-requires-`body` ([ADR-0003](0003-portfolio-content-model.md)).
 
+### `form-action 'self'` — supplied later, and it was a real gap
+
+> **Added by
+> [AWK-26](https://linear.app/awkale/issue/AWK-26/decide-whether-anything-needs-a-server)**
+> — see [ADR-0011](0011-input-surface.md).
+
+`form-action` has **no fallback to `default-src`**. This record named only
+`script-src`, so the policy as drafted would have permitted a form on this site to
+POST to **any origin** — harmless while the site had no form, load-bearing the
+moment it got one.
+
+ADR-0011 ships a contact form, and supplies the value: **`form-action 'self'`**.
+Netlify Forms posts to the site's own origin, so `'self'` is exactly sufficient and
+nothing broader is needed.
+
+Worth noting what this directive is *not* protecting against. It does not stop spam,
+and it does not stop abuse of the form itself; it stops a future edit — or an
+injection — from pointing the form's `action` at somewhere else and exfiltrating what
+a visitor typed. That is the same class of protection `script-src` gives, applied to
+the one surface on this site that accepts input.
+
 ### `img-src` is deliberately unset here
 
 Writing the full policy requires knowing how Contentful assets are delivered, and
@@ -160,8 +181,12 @@ third-party script tags at all.
 
 **Writing the CSP and wiring the script hash is build work**, blocked on
 [AWK-28](https://linear.app/awkale/issue/AWK-28/decide-how-contentful-asset-images-are-delivered)
-for `img-src`. Note `public/_headers` also carries the staging `noindex` block marked
-*REMOVE AT CUTOVER* — the same edit touches both, so they want doing together.
+for `img-src` — and, since
+[AWK-26](https://linear.app/awkale/issue/AWK-26/decide-whether-anything-needs-a-server),
+on nothing else. Note `public/_headers` also carries the staging `noindex` block
+marked *REMOVE AT CUTOVER*, and [ADR-0011](0011-input-surface.md) adds a per-path
+`noindex` for `/contact/sent/` that the removal of that block would otherwise
+expose — so the same edit now touches three things and they want doing together.
 
 **The `curl` sweep is the accepted mitigation for having no request log.** One
 post-cutover pass over the thirteen redirects and the old URL inventory. It is

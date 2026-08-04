@@ -54,6 +54,35 @@ Godard — it carries verbatim. Added by
 which also generalized this section from the single `/music` reservation it
 originally held.
 
+## Contact
+
+> **Added by
+> [AWK-26](https://linear.app/awkale/issue/AWK-26/decide-whether-anything-needs-a-server)**
+> — see [ADR-0011](0011-input-surface.md). This record originally described only
+> the two peer sections; contact was never in the sitemap.
+
+Two paths outside both sections, and the only pages here that are neither a
+section index nor a content record:
+
+| Path | Holds |
+| --- | --- |
+| `/contact` | a Netlify Forms contact form, plus the three profile links |
+| `/contact/sent` | the success page the form's native POST redirects to |
+
+`/contact/sent` exists because the submission is an ordinary browser POST rather
+than a `fetch`, so the browser has to land somewhere. It is a real page in the
+site's own typography rather than Netlify's generic confirmation, and it wants
+`X-Robots-Tag: noindex` — it is a prerendered page with no inbound purpose, and the
+sitewide staging `noindex` that covers it today is marked *REMOVE AT CUTOVER*.
+
+`/contact` collides with nothing, so this needed none of the care `/projects` did.
+Contrast the `/work` rejection below: the collision was removed at the source there
+because `work` is one of the archive's own content types. `contact` is not a term
+this domain uses for anything.
+
+Neither path takes a facet, and neither is a section — the site still has exactly
+two, which is what the opening paragraph means.
+
 ## Considered options
 
 **Base path.** `/music` was ruled out by the reservation above. `/performance`

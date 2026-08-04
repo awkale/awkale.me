@@ -647,6 +647,19 @@ If a component ever earns its place — realistically only a combobox, and only 
 run `init` in a throwaway directory, copy the component source across, and point it
 at this repo's tokens. Never run it here.
 
+> **Moot, and by this record's own doing.**
+> [AWK-26](https://linear.app/awkale/issue/AWK-26/decide-whether-anything-needs-a-server)
+> decided archive search **does** happen — see
+> [ADR-0011](0011-input-surface.md) — so the one condition above is met. The
+> instruction is still dead, because the paragraph predates
+> [the second amendment below](#amendment--react-aria-plus-plain-css-2026-08-03):
+> the component source is `react-aria-components`, which ships a `ComboBox`
+> already, at `^1.20.0` in `package.json`.
+>
+> So the combobox arrives as an import, not as a copied file, and no throwaway
+> `init` is needed for it. The *trap itself* stands unchanged and still matters —
+> never run `init` in this repo — it simply no longer has a foreseen occasion.
+
 ## Amendment — React Aria plus plain CSS (2026-08-03)
 
 **shadcn/ui is no longer the component source.** Components come from
