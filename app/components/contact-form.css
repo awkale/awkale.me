@@ -1,0 +1,121 @@
+/* ===========================================================================
+   contact-form — the field internals of the /contact/ form.
+   ---------------------------------------------------------------------------
+   Plain CSS, and deliberately NOT react-aria-components. ADR-0011 records that
+   this form "adds nothing to the client bundle" and keeps ADR-0004's measured
+   client-interactive surface at ONE file (mode-toggle). A RAC `TextField` would
+   make it two, in exchange for nothing: a native POST has no state to manage and
+   works with JavaScript disabled, which is the property that decision is for.
+
+   So unlike mode-toggle.css and facet-chip.css there are no `[data-hovered]` /
+   `[data-focus-visible]` hooks here — nothing supplies them. The states are the
+   browser's own: `:focus-visible`, and `:user-invalid` for a field the visitor
+   has actually left in a bad state (never bare `:invalid`, which paints every
+   required field red before it has been touched).
+   =========================================================================== */
+
+.contact-form {
+  display: grid;
+  gap: 1rem;
+  /* Narrower than --width-content: a name field the width of a paragraph reads
+     as a mistake. The textarea alone wants the full measure. */
+  max-width: 32rem;
+}
+
+.contact-field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+/* One rule, two names: `.contact-label` labels a field, `.contact-eyebrow` heads
+   the profile-links section. Same treatment, different jobs — worth two selectors
+   and not worth two rules.
+
+   The repo has ~14 hand-tuned copies of this uppercase eyebrow in route files as
+   Tailwind utilities, and their values have already drifted (0.66–0.72rem,
+   0.09–0.14em). Extracting ONE site-wide `.eyebrow` is the right fix and is not
+   this ticket; this at least keeps the contact surface down to a single copy. */
+.contact-label,
+.contact-eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* One rule for both controls. Local vars, remapped by the states below. */
+.contact-input,
+.contact-textarea {
+  --field-bg: var(--card);
+  --field-border: var(--input);
+
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+  background: var(--field-bg);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.contact-textarea {
+  /* Vertical only — horizontal resize escapes the measure and the layout. */
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.contact-input::placeholder,
+.contact-textarea::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* The base layer's :focus-visible already draws the ring; this darkens the
+   border underneath it so the active field is legible against the ring. */
+.contact-input:focus-visible,
+.contact-textarea:focus-visible {
+  --field-border: var(--border);
+}
+
+.contact-input:user-invalid,
+.contact-textarea:user-invalid {
+  --field-border: var(--destructive);
+}
+
+/* --- honeypot -------------------------------------------------------------- */
+/* `netlify-honeypot="bot-field"` on the form names this field; Netlify rejects
+   any submission that fills it. display:none rather than an off-screen shift,
+   because a bot reading the markup should still find a plausible field and a
+   human should never tab into one. The wrapper also carries aria-hidden. */
+.contact-honeypot {
+  display: none;
+}
+
+/* --- submit --------------------------------------------------------------- */
+.contact-submit {
+  --submit-bg: var(--primary);
+  --submit-text: var(--primary-foreground);
+
+  justify-self: start;
+  padding: 0.4rem 0.9rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--submit-bg);
+  color: var(--submit-text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.contact-submit:hover {
+  --submit-bg: var(--primary-hover);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .contact-input,
+  .contact-textarea,
+  .contact-submit {
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+  }
+}

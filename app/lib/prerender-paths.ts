@@ -41,6 +41,12 @@ export async function prerenderPaths(): Promise<string[]> {
     "/projects",
     "/concerts",
     "/concerts/composers",
+    // ADR-0011's two contact pages. Static, and the only entries here that are
+    // not derived from content — they exist whatever the archive holds. Both are
+    // prerendered like everything else, which is the whole reason Netlify's form
+    // scanner can see the form at deploy time.
+    "/contact",
+    "/contact/sent",
   ];
 
   // Case studies only. An empty `body` means index-only with no page, which is

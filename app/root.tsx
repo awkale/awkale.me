@@ -1,6 +1,7 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import { themeScript } from "./lib/mode";
 import { SiteHeader } from "./components/site-header";
+import { SiteFooter } from "./components/site-footer";
 import "./app.css";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <SiteHeader />
         {children}
+        {/* ADR-0011. See site-footer.tsx for what it carries and why. */}
+        <SiteFooter />
         <ScrollRestoration />
         <Scripts />
       </body>

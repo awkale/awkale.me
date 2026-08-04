@@ -29,6 +29,7 @@
    rather than dependent on module graph traversal. */
 @import "./components/mode-toggle.css";
 @import "./components/facet-chip.css";
+@import "./components/contact-form.css";
 
 @custom-variant dark (&:is(.dark *));
 

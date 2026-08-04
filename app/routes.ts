@@ -42,4 +42,13 @@ export default [
   route("concerts/composers/:composer", "routes/composer.tsx"),
   route("concerts/composers/:composer/works/:work", "routes/work.tsx"),
   route("concerts/:date", "routes/concert.tsx"),
+
+  /* Two paths outside both sections, and the only pages that are neither a
+     section index nor a content record. ADR-0001's Contact section, amended onto
+     it by AWK-26; ADR-0011 has the form's own constraints.
+
+     `contact/sent` is a sibling route, not a child of `contact` — there is no
+     shared layout, and nesting would put an <Outlet /> in the form page. */
+  route("contact", "routes/contact.tsx"),
+  route("contact/sent", "routes/contact-sent.tsx"),
 ] satisfies RouteConfig;
