@@ -34,15 +34,34 @@ See `docs/agents/domain.md`.
 | Path | Holds |
 | --- | --- |
 | `CONTEXT.md` | The ubiquitous language. Read before naming anything. |
-| `docs/adr/` | Thirteen accepted records. The spec. |
+| `docs/adr/` | Fourteen accepted records. The spec. |
 | `docs/research/` | Research output backing a decision — currently ADR-0009's rendering-layer comparison. |
 | `docs/agents/facts.md` | 58 findings from the AWK-5 map, kept so they are not rediscovered. Findings, not spec — verify before trusting. |
 | `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. |
 | `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. |
 | `Wikipedia BSO Archive.xlsx` | The raw source the parser reads. |
 | `app/tokens.css` | Design values. A spec artifact, per ADR-0004's AWK-22 amendment. |
+| `.githooks/pre-commit` | Blocks a commit that is unformatted or fails lint. See ADR-0014. |
 
-## Three things that will bite
+## Commands
+
+`bun`, never `npm` or `yarn`. ADR-0014 covers the toolchain.
+
+| | |
+| --- | --- |
+| `bun run dev` | Dev server. |
+| `bun run build` | Prerenders every route into `build/client`. |
+| `bun run typecheck` | `react-router typegen && tsc`. Run this before believing an editor error. |
+| `bun run test` | Vitest. Skips the built-output block if `build/client` is absent. |
+| `bun run test:ci` | Builds first, so the built-output assertion cannot skip. |
+| `bun run lint` / `lint:fix` | oxlint, 210 rules copied from `waterfall-ui`. |
+| `bun run format` / `format:check` | oxfmt. **Markdown is excluded** — see ADR-0014. |
+
+**A commit runs `format:check` and `lint` and fails on either.** The hook is
+installed by `bun install` (the `prepare` script sets `core.hooksPath`), so it
+arrives with the clone. It checks and never fixes; `--no-verify` skips it.
+
+## Four things that will bite
 
 **The pipeline's paths are positional.** `parse_archive.py` defaults to
 `"Wikipedia BSO Archive.xlsx"` **relative to the working directory**, and writes
@@ -77,12 +96,27 @@ bun run typecheck    # react-router typegen && tsc
 `bun run dev` and `bun run build` regenerate them too. Report these as a real
 break only if they survive that command.
 
+**`oxfmt` is not idempotent in one pass.** `app/components/site-header.tsx` and
+`site-footer.tsx` — the two files with multi-line `className` strings — need a
+second run to converge, because the first pass collapses the string and the second
+sorts and rewraps it. So `bun run format` reporting nothing to do is not proof it
+is settled: if `format:check` still fails, run `format` again before assuming a bug.
+It is also why the pre-commit hook checks rather than fixes (ADR-0014).
+
 ## Build state
 
 **There is a build, and it is clean.** Dependencies are installed, `bun run build`
 and `bun run typecheck` both pass, and the repo carries `package.json`,
 `bun.lock`, `netlify.toml`, `react-router.config.ts`, `vite.config.ts` and
 self-hosted fonts. It is not yet connected to Netlify.
+
+**There is a test suite too, as of ADR-0014**: 20 tests over three layers — the
+built-output page assertion, the prerender enumerator's guards, and `/contact/`'s
+form attributes. `test`, `lint` and `format:check` all pass. Two gaps that older
+tickets still assume: there is **no CI** in this repo at all (no `.github/`), so
+"joins the CI page assertion" means `scripts/assert-pages.test.ts` and nothing
+automatic; and route components taking loader data are untestable as written,
+because Vitest runs without the `reactRouter()` plugin.
 
 `app/data/sample.ts` is still placeholder, because **none of the decided
 Contentful schema exists in the space** — `concert.attended`, `concert.satOut`,

@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+# Pre-commit: formatting and lint must be clean before anything lands.
+#
+# CHECKS, never fixes. Two reasons it is not `oxfmt` followed by `git add`:
+#
+#   1. Rewriting files mid-commit means the commit contains something other than
+#      what was reviewed and staged, which is the wrong surprise to hand someone.
+#   2. oxfmt is not idempotent in one pass on this repo — the two files with
+#      multi-line className strings need a second run to converge — so an
+#      auto-fixing hook could stage a state that still fails its own check.
+#
+# Whole repo rather than staged files only: both tools finish in well under a
+# second here, and staged-only checking hides a file that a previous commit left
+# unformatted.
+#
+# Installed by `bun install` via package.json's `prepare` script, which sets
+# core.hooksPath to this directory. To run one commit without it: --no-verify.
+
+set -e
+
+echo "pre-commit: oxfmt --check"
+if ! bun run format:check >/dev/null 2>&1; then
+  echo
+  echo "  Formatting is not clean. Fix it with:"
+  echo
+  echo "      bun run format"
+  echo
+  echo "  Then stage the result and commit again. Run it twice if the first pass"
+  echo "  reports work remaining — see the note above about idempotence."
+  echo
+  bun run format:check 2>&1 | grep -vE '^\$' || true
+  exit 1
+fi
+
+echo "pre-commit: oxlint"
+if ! bun run lint >/dev/null 2>&1; then
+  echo
+  echo "  Lint failed. The findings:"
+  echo
+  bun run lint 2>&1 | grep -vE '^\$' || true
+  echo
+  echo "  Auto-fixable subset: bun run lint:fix"
+  echo
+  exit 1
+fi
+
+echo "pre-commit: clean"
