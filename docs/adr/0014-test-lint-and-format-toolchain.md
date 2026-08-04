@@ -9,10 +9,14 @@ status: accepted
 `waterfall-ui`** rather than chosen here, and a **pre-commit hook** blocks any commit
 that is unformatted or fails lint.
 
-Not decided by a ticket of its own. It came out of
-[AWK-35](https://linear.app/awkale/issue/AWK-35/build-the-contact-surface), which had
-to verify its own output by hand because the repo had no runner at all, and then out
-of a direct instruction to add the ox tools with waterfall-ui's settings.
+Recorded in
+[AWK-49](https://linear.app/awkale/issue/AWK-49/adopt-the-test-lint-and-format-toolchain-vitest-oxlint-oxfmt),
+which was **filed after the fact** — this decision came out of
+[AWK-35](https://linear.app/awkale/issue/AWK-35/build-the-contact-surface) having to
+verify its own output by hand because the repo had no runner at all, and then out of a
+direct instruction to add the ox tools with waterfall-ui's settings. The ticket exists
+so this record cites one like every other here does; it is not where the thinking
+happened.
 
 ## Why borrow instead of decide
 
