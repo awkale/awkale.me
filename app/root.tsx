@@ -23,6 +23,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
           This script owns those attributes; if React also renders them, every
           page logs a hydration mismatch.
         */}
+        {/*
+          oxlint's react/no-danger is correct in general and wrong here: the
+          content is a module-local constant in lib/mode.ts with no interpolation
+          and no external input, so there is nothing to inject. Suppressed locally
+          rather than repo-wide, so the next dangerouslySetInnerHTML still gets
+          questioned.
+        */}
+        {/* eslint-disable-next-line react/no-danger */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
 
         {/* One preload per above-the-fold face. */}

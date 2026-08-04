@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "trailingComma": "es5",
+  "tabWidth": 2,
+  "semi": false,
+  "singleQuote": true,
+  "printWidth": 120,
+  "sortImports": {},
+  "sortTailwindcss": {
+    "stylesheet": "./app/app.css",
+    "functions": [
+      "cn"
+    ]
+  },
+  "classRegex": [
+    ":\\s*`([\\s\\S]*?)`",
+    "=\\s*`([\\s\\S]*?)`"
+  ],
+  "experimentalSortPackageJson": false,
+  "ignorePatterns": [
+    "node_modules",
+    "build",
+    ".react-router",
+    "coverage",
+    "preview"
+  ]
+}
