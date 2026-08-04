@@ -36,6 +36,7 @@ See `docs/agents/domain.md`.
 | `CONTEXT.md` | The ubiquitous language. Read before naming anything. |
 | `docs/adr/` | Thirteen accepted records. The spec. |
 | `docs/research/` | Research output backing a decision — currently ADR-0009's rendering-layer comparison. |
+| `docs/agents/facts.md` | 58 findings from the AWK-5 map, kept so they are not rediscovered. Findings, not spec — verify before trusting. |
 | `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. |
 | `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. |
 | `Wikipedia BSO Archive.xlsx` | The raw source the parser reads. |
