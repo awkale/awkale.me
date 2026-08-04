@@ -161,29 +161,40 @@ injection — from pointing the form's `action` at somewhere else and exfiltrati
 a visitor typed. That is the same class of protection `script-src` gives, applied to
 the one surface on this site that accepts input.
 
-### `img-src` is deliberately unset here
+### `img-src 'self'` — supplied later, and the policy is now complete
 
-Writing the full policy requires knowing how Contentful assets are delivered, and
-[ADR-0003](0003-portfolio-content-model.md) **does not say**. Contentful serves
-assets from `images.ctfassets.net` by default, a third-party origin — so hotlinking
-would let a tracking surface in through the back door of the decision that just
-banned tracking, without violating its letter.
+> **Added by
+> [AWK-28](https://linear.app/awkale/issue/AWK-28/decide-how-contentful-asset-images-are-delivered)**
+> — see [ADR-0013](0013-asset-image-delivery.md).
 
-That is an [ADR-0003](0003-portfolio-content-model.md) concern rather than an
-analytics one, so it was not half-specified here. Decided in
-[AWK-28](https://linear.app/awkale/issue/AWK-28/decide-how-contentful-asset-images-are-delivered);
-**this record's CSP cannot be written until it resolves.**
+This directive was left unset because writing it required knowing how Contentful
+assets are delivered, and [ADR-0003](0003-portfolio-content-model.md) **did not
+say**. Contentful serves assets from `images.ctfassets.net` by default, a
+third-party origin — so hotlinking would have let a tracking surface in through the
+back door of the decision that just banned tracking, without violating its letter.
+
+ADR-0013 closes it: asset images are proxied by **Netlify Image CDN** from this
+site's own origin, so the browser never connects to Contentful. The value is
+therefore **`img-src 'self'`** — nothing else, not even `data:`.
+
+**With `script-src`, `form-action` and `img-src` all settled, this policy is fully
+specified** and blocked on nothing. Writing it remains build work.
+
+Note the argument that decided it was **not** the privacy one this record would have
+made. Contentful's Free plan pauses its delivery APIs at 100% of a 50 GB asset
+bandwidth limit, so hotlinking would have put image availability behind a second
+vendor's free tier — and this record's own consequence is that **nothing on this site
+can report a failure like that.** See ADR-0013.
 
 ## Consequences
 
 **Nothing is added to the document head or body for measurement.** The site ships no
 third-party script tags at all.
 
-**Writing the CSP and wiring the script hash is build work**, blocked on
+**Writing the CSP and wiring the script hash is build work**, and since
 [AWK-28](https://linear.app/awkale/issue/AWK-28/decide-how-contentful-asset-images-are-delivered)
-for `img-src` — and, since
-[AWK-26](https://linear.app/awkale/issue/AWK-26/decide-whether-anything-needs-a-server),
-on nothing else. Note `public/_headers` also carries the staging `noindex` block
+supplied `img-src 'self'` it is **blocked on nothing** — every directive is settled.
+Note `public/_headers` also carries the staging `noindex` block
 marked *REMOVE AT CUTOVER*, and [ADR-0011](0011-input-surface.md) adds a per-path
 `noindex` for `/contact/sent/` that the removal of that block would otherwise
 expose — so the same edit now touches three things and they want doing together.

@@ -126,6 +126,26 @@ Checked against the content that exists: the Cision sidebar item is one
 `fullWidth` hero followed by a `grid` of five step screenshots. Neither leaves a
 residue the model cannot express.
 
+## Asset delivery
+
+> **Added by
+> [AWK-28](https://linear.app/awkale/issue/AWK-28/decide-how-contentful-asset-images-are-delivered)**
+> — see [ADR-0013](0013-asset-image-delivery.md).
+
+This record specifies where images *live* — Contentful Assets, embedded in `body` or
+grouped by `imageGroup`, with alt text and captions on the Asset itself — and was
+**silent on how they reach a visitor.** Since Contentful serves assets from
+`images.ctfassets.net` by default, silence was not neutral: it picked hotlinking.
+
+**Decided: proxied by Netlify Image CDN from this site's own origin.** The browser
+never connects to Contentful; Netlify fetches the source server-side and transforms
+it per request. This makes [ADR-0010](0010-no-analytics.md)'s CSP `img-src 'self'`,
+and it means every `coverImage` and every asset embedded in a `body` is addressed
+through `/.netlify/images`, never by its `ctfassets` URL.
+
+Nothing in the schema above changes. ADR-0013 carries the reasoning, the
+`netlify.toml` block, and the responsive-image markup.
+
 ## Considered options
 
 **Partitioning.** A separate Contentful space would give real editorial

@@ -122,6 +122,22 @@ which bounds the rollback window to about five minutes and shrinks the
 propagation half of the TLS gap below — issuance time is Let's Encrypt's and is
 not governed by the TTL.
 
+**`netlify.toml` gains an `[images]` block.**
+
+> **Added by
+> [AWK-28](https://linear.app/awkale/issue/AWK-28/decide-how-contentful-asset-images-are-delivered)**
+> — see [ADR-0013](0013-asset-image-delivery.md).
+
+Asset images are proxied through **Netlify Image CDN**, which requires remote source
+origins to be named in a `remote_images` allowlist. That is the second thing this
+project hand-writes into `netlify.toml` after the build block, and it sits well with
+the config-as-code reasoning that chose Netlify here — unlike ADR-0011's Forms
+detection, which is a dashboard toggle with no file equivalent.
+
+It also puts image bytes on **this account's** 100 GB bandwidth meter rather than
+Contentful's 50 GB one. Both are hard stops on their respective free plans; the
+choice was deliberate and ADR-0013 records why.
+
 **The apex costs some CDN routing, and that is accepted.** Netlify's guidance
 for third-party DNS is that an apex configured this way "can't take advantage of
 direct DNS routing on a global CDN like Netlify's", and it recommends a
