@@ -17,19 +17,19 @@
    So: no utility soup for state. `[data-selected]`, `[data-hovered]`,
    `[data-focus-visible]`, `[data-disabled]` are the styling surface, and they come
    from React Aria for free. */
-@import "tailwindcss";
+@import 'tailwindcss';
 
-@import "./typeset.css";
+@import './typeset.css';
 
 /* tokens.css comes LAST of the package imports on purpose: it must win over
    anything they declare. */
-@import "./tokens.css";
+@import './tokens.css';
 
 /* Component CSS. One file per component, imported here so ordering is explicit
    rather than dependent on module graph traversal. */
-@import "./components/mode-toggle.css";
-@import "./components/facet-chip.css";
-@import "./components/contact-form.css";
+@import './components/mode-toggle.css';
+@import './components/facet-chip.css';
+@import './components/contact-form.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -99,24 +99,24 @@
    declares its own copies with relative paths, which is the one duplication
    between the app and the specimen. */
 @font-face {
-  font-family: "Fraunces";
-  src: url("/fonts/fraunces-latin-var.woff2") format("woff2");
+  font-family: 'Fraunces';
+  src: url('/fonts/fraunces-latin-var.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
-  src: url("/fonts/inter-latin-var.woff2") format("woff2");
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin-var.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "JetBrains Mono";
-  src: url("/fonts/jetbrains-mono-latin-var.woff2") format("woff2");
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono-latin-var.woff2') format('woff2');
   font-weight: 100 800;
   font-style: normal;
   font-display: swap;

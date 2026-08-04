@@ -1,5 +1,6 @@
-import { Link } from "react-router";
-import { WORK, byline, formatDate } from "../data/sample";
+import { Link } from 'react-router'
+
+import { WORK, byline, formatDate } from '../data/sample'
 
 /**
  * A work page exists iff at least one (concert, item) pair was attended AND not
@@ -13,38 +14,37 @@ import { WORK, byline, formatDate } from "../data/sample";
  * Period and forms are filters, never routes, so they render as flat tags here.
  */
 export default function Work() {
-  const work = WORK;
+  const work = WORK
 
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
-        <p className="text-[0.72rem] uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-[0.72rem] tracking-[0.14em] text-muted-foreground uppercase">
           <Link to="/concerts/composers/beethoven-ludwig-van/" className="no-underline hover:underline">
             {byline(work)}
           </Link>
         </p>
-        <h1 className="font-display mt-2 text-2xl font-semibold tracking-tight">{work.title}</h1>
+        <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">{work.title}</h1>
 
         <dl className="mt-5 flex flex-wrap gap-9">
           <Fact label="Period">{work.period}</Fact>
-          <Fact label="Forms">{work.forms.join(", ")}</Fact>
+          <Fact label="Forms">{work.forms.join(', ')}</Fact>
           <Fact label="Performances">
             <span className="tabular">{work.performances.length}</span>
           </Fact>
         </dl>
 
         <p className="mt-6 max-w-[var(--measure)] font-medium">
-          I played this {work.performances.length === 1 ? "once" : "twice"}.
+          I played this {work.performances.length === 1 ? 'once' : 'twice'}.
         </p>
 
         <table className="mt-4 w-full border-collapse text-[0.8rem]">
           <thead>
             <tr>
-              {["Date", "Hall", "Conductor"].map((h) => (
+              {['Date', 'Hall', 'Conductor'].map((h) => (
                 <th
                   key={h}
-                  className="border-b border-border px-2 py-1.5 text-left text-[0.66rem]
-                             font-medium uppercase tracking-[0.09em] text-muted-foreground"
+                  className="border-b border-border px-2 py-1.5 text-left text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase"
                 >
                   {h}
                 </th>
@@ -61,7 +61,7 @@ export default function Work() {
                 </td>
                 <td className="border-b border-border-subtle px-2 py-1.5 align-baseline">{p.hall}</td>
                 <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
-                  {p.conductor ?? "—"}
+                  {p.conductor ?? '—'}
                 </td>
               </tr>
             ))}
@@ -69,14 +69,14 @@ export default function Work() {
         </table>
       </div>
     </main>
-  );
+  )
 }
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[0.66rem] uppercase tracking-[0.09em] text-muted-foreground">{label}</dt>
+      <dt className="text-[0.66rem] tracking-[0.09em] text-muted-foreground uppercase">{label}</dt>
       <dd className="mt-0.5 text-sm">{children}</dd>
     </div>
-  );
+  )
 }

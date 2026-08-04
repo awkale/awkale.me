@@ -1,5 +1,6 @@
-import { Link } from "react-router";
-import { ModeToggle } from "./mode-toggle";
+import { Link } from 'react-router'
+
+import { ModeToggle } from './mode-toggle'
 
 /**
  * Internal links carry a TRAILING SLASH deliberately. AWK-17: the build emits
@@ -12,15 +13,8 @@ import { ModeToggle } from "./mode-toggle";
  */
 export function SiteHeader() {
   return (
-    <header
-      className="sticky top-0 z-20 flex flex-wrap items-center gap-6
-                 border-b border-border-subtle bg-background/90 px-[var(--gutter)]
-                 py-4 backdrop-blur"
-    >
-      <Link
-        to="/"
-        className="font-display text-base font-semibold tracking-tight text-foreground no-underline"
-      >
+    <header className="sticky top-0 z-20 flex flex-wrap items-center gap-6 border-b border-border-subtle bg-background/90 px-[var(--gutter)] py-4 backdrop-blur">
+      <Link to="/" className="font-display text-base font-semibold tracking-tight text-foreground no-underline">
         awkale.me
       </Link>
 
@@ -31,15 +25,12 @@ export function SiteHeader() {
         <Link to="/concerts/" className="text-sm text-muted-foreground no-underline hover:text-foreground">
           Performance history
         </Link>
-        <Link
-          to="/concerts/composers/"
-          className="text-sm text-muted-foreground no-underline hover:text-foreground"
-        >
+        <Link to="/concerts/composers/" className="text-sm text-muted-foreground no-underline hover:text-foreground">
           Composers
         </Link>
       </nav>
 
       <ModeToggle />
     </header>
-  );
+  )
 }

@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { prerenderPaths } from "./prerender-paths";
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import { prerenderPaths } from './prerender-paths'
 
 /**
  * The enumerator is the one place that decides which pages exist, so its two
@@ -11,69 +12,69 @@ import { prerenderPaths } from "./prerender-paths";
  * not that a helper rejects a bad string. `vi.doMock` plus `resetModules` is what
  * lets each case supply its own fixture; `vi.mock` would hoist and apply to all.
  */
-describe("prerenderPaths", () => {
+describe('prerenderPaths', () => {
   afterEach(() => {
-    vi.doUnmock("../data/sample");
-    vi.resetModules();
-  });
+    vi.doUnmock('../data/sample')
+    vi.resetModules()
+  })
 
-  it("enumerates both contact pages (ADR-0011)", async () => {
-    const paths = await prerenderPaths();
+  it('enumerates both contact pages (ADR-0011)', async () => {
+    const paths = await prerenderPaths()
 
-    expect(paths).toContain("/contact");
-    expect(paths).toContain("/contact/sent");
-  });
+    expect(paths).toContain('/contact')
+    expect(paths).toContain('/contact/sent')
+  })
 
-  it("emits every path slash-free, since a trailing slash is a hard build failure", async () => {
-    const paths = await prerenderPaths();
-    const offenders = paths.filter((p) => p !== "/" && p.endsWith("/"));
+  it('emits every path slash-free, since a trailing slash is a hard build failure', async () => {
+    const paths = await prerenderPaths()
+    const offenders = paths.filter((p) => p !== '/' && p.endsWith('/'))
 
-    expect(offenders).toEqual([]);
-  });
+    expect(offenders).toEqual([])
+  })
 
-  it("emits no duplicates", async () => {
-    const paths = await prerenderPaths();
+  it('emits no duplicates', async () => {
+    const paths = await prerenderPaths()
 
-    expect(paths).toHaveLength(new Set(paths).size);
-  });
+    expect(paths).toHaveLength(new Set(paths).size)
+  })
 
-  it("emits absolute paths only", async () => {
-    const paths = await prerenderPaths();
-    const offenders = paths.filter((p) => !p.startsWith("/"));
+  it('emits absolute paths only', async () => {
+    const paths = await prerenderPaths()
+    const offenders = paths.filter((p) => !p.startsWith('/'))
 
-    expect(offenders).toEqual([]);
-  });
+    expect(offenders).toEqual([])
+  })
 
-  it("throws rather than emitting a trailing-slash path", async () => {
+  it('throws rather than emitting a trailing-slash path', async () => {
     // An empty project slug is the realistic way this happens: Contentful can
     // hold a published entry whose slug was never filled, and `/projects/` would
     // fail the build with a message about the route, not the data.
-    vi.resetModules();
-    vi.doMock("../data/sample", () => ({
+    vi.resetModules()
+    vi.doMock('../data/sample', () => ({
       CONCERTS: [],
       COMPOSERS: [],
-      WORK: { composer: "Beethoven, Ludwig van", slug: "symphony-no-5" },
-      PROJECTS: [{ slug: "", hasBody: true }],
-    }));
+      WORK: { composer: 'Beethoven, Ludwig van', slug: 'symphony-no-5' },
+      PROJECTS: [{ slug: '', hasBody: true }],
+    }))
 
-    const { prerenderPaths: withBadSlug } = await import("./prerender-paths");
+    const { prerenderPaths: withBadSlug } = await import('./prerender-paths')
 
-    await expect(withBadSlug()).rejects.toThrow(/trailing slash/);
-  });
+    await expect(withBadSlug()).rejects.toThrow(/trailing slash/)
+  })
 
-  it("throws rather than emitting a duplicate path", async () => {
+  it('throws rather than emitting a duplicate path', async () => {
     // Two concerts on one date. ADR-0001 keys concert URLs BY DATE, so a genuine
     // double-header is data this guard has to catch rather than silently collapse.
-    vi.resetModules();
-    vi.doMock("../data/sample", () => ({
-      CONCERTS: [{ slug: "2008-12-13" }, { slug: "2008-12-13" }],
+    vi.resetModules()
+    vi.doMock('../data/sample', () => ({
+      CONCERTS: [{ slug: '2008-12-13' }, { slug: '2008-12-13' }],
       COMPOSERS: [],
-      WORK: { composer: "Beethoven, Ludwig van", slug: "symphony-no-5" },
+      WORK: { composer: 'Beethoven, Ludwig van', slug: 'symphony-no-5' },
       PROJECTS: [],
-    }));
+    }))
 
-    const { prerenderPaths: withDupe } = await import("./prerender-paths");
+    const { prerenderPaths: withDupe } = await import('./prerender-paths')
 
-    await expect(withDupe()).rejects.toThrow(/duplicate/);
-  });
-});
+    await expect(withDupe()).rejects.toThrow(/duplicate/)
+  })
+})

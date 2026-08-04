@@ -1,5 +1,6 @@
-import type { Config } from "@react-router/dev/config";
-import { prerenderPaths } from "./app/lib/prerender-paths";
+import type { Config } from '@react-router/dev/config'
+
+import { prerenderPaths } from './app/lib/prerender-paths'
 
 /**
  * ADR-0002 / AWK-8: React Router framework mode, `ssr: false` + `prerender`.
@@ -33,4 +34,4 @@ import { prerenderPaths } from "./app/lib/prerender-paths";
 export default {
   ssr: false,
   prerender: prerenderPaths,
-} satisfies Config;
+} satisfies Config

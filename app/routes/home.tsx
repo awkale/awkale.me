@@ -1,5 +1,6 @@
-import { Link } from "react-router";
-import { COUNTS } from "../data/sample";
+import { Link } from 'react-router'
+
+import { COUNTS } from '../data/sample'
 
 /**
  * Home is a landing page distinct from the /projects/ index (ADR-0001).
@@ -15,9 +16,7 @@ export default function Home() {
         <div className="flex flex-wrap items-end justify-between gap-8 border-b-2 border-foreground pb-6">
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight">Alex W. Kale</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Design systems &amp; front-end engineering · Brooklyn
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Design systems &amp; front-end engineering · Brooklyn</p>
           </div>
 
           <dl className="flex gap-8">
@@ -35,59 +34,44 @@ export default function Home() {
             desc="Performance history, indexed by composer and work"
             n={String(COUNTS.concerts)}
           />
-          <DirRow
-            to="/concerts/composers/"
-            path="/concerts/composers"
-            desc="A–Z index"
-            n={String(COUNTS.composers)}
-          />
+          <DirRow to="/concerts/composers/" path="/concerts/composers" desc="A–Z index" n={String(COUNTS.composers)} />
           {/* Reserved permanently for Alex's own original work (ADR-0001). */}
           <DirRow path="/music" desc="Reserved" n="—" />
         </div>
       </div>
     </main>
-  );
+  )
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <dt className="text-[0.66rem] uppercase tracking-[0.1em] text-muted-foreground">{label}</dt>
+      <dt className="text-[0.66rem] tracking-[0.1em] text-muted-foreground uppercase">{label}</dt>
       <dd className="tabular mt-0.5 text-2xl">{value}</dd>
     </div>
-  );
+  )
 }
 
-function DirRow({
-  to,
-  path,
-  desc,
-  n,
-}: {
-  to?: string;
-  path: string;
-  desc: string;
-  n: string;
-}) {
+function DirRow({ to, path, desc, n }: { to?: string; path: string; desc: string; n: string }) {
   const cells = (
     <>
       <span className="font-mono text-sm">{path}</span>
       <span className="hidden text-muted-foreground sm:block">{desc}</span>
       <span className="tabular text-right text-muted-foreground">{n}</span>
     </>
-  );
+  )
 
   const grid =
-    "grid grid-cols-[1fr_auto] items-baseline gap-4 border-b border-border-subtle px-4 py-3 text-sm last:border-b-0 sm:grid-cols-[16rem_1fr_4rem]";
+    'grid grid-cols-[1fr_auto] items-baseline gap-4 border-b border-border-subtle px-4 py-3 text-sm last:border-b-0 sm:grid-cols-[16rem_1fr_4rem]'
 
   // A row without a destination is rendered flat, never as a dead link.
   if (!to) {
-    return <span className={`${grid} text-muted-foreground`}>{cells}</span>;
+    return <span className={`${grid} text-muted-foreground`}>{cells}</span>
   }
 
   return (
     <Link to={to} className={`${grid} text-foreground no-underline hover:bg-muted`}>
       {cells}
     </Link>
-  );
+  )
 }

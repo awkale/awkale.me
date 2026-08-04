@@ -1,4 +1,4 @@
-import { PROFILES } from "../data/profiles";
+import { PROFILES } from '../data/profiles'
 
 /**
  * /contact/ — a Netlify Forms contact form. ADR-0011, decided in AWK-26.
@@ -55,8 +55,7 @@ export default function Contact() {
       <div className="mx-auto max-w-[var(--width-content)]">
         <h1 className="font-display text-2xl font-semibold tracking-tight">Contact</h1>
         <p className="mt-1 max-w-[52ch] text-sm text-muted-foreground">
-          Send a message and it reaches me directly. For anything public, the profile links
-          below are the faster route.
+          Send a message and it reaches me directly. For anything public, the profile links below are the faster route.
         </p>
 
         <form
@@ -71,14 +70,7 @@ export default function Contact() {
             <label className="contact-label" htmlFor="contact-name">
               Name
             </label>
-            <input
-              className="contact-input"
-              id="contact-name"
-              name="name"
-              type="text"
-              autoComplete="name"
-              required
-            />
+            <input className="contact-input" id="contact-name" name="name" type="text" autoComplete="name" required />
           </div>
 
           <div className="contact-field">
@@ -99,13 +91,7 @@ export default function Contact() {
             <label className="contact-label" htmlFor="contact-message">
               Message
             </label>
-            <textarea
-              className="contact-textarea"
-              id="contact-message"
-              name="message"
-              rows={7}
-              required
-            />
+            <textarea className="contact-textarea" id="contact-message" name="message" rows={7} required />
           </div>
 
           {/*
@@ -142,5 +128,5 @@ export default function Contact() {
         </section>
       </div>
     </main>
-  );
+  )
 }

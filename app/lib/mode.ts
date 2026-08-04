@@ -20,12 +20,12 @@
  *      flips mid-session. A two-state toggle would not need this.
  */
 
-export type Mode = "light" | "dark" | "system";
-export type Resolved = "light" | "dark";
+export type Mode = 'light' | 'dark' | 'system'
+export type Resolved = 'light' | 'dark'
 
-export const MODE_KEY = "awk-mode";
-export const THEME_KEY = "awk-theme";
-export const DEFAULT_THEME = "ember";
+export const MODE_KEY = 'awk-mode'
+export const THEME_KEY = 'awk-theme'
+export const DEFAULT_THEME = 'ember'
 
 /**
  * Stringified into the document head via dangerouslySetInnerHTML so
@@ -52,35 +52,35 @@ export const themeScript = `
     document.documentElement.setAttribute("data-theme", "${DEFAULT_THEME}");
   }
 })();
-`.trim();
+`.trim()
 
 export function getMode(): Mode {
-  if (typeof localStorage === "undefined") return "system";
-  const m = localStorage.getItem(MODE_KEY);
-  return m === "light" || m === "dark" || m === "system" ? m : "system";
+  if (typeof localStorage === 'undefined') return 'system'
+  const m = localStorage.getItem(MODE_KEY)
+  return m === 'light' || m === 'dark' || m === 'system' ? m : 'system'
 }
 
 export function resolve(mode: Mode): Resolved {
-  if (mode !== "system") return mode;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  if (mode !== 'system') return mode
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
 /** Applies a mode and persists it. The only writer of the class, post-hydration. */
 export function setMode(mode: Mode): void {
-  localStorage.setItem(MODE_KEY, mode);
-  const r = resolve(mode);
-  const root = document.documentElement;
-  root.classList.toggle("dark", r === "dark");
-  root.classList.toggle("light", r === "light");
-  root.style.colorScheme = r;
+  localStorage.setItem(MODE_KEY, mode)
+  const r = resolve(mode)
+  const root = document.documentElement
+  root.classList.toggle('dark', r === 'dark')
+  root.classList.toggle('light', r === 'light')
+  root.style.colorScheme = r
 }
 
 /** Re-stamps when the OS flips while `system` is selected. Returns a cleanup. */
 export function watchSystem(): () => void {
-  const mql = window.matchMedia("(prefers-color-scheme: dark)");
+  const mql = window.matchMedia('(prefers-color-scheme: dark)')
   const onChange = () => {
-    if (getMode() === "system") setMode("system");
-  };
-  mql.addEventListener("change", onChange);
-  return () => mql.removeEventListener("change", onChange);
+    if (getMode() === 'system') setMode('system')
+  }
+  mql.addEventListener('change', onChange)
+  return () => mql.removeEventListener('change', onChange)
 }

@@ -8,20 +8,9 @@
   "sortImports": {},
   "sortTailwindcss": {
     "stylesheet": "./app/app.css",
-    "functions": [
-      "cn"
-    ]
+    "functions": ["cn"]
   },
-  "classRegex": [
-    ":\\s*`([\\s\\S]*?)`",
-    "=\\s*`([\\s\\S]*?)`"
-  ],
+  "classRegex": [":\\s*`([\\s\\S]*?)`", "=\\s*`([\\s\\S]*?)`"],
   "experimentalSortPackageJson": false,
-  "ignorePatterns": [
-    "node_modules",
-    "build",
-    ".react-router",
-    "coverage",
-    "preview"
-  ]
+  "ignorePatterns": ["node_modules", "build", ".react-router", "coverage", "preview", "**/*.md"]
 }

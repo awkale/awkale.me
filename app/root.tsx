@@ -1,8 +1,10 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
-import { themeScript } from "./lib/mode";
-import { SiteHeader } from "./components/site-header";
-import { SiteFooter } from "./components/site-footer";
-import "./app.css";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
+
+import { SiteFooter } from './components/site-footer'
+import { SiteHeader } from './components/site-header'
+import { themeScript } from './lib/mode'
+
+import './app.css'
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -41,13 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           type="font/woff2"
           crossOrigin="anonymous"
         />
-        <link
-          rel="preload"
-          href="/fonts/inter-latin-var.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
+        <link rel="preload" href="/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </head>
       <body>
         <SiteHeader />
@@ -58,9 +54,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
-  );
+  )
 }
 
 export default function App() {
-  return <Outlet />;
+  return <Outlet />
 }

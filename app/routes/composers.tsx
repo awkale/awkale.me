@@ -1,5 +1,6 @@
-import { Link } from "react-router";
-import { COMPOSERS, COUNTS } from "../data/sample";
+import { Link } from 'react-router'
+
+import { COMPOSERS, COUNTS } from '../data/sample'
 
 /**
  * The A–Z index, and the surface where ADR-0008 is visibly working.
@@ -19,13 +20,13 @@ import { COMPOSERS, COUNTS } from "../data/sample";
  * silently fails.
  */
 export default function Composers() {
-  const byLetter = new Map<string, typeof COMPOSERS>();
+  const byLetter = new Map<string, typeof COMPOSERS>()
   for (const c of COMPOSERS) {
-    const letter = c.name[0].toUpperCase();
-    if (!byLetter.has(letter)) byLetter.set(letter, []);
-    byLetter.get(letter)!.push(c);
+    const letter = c.name[0].toUpperCase()
+    if (!byLetter.has(letter)) byLetter.set(letter, [])
+    byLetter.get(letter)!.push(c)
   }
-  const letters = [...byLetter.keys()].sort();
+  const letters = [...byLetter.keys()].sort()
 
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
@@ -47,12 +48,10 @@ export default function Composers() {
           ))}
         </nav>
 
-        <div className="mt-6 [column-gap:3rem] [columns:18rem]">
+        <div className="mt-6 [columns:18rem] [column-gap:3rem]">
           {letters.map((l) => (
             <section key={l} id={`letter-${l}`} className="mb-7 break-inside-avoid">
-              <h2 className="font-display border-b border-border pb-1 text-lg text-[color:var(--accent-11)]">
-                {l}
-              </h2>
+              <h2 className="border-b border-border pb-1 font-display text-lg text-[color:var(--accent-11)]">{l}</h2>
               <ul className="m-0 list-none p-0 text-sm">
                 {byLetter.get(l)!.map((c) => (
                   <li key={c.name} className="flex items-baseline justify-between gap-2 py-0.5">
@@ -68,5 +67,5 @@ export default function Composers() {
         </div>
       </div>
     </main>
-  );
+  )
 }

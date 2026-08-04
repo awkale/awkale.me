@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { RadioGroup, RadioField, RadioButton } from "react-aria-components";
-import { getMode, setMode, watchSystem, type Mode } from "../lib/mode";
+import { useEffect, useState } from 'react'
+import { RadioGroup, RadioField, RadioButton } from 'react-aria-components'
 
-const MODES: Mode[] = ["light", "dark", "system"];
+import { getMode, setMode, watchSystem, type Mode } from '../lib/mode'
+
+const MODES: Mode[] = ['light', 'dark', 'system']
 
 /**
  * A three-way colour-mode control, built on React Aria's `RadioGroup`.
@@ -27,20 +28,20 @@ const MODES: Mode[] = ["light", "dark", "system"];
  * during render would produce a hydration mismatch on all ~600 pages.
  */
 export function ModeToggle() {
-  const [mode, setLocal] = useState<Mode | null>(null);
+  const [mode, setLocal] = useState<Mode | null>(null)
 
   useEffect(() => {
-    setLocal(getMode());
-    return watchSystem();
-  }, []);
+    setLocal(getMode())
+    return watchSystem()
+  }, [])
 
   return (
     <RadioGroup
       aria-label="Colour mode"
       value={mode}
       onChange={(next) => {
-        setMode(next as Mode);
-        setLocal(next as Mode);
+        setMode(next as Mode)
+        setLocal(next as Mode)
       }}
       className="mode-toggle"
     >
@@ -55,5 +56,5 @@ export function ModeToggle() {
         </RadioField>
       ))}
     </RadioGroup>
-  );
+  )
 }

@@ -34,5 +34,5 @@ export default function ContactSent() {
         </p>
       </div>
     </main>
-  );
+  )
 }

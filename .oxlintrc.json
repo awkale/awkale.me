@@ -1,13 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "react",
-    "import",
-    "jsx-a11y",
-    "typescript",
-    "unicorn",
-    "vitest"
-  ],
+  "plugins": ["react", "import", "jsx-a11y", "typescript", "unicorn", "vitest"],
   "categories": {
     "correctness": "off"
   },
@@ -38,9 +31,7 @@
     "react/no-unknown-property": [
       "error",
       {
-        "ignore": [
-          "netlify-honeypot"
-        ]
+        "ignore": ["netlify-honeypot"]
       }
     ],
     "react/react-in-jsx-scope": "off",
@@ -90,10 +81,7 @@
     ],
     "grouped-accessor-pairs": "error",
     "guard-for-in": "error",
-    "max-classes-per-file": [
-      "error",
-      1
-    ],
+    "max-classes-per-file": ["error", 1],
     "no-alert": "warn",
     "no-caller": "error",
     "no-constructor-return": "error",
@@ -103,9 +91,7 @@
         "allowElseIf": false
       }
     ],
-    "no-empty-function": [
-      "warn"
-    ],
+    "no-empty-function": ["warn"],
     "no-empty-pattern": "error",
     "no-eval": "error",
     "no-extend-native": "error",
@@ -154,10 +140,7 @@
     ],
     "no-proto": "error",
     "no-redeclare": "error",
-    "no-return-assign": [
-      "error",
-      "always"
-    ],
+    "no-return-assign": ["error", "always"],
     "no-script-url": "error",
     "no-self-assign": [
       "error",
@@ -189,10 +172,7 @@
     "no-async-promise-executor": "error",
     "no-await-in-loop": "error",
     "no-compare-neg-zero": "error",
-    "no-cond-assign": [
-      "error",
-      "always"
-    ],
+    "no-cond-assign": ["error", "always"],
     "no-console": "warn",
     "no-constant-condition": "warn",
     "no-control-regex": "error",
@@ -241,36 +221,24 @@
         "newIsCap": true,
         "newIsCapExceptions": [],
         "capIsNew": false,
-        "capIsNewExceptions": [
-          "Immutable.Map",
-          "Immutable.Set",
-          "Immutable.List"
-        ]
+        "capIsNewExceptions": ["Immutable.Map", "Immutable.Set", "Immutable.List"]
       }
     ],
     "no-array-constructor": "error",
     "no-bitwise": "error",
     "no-continue": "error",
     "no-lonely-if": "error",
-    "no-multi-assign": [
-      "error"
-    ],
+    "no-multi-assign": ["error"],
     "no-unneeded-ternary": [
       "error",
       {
         "defaultAssignment": false
       }
     ],
-    "operator-assignment": [
-      "error",
-      "always"
-    ],
+    "operator-assignment": ["error", "always"],
     "prefer-exponentiation-operator": "error",
     "prefer-object-spread": "error",
-    "unicode-bom": [
-      "error",
-      "never"
-    ],
+    "unicode-bom": ["error", "never"],
     "no-delete-var": "error",
     "no-label-var": "error",
     "no-restricted-globals": [
@@ -343,9 +311,7 @@
       "top"
     ],
     "no-shadow-restricted-names": "error",
-    "no-unused-vars": [
-      "error"
-    ],
+    "no-unused-vars": ["error"],
     "constructor-super": "error",
     "no-class-assign": "error",
     "no-const-assign": "error",
@@ -423,24 +389,17 @@
       "error",
       {
         "allowAllCaps": true,
-        "ignore": [
-          "BETA_*"
-        ]
+        "ignore": ["BETA_*"]
       }
     ],
     "react/no-danger": "warn",
     "react/no-will-update-set-state": "error",
-    "react/prefer-es6-class": [
-      "error",
-      "always"
-    ],
+    "react/prefer-es6-class": ["error", "always"],
     "react/self-closing-comp": "error",
     "react/jsx-filename-extension": [
       "warn",
       {
-        "extensions": [
-          ".tsx"
-        ]
+        "extensions": [".tsx"]
       }
     ],
     "react/style-prop-object": "error",
@@ -463,22 +422,14 @@
       }
     ],
     "react/no-this-in-sfc": "error",
-    "react/jsx-fragments": [
-      "error",
-      "syntax"
-    ],
-    "react/state-in-constructor": [
-      "error",
-      "always"
-    ],
+    "react/jsx-fragments": ["error", "syntax"],
+    "react/state-in-constructor": ["error", "always"],
     "react/jsx-no-script-url": [
       "error",
       [
         {
           "name": "Link",
-          "props": [
-            "to"
-          ]
+          "props": ["to"]
         }
       ]
     ],
@@ -487,12 +438,7 @@
     "jsx-a11y/alt-text": [
       "error",
       {
-        "elements": [
-          "img",
-          "object",
-          "area",
-          "input[type=\"image\"]"
-        ],
+        "elements": ["img", "object", "area", "input[type=\"image\"]"],
         "img": [],
         "object": [],
         "area": [],
@@ -503,17 +449,9 @@
     "jsx-a11y/anchor-is-valid": [
       "error",
       {
-        "components": [
-          "Link"
-        ],
-        "specialLink": [
-          "to"
-        ],
-        "aspects": [
-          "noHref",
-          "invalidHref",
-          "preferButton"
-        ]
+        "components": ["Link"],
+        "specialLink": ["to"],
+        "aspects": ["noHref", "invalidHref", "preferButton"]
       }
     ],
     "jsx-a11y/aria-activedescendant-has-tabindex": "error",
@@ -530,9 +468,7 @@
     "jsx-a11y/heading-has-content": [
       "error",
       {
-        "components": [
-          ""
-        ]
+        "components": [""]
       }
     ],
     "jsx-a11y/html-has-lang": "error",
@@ -542,10 +478,7 @@
       "error",
       {
         "required": {
-          "some": [
-            "nesting",
-            "id"
-          ]
+          "some": ["nesting", "id"]
         }
       }
     ],
@@ -569,19 +502,14 @@
     "jsx-a11y/no-distracting-elements": [
       "error",
       {
-        "elements": [
-          "marquee",
-          "blink"
-        ]
+        "elements": ["marquee", "blink"]
       }
     ],
     "jsx-a11y/no-noninteractive-tabindex": [
       "error",
       {
         "tags": [],
-        "roles": [
-          "tabpanel"
-        ]
+        "roles": ["tabpanel"]
       }
     ],
     "jsx-a11y/no-redundant-roles": "error",
@@ -619,10 +547,7 @@
   ],
   "overrides": [
     {
-      "files": [
-        "**/*.ts",
-        "**/*.tsx"
-      ],
+      "files": ["**/*.ts", "**/*.tsx"],
       "rules": {
         "constructor-super": "off",
         "no-class-assign": "off",

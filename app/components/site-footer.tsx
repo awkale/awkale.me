@@ -1,5 +1,6 @@
-import { Link } from "react-router";
-import { PROFILES } from "../data/profiles";
+import { Link } from 'react-router'
+
+import { PROFILES } from '../data/profiles'
 
 /**
  * Site-wide, rendered from root.tsx's Layout so it lands on all ~600 pages.
@@ -16,10 +17,7 @@ import { PROFILES } from "../data/profiles";
  */
 export function SiteFooter() {
   return (
-    <footer
-      className="mt-[var(--space-section)] border-t border-border-subtle
-                 px-[var(--gutter)] py-8"
-    >
+    <footer className="mt-[var(--space-section)] border-t border-border-subtle px-[var(--gutter)] py-8">
       <div className="mx-auto flex max-w-[var(--width-wide)] flex-wrap items-center gap-x-6 gap-y-3">
         <nav className="flex flex-wrap gap-4">
           {PROFILES.map((p) => (
@@ -29,13 +27,10 @@ export function SiteFooter() {
           ))}
         </nav>
 
-        <Link
-          to="/contact/"
-          className="text-sm text-muted-foreground no-underline hover:text-foreground"
-        >
+        <Link to="/contact/" className="text-sm text-muted-foreground no-underline hover:text-foreground">
           Contact
         </Link>
       </div>
     </footer>
-  );
+  )
 }

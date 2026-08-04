@@ -1,5 +1,6 @@
-import { Link } from "react-router";
-import { COMPOSERS, WORK } from "../data/sample";
+import { Link } from 'react-router'
+
+import { COMPOSERS, WORK } from '../data/sample'
 
 /**
  * A composer page — 147 of these, one per person whose work Alex played.
@@ -21,33 +22,29 @@ import { COMPOSERS, WORK } from "../data/sample";
  */
 export default function Composer() {
   // Placeholder: the real route resolves this from the :composer param.
-  const composer = COMPOSERS.find((c) => c.name === "Beethoven, Ludwig van")!;
-  const works = [WORK];
+  const composer = COMPOSERS.find((c) => c.name === 'Beethoven, Ludwig van')!
+  const works = [WORK]
 
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
-        <p className="text-[0.72rem] uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-[0.72rem] tracking-[0.14em] text-muted-foreground uppercase">
           <Link to="/concerts/composers/" className="no-underline hover:underline">
             Composers
           </Link>
         </p>
-        <h1 className="font-display mt-2 text-2xl font-semibold tracking-tight">
-          {composer.name}
-        </h1>
+        <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">{composer.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          <span className="tabular">{composer.works}</span>{" "}
-          {composer.works === 1 ? "work" : "works"} I have played
+          <span className="tabular">{composer.works}</span> {composer.works === 1 ? 'work' : 'works'} I have played
         </p>
 
         <table className="mt-6 w-full border-collapse text-[0.8rem]">
           <thead>
             <tr>
-              {["Work", "Period", "Forms", "Performances"].map((h) => (
+              {['Work', 'Period', 'Forms', 'Performances'].map((h) => (
                 <th
                   key={h}
-                  className="border-b border-border px-2 py-1.5 text-left text-[0.66rem]
-                             font-medium uppercase tracking-[0.09em] text-muted-foreground"
+                  className="border-b border-border px-2 py-1.5 text-left text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase"
                 >
                   {h}
                 </th>
@@ -67,15 +64,13 @@ export default function Composer() {
                   {/* The arranger is what keeps two same-titled works apart —
                       Tchaikovsky's Nutcracker Suite and Ellington's are distinct
                       works with an identical title. */}
-                  {w.arranger ? (
-                    <span className="text-muted-foreground"> — arr. {w.arranger}</span>
-                  ) : null}
+                  {w.arranger ? <span className="text-muted-foreground"> — arr. {w.arranger}</span> : null}
                 </td>
                 <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
                   {w.period}
                 </td>
                 <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
-                  {w.forms.join(", ")}
+                  {w.forms.join(', ')}
                 </td>
                 <td className="tabular border-b border-border-subtle px-2 py-1.5 align-baseline">
                   {w.performances.length}
@@ -86,5 +81,5 @@ export default function Composer() {
         </table>
       </div>
     </main>
-  );
+  )
 }

@@ -1,6 +1,6 @@
-import { reactRouter } from "@react-router/dev/vite";
-import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vitest/config";
+import { reactRouter } from '@react-router/dev/vite'
+import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from 'vitest/config'
 
 /**
  * `defineConfig` comes from `vitest/config`, not `vite`, purely so the `test` key
@@ -25,6 +25,6 @@ export default defineConfig({
   },
   test: {
     // happy-dom over jsdom: lighter, and nothing here needs jsdom's fidelity.
-    environment: "happy-dom",
+    environment: 'happy-dom',
   },
-});
+})

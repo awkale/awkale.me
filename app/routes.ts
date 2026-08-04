@@ -1,4 +1,4 @@
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
+import { type RouteConfig, index, route } from '@react-router/dev/routes'
 
 /**
  * URL structure is ADR-0001, not a preference. The shape that matters:
@@ -32,16 +32,16 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
  * ~590 pages instead of ~870.
  */
 export default [
-  index("routes/home.tsx"),
+  index('routes/home.tsx'),
 
-  route("projects", "routes/projects.tsx"),
-  route("projects/:slug", "routes/project.tsx"),
+  route('projects', 'routes/projects.tsx'),
+  route('projects/:slug', 'routes/project.tsx'),
 
-  route("concerts", "routes/concerts.tsx"),
-  route("concerts/composers", "routes/composers.tsx"),
-  route("concerts/composers/:composer", "routes/composer.tsx"),
-  route("concerts/composers/:composer/works/:work", "routes/work.tsx"),
-  route("concerts/:date", "routes/concert.tsx"),
+  route('concerts', 'routes/concerts.tsx'),
+  route('concerts/composers', 'routes/composers.tsx'),
+  route('concerts/composers/:composer', 'routes/composer.tsx'),
+  route('concerts/composers/:composer/works/:work', 'routes/work.tsx'),
+  route('concerts/:date', 'routes/concert.tsx'),
 
   /* Two paths outside both sections, and the only pages that are neither a
      section index nor a content record. ADR-0001's Contact section, amended onto
@@ -49,6 +49,6 @@ export default [
 
      `contact/sent` is a sibling route, not a child of `contact` — there is no
      shared layout, and nesting would put an <Outlet /> in the form page. */
-  route("contact", "routes/contact.tsx"),
-  route("contact/sent", "routes/contact-sent.tsx"),
-] satisfies RouteConfig;
+  route('contact', 'routes/contact.tsx'),
+  route('contact/sent', 'routes/contact-sent.tsx'),
+] satisfies RouteConfig

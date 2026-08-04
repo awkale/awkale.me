@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 /**
  * The class merger every shadcn component imports. `clsx` resolves conditionals,
@@ -10,5 +10,5 @@ import { twMerge } from "tailwind-merge";
  * app.css and replaced this repo's token layers. See ADR-0004's amendments.
  */
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }

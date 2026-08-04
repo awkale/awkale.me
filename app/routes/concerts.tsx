@@ -1,6 +1,7 @@
-import { Link } from "react-router";
-import { ToggleButton } from "react-aria-components";
-import { COUNTS, CONCERTS, FACETS } from "../data/sample";
+import { ToggleButton } from 'react-aria-components'
+import { Link } from 'react-router'
+
+import { COUNTS, CONCERTS, FACETS } from '../data/sample'
 
 /**
  * The dense surface, and the one that decided direction B.
@@ -21,10 +22,9 @@ export default function Concerts() {
         <h1 className="font-display text-2xl font-semibold tracking-tight">Performance history</h1>
 
         <p className="mt-2 text-sm text-muted-foreground">
-          <span className="tabular">{COUNTS.concerts}</span> concerts ·{" "}
-          <span className="tabular">{COUNTS.works}</span> works ·{" "}
-          <span className="tabular">{COUNTS.composers}</span> composers ·{" "}
-          <span className="tabular">{COUNTS.conductors}</span> conductors ·{" "}
+          <span className="tabular">{COUNTS.concerts}</span> concerts · <span className="tabular">{COUNTS.works}</span>{' '}
+          works · <span className="tabular">{COUNTS.composers}</span> composers ·{' '}
+          <span className="tabular">{COUNTS.conductors}</span> conductors ·{' '}
           <span className="tabular">{COUNTS.halls}</span> halls
         </p>
 
@@ -52,11 +52,14 @@ export default function Concerts() {
                 <Td>{c.hall}</Td>
                 {/* 2007-12-16 has no conductor, which also hides it from the
                     conductor filter. The em dash is the honest rendering. */}
-                <Td className={c.conductor ? "" : "text-muted-foreground"}>{c.conductor ?? "—"}</Td>
+                <Td className={c.conductor ? '' : 'text-muted-foreground'}>{c.conductor ?? '—'}</Td>
                 <Td className="tabular text-right">{c.program.length}</Td>
                 <Td className="text-muted-foreground">
-                  {c.program.slice(0, 2).map((i) => i.work).join(", ")}
-                  {c.program.length > 2 ? "…" : ""}
+                  {c.program
+                    .slice(0, 2)
+                    .map((i) => i.work)
+                    .join(', ')}
+                  {c.program.length > 2 ? '…' : ''}
                 </Td>
               </tr>
             ))}
@@ -64,7 +67,7 @@ export default function Concerts() {
         </table>
       </div>
     </main>
-  );
+  )
 }
 
 /**
@@ -87,25 +90,19 @@ function FacetRow({ label, items }: { label: string; items: { name: string; n: n
         </ToggleButton>
       ))}
     </div>
-  );
+  )
 }
 
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Th({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <th
-      className={`sticky top-[3.6rem] border-b border-border bg-background px-2 py-1.5
-                  text-left text-[0.66rem] font-medium uppercase tracking-[0.09em]
-                  text-muted-foreground ${className}`}
+      className={`sticky top-[3.6rem] border-b border-border bg-background px-2 py-1.5 text-left text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase ${className}`}
     >
       {children}
     </th>
-  );
+  )
 }
 
-function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <td className={`border-b border-border-subtle px-2 py-1.5 align-baseline ${className}`}>
-      {children}
-    </td>
-  );
+function Td({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return <td className={`border-b border-border-subtle px-2 py-1.5 align-baseline ${className}`}>{children}</td>
 }

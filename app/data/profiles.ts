@@ -17,7 +17,7 @@
  * so the address is never scraped, and an address cannot be un-scraped.
  */
 export const PROFILES = [
-  { label: "GitHub", href: "https://github.com/awkale" },
-  { label: "Threads", href: "https://www.threads.com/@awkale" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/in/awkale" },
-] as const;
+  { label: 'GitHub', href: 'https://github.com/awkale' },
+  { label: 'Threads', href: 'https://www.threads.com/@awkale' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/awkale' },
+] as const
