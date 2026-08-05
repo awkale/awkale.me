@@ -31,18 +31,24 @@ import { PROFILES } from '../data/profiles'
  *     during post-processing — so the deployed HTML differs from build/client on
  *     this page, the first place in this pipeline where that is true.
  *
- *     UNVERIFIED, and the one thing here that can fail silently. That injected
- *     input is a DOM node absent from React's tree, inside a form React hydrates
- *     (root.tsx renders <Scripts /> sitewide). React 19 may discard it as a
- *     hydration mismatch, and a JS-enabled submit would then POST without
- *     `form-name`, which Netlify rejects — while a no-JS submit still works,
- *     making it look intermittent. Nothing local can test this; it needs the real
- *     deploy in AWK-34.
+ *     VERIFIED SAFE on 2026-08-05, against the real deploy, and worth keeping the
+ *     reasoning because the risk was real. That injected input is a DOM node
+ *     absent from React's tree, inside a form React hydrates (root.tsx renders
+ *     <Scripts /> sitewide), so React 19 could have discarded it as a hydration
+ *     mismatch — after which a JS-enabled submit would POST without `form-name`
+ *     and Netlify would reject it, while a no-JS submit kept working, making the
+ *     whole thing look intermittent.
  *
- *     If it does fail, the fix is to author the hidden input here and keep
- *     `data-netlify` — the documented approach for client-rendered forms. It is
- *     not the default only because the ADR describes injection as the mechanism,
- *     and a second `form-name` field may break the POST its own way.
+ *     It does not. Loading awkale.netlify.app/contact/ in a browser and reading
+ *     the DOM after hydration finds `input[name="form-name"]` present, valued
+ *     "contact", first in the field order, with NO hydration warning logged. So
+ *     do not author the hidden input by hand — that remains the documented fix if
+ *     this ever regresses, but a second `form-name` field may break the POST its
+ *     own way, and today there is nothing to fix.
+ *
+ *     One detail if you ever diff deployed against built HTML: the post-processor
+ *     RE-SERIALISES the form tag with single quotes (`name='contact'`), so a
+ *     double-quote grep finds nothing and looks like a failure.
  *
  * Spam handling is honeypot plus Akismet and nothing else. reCAPTCHA is
  * unavailable by prior decision, not preference: Netlify's built-in option
