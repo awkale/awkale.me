@@ -30,7 +30,15 @@
 set -eu
 
 HOST="${1:-awkale.me}"
-BASE="https://$HOST"
+
+# A bare hostname gets https://; a full URL is used as given, so this also works
+# against a local dev server (http://localhost:5173) now that @netlify/vite-plugin
+# serves _redirects and _headers in dev. That is what makes the thirteen testable
+# before the apex cutover rather than only after it.
+case "$HOST" in
+  http://* | https://*) BASE="${HOST%/}" ;;
+  *) BASE="https://$HOST" ;;
+esac
 REDIRECTS="$(dirname "$0")/../public/_redirects"
 
 pass=0
