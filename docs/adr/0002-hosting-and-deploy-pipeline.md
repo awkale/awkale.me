@@ -219,12 +219,53 @@ Delivery token, held in Netlify env vars alongside `CONTENTFUL_SPACE_ID` and
 must never enter CI — it stays local, in `~/.contentful-cma-token`, because the
 repository is public.
 
-**The nine gist targets now have exactly one durable record.** ADR-0001's
-redirect ledger names the cheatsheet URLs but not their gists, and the ids
-existed only in `_cheatsheets/*.md` in a repository scheduled for archival:
-`bash` → `2a4c8f344b04bc29deb500aad2d72636`, `git` → `6116732`, `homebrew` →
-`922318f72934b500ce468d0ae36fc3fa`, `javascript` →
-`e9be49111319b0b28b206b5aa217f7fb`, `rails` → `459ffd17364956d98bd0`, `ruby` →
-`5b1c5b8f63de792b6c86`, `terminal` → `1128e3349d5c2e79cc5e`, `vim` →
-`2de8e3b6334f1f1514b8`, all under `gist.github.com/awkale/`, with
-`/cheatsheets/` itself going to `gist.github.com/awkale`.
+**The nine gist targets are recorded here.** ADR-0001's redirect ledger names the
+cheatsheet URLs but not their gists. All eight sheets live under
+`gist.github.com/awkale/`, with `/cheatsheets/` itself going to
+`gist.github.com/awkale`:
+
+| Cheatsheet | Gist |
+| --- | --- |
+| `bash` | `2de8e3b6334f1f1514b8` |
+| `git` | `922318f72934b500ce468d0ae36fc3fa` |
+| `homebrew` | `2a4c8f344b04bc29deb500aad2d72636` |
+| `javascript` | `1128e3349d5c2e79cc5e` |
+| `rails` | `5b1c5b8f63de792b6c86` |
+| `ruby` | `459ffd17364956d98bd0` |
+| `terminal` | `6116732` |
+| `vim` | `e9be49111319b0b28b206b5aa217f7fb` |
+
+> **This table was wrong on all eight pairings, and is corrected above.** Found by
+> [AWK-45](https://linear.app/awkale/issue/AWK-45/write-the-thirteen-redirects-then-run-the-post-cutover-curl-sweep)
+> while writing `public/_redirects` from it.
+>
+> The **set** of ids was right; the pairing was a permutation of it — a six-cycle
+> (`bash`→`homebrew`→`git`→`terminal`→`javascript`→`vim`→`bash`) plus a
+> `rails`/`ruby` swap. Written from this record unchecked, **every one of the eight
+> cheatsheets would have redirected to the wrong gist** — and each wrong target
+> returns a healthy 200, so the curl sweep would have passed, and nothing would
+> ever have caught it. It is the worst failure shape available here: silent,
+> permanent, and invisible to its own test.
+>
+> **The claim that made it dangerous was this record's own.** It said the ids
+> "existed only in `_cheatsheets/*.md` in a repository scheduled for archival",
+> which reads as *this is now the only copy* — so a reader has no reason to look
+> further. That was never true, and is not true now: the old repo is still on disk
+> at `~/Sites/awkale.github.io`, unarchived, and `_cheatsheets/*.md` carries one
+> `<script src="…">` per file. **It is the source of truth; this table is a
+> convenience.** The corrected pairings were read from it and re-verified against it
+> file by file.
+>
+> **Corrected in place, unlike every other amendment here.** ADR-0001 keeps its
+> "Twelve URLs need redirects" sentence standing with the correction beneath it, and
+> that is the right default: it keeps the history legible. A wrong **reference table**
+> is different, because its whole purpose is to be copied — leaving eight bad ids
+> above a note saying they are bad invites exactly the mistake this amendment exists
+> to stop. The history is not lost: the permutation is described precisely enough
+> above to reconstruct the old table.
+>
+> This is the second time a redirect fact has been wrong in exactly this way — see
+> ADR-0001's amendment on redirect thirteen, which the same repository would have
+> revealed. The generalization is [AWK-5](https://linear.app/awkale/issue/AWK-5/rewrite-awkaleme-portfolio-performance-history)'s
+> most-repeated lesson pointed at a specific place: **for any question about the old
+> URL space, read the old repo, not a record about it.**

@@ -36,9 +36,11 @@ See `docs/agents/domain.md`.
 | `CONTEXT.md` | The ubiquitous language. Read before naming anything. |
 | `docs/adr/` | Fourteen accepted records. The spec. |
 | `docs/research/` | Research output backing a decision — currently ADR-0009's rendering-layer comparison. |
-| `docs/agents/facts.md` | 58 findings from the AWK-5 map, kept so they are not rediscovered. Findings, not spec — verify before trusting. |
+| `docs/agents/facts.md` | 59 findings — the AWK-5 map's 58 plus later additions, which carry an `Added by` line. Findings, not spec — verify before trusting. |
 | `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. |
 | `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. |
+| `public/_redirects` | The thirteen redirects. Never add a catch-all — see the file's own header. |
+| `scripts/curl-sweep.sh` | Post-cutover redirect sweep. ADR-0010's mitigation for having no request log. |
 | `Wikipedia BSO Archive.xlsx` | The raw source the parser reads. |
 | `app/tokens.css` | Design values. A spec artifact, per ADR-0004's AWK-22 amendment. |
 | `.githooks/pre-commit` | Blocks a commit that is unformatted or fails lint. See ADR-0014. |
@@ -56,6 +58,10 @@ See `docs/agents/domain.md`.
 | `bun run test:ci` | Builds first, so the built-output assertion cannot skip. |
 | `bun run lint` / `lint:fix` | oxlint, 210 rules copied from `waterfall-ui`. |
 | `bun run format` / `format:check` | oxfmt. **Markdown is excluded** — see ADR-0014. |
+
+`scripts/curl-sweep.sh [host]` is not a `bun` script and is **not run at build
+time**: it curls a live host, defaults to `awkale.me`, and only makes sense after
+the apex cutover (AWK-46). Against the old site every redirect fails, correctly.
 
 **A commit runs `format:check` and `lint` and fails on either.** The hook is
 installed by `bun install` (the `prepare` script sets `core.hooksPath`), so it
@@ -110,9 +116,9 @@ and `bun run typecheck` both pass, and the repo carries `package.json`,
 `bun.lock`, `netlify.toml`, `react-router.config.ts`, `vite.config.ts` and
 self-hosted fonts. It is not yet connected to Netlify.
 
-**There is a test suite too, as of ADR-0014**: 20 tests over three layers — the
-built-output page assertion, the prerender enumerator's guards, and `/contact/`'s
-form attributes. `test`, `lint` and `format:check` all pass. Two gaps that older
+**There is a test suite too, as of ADR-0014**: 31 tests across four files — the
+built-output page assertion, the prerender enumerator's guards, `/contact/`'s form
+attributes, and `public/_redirects`. `test`, `lint` and `format:check` all pass. Two gaps that older
 tickets still assume: there is **no CI** in this repo at all (no `.github/`), so
 "joins the CI page assertion" means `scripts/assert-pages.test.ts` and nothing
 automatic; and route components taking loader data are untestable as written,

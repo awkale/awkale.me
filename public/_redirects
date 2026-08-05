@@ -1,0 +1,82 @@
+# Netlify redirects — awkale.me
+#
+# Like _headers, this MUST end up in the publish directory (build/client) to take
+# effect. Vite copies public/* to the output root, which is why it lives here and
+# not at the repo root, where it would be silently ignored.
+#
+# Thirteen rules, and thirteen is the whole ledger — ADR-0001 as corrected by
+# AWK-21. Real 301s are the reason this site is on Netlify at all: ADR-0002 rejected
+# GitHub Pages primarily because it cannot issue one, and its closest approximation
+# (a stub page carrying <meta http-equiv="refresh">) returns 200 and, for the nine
+# cross-origin gist targets, flashes before navigating.
+#
+# ---------------------------------------------------------------------------
+# NEVER ADD A CATCH-ALL. This is AWK-17's single most valuable finding, verified
+# live: with no catch-all, an unknown path returns a real 404. Add one — a
+# /* fallback to /index.html, as an SPA needs — and every unknown path silently
+# serves an empty hydration shell instead, across the whole archive. It is also
+# what keeps ADR-0001's reserved paths (/music, /2-or-3-things) honestly 404ing
+# rather than shipping a blank page.
+# ---------------------------------------------------------------------------
+#
+# Sources are written SLASH-FREE, and the live URLs they catch all have trailing
+# slashes — the old site was Jekyll with `permalink: pretty`. Netlify normalizes
+# trailing slashes when matching, so one rule catches both forms. That assumption
+# is not taken on trust: scripts/curl-sweep.sh tests every source in both forms.
+#
+# All rules are EXACT paths, not splats, so order does not affect matching. The two
+# /portfolios/ entries are listed individually rather than as /portfolios/* on
+# purpose: a splat would also swallow paths that never existed, and those should
+# 404 like anything else.
+
+# --- portfolio ---------------------------------------------------------------
+#
+# All three land on the /projects/ index, NOT on case studies. AWK-21 corrected
+# ADR-0001 here: both /portfolios/ entries are Cision items that ship index-only,
+# so the case-study pages the original ledger pointed at will never exist. A
+# redirect to a case study that was never written is a 404 with extra steps.
+
+/portfolio                       /projects/                                                  301
+/portfolios/c3_sidebar           /projects/                                                  301
+/portfolios/c3_wizard            /projects/                                                  301
+
+# --- cheatsheets -------------------------------------------------------------
+#
+# Nine rules: the index plus eight sheets. The cheatsheets carried no content of
+# their own — each was a single <script src="gist.github.com/…"> embed, untouched
+# since 2017 — so they get no routes on the new site and point straight at the
+# gists they always displayed.
+#
+# THE MAPPING BELOW WAS READ FROM THE OLD REPO, NOT FROM A RECORD:
+# ~/Sites/awkale.github.io/_cheatsheets/*.md, one `<script>` per file. ADR-0002's
+# gist table had it wrong on all eight, and the amendment under that table explains
+# how and why it matters. If any pairing is ever in doubt, go back to those files.
+
+/cheatsheets                     https://gist.github.com/awkale                              301
+/cheatsheets/bash                https://gist.github.com/awkale/2de8e3b6334f1f1514b8          301
+/cheatsheets/git                 https://gist.github.com/awkale/922318f72934b500ce468d0ae36fc3fa  301
+/cheatsheets/homebrew            https://gist.github.com/awkale/2a4c8f344b04bc29deb500aad2d72636  301
+/cheatsheets/javascript          https://gist.github.com/awkale/1128e3349d5c2e79cc5e          301
+/cheatsheets/rails               https://gist.github.com/awkale/5b1c5b8f63de792b6c86          301
+/cheatsheets/ruby                https://gist.github.com/awkale/459ffd17364956d98bd0          301
+/cheatsheets/terminal            https://gist.github.com/awkale/6116732                       301
+/cheatsheets/vim                 https://gist.github.com/awkale/e9be49111319b0b28b206b5aa217f7fb  301
+
+# --- redirect thirteen -------------------------------------------------------
+#
+# The one nothing in this repository reveals. /user-story-best-practice/ returns 200
+# today and is NOT served from the old site: GitHub Pages serves it from the
+# gh-pages branch of the separate awkale/user-story-best-practice repo, which
+# resolves under awkale.me only because the user site holds the CNAME. ADR-0001 said
+# twelve and missed it entirely, so the cutover would have silently 404'd it.
+#
+# At 65 stars it is the most externally-validated thing here by a wide margin.
+#
+# It targets the REPO, not the 2015 slide deck: the deck and the repo's README carry
+# the same guide, the README is the better rendering, and the repo is what those
+# stars point at. Pointing at awkale.github.io/user-story-best-practice/ was
+# rejected as the one target whose behaviour depends on what Pages does once the
+# CNAME is removed — an unknown resolved at cutover, on the single URL here with an
+# organic audience.
+
+/user-story-best-practice        https://github.com/awkale/user-story-best-practice            301
