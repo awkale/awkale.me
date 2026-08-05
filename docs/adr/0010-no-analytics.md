@@ -140,6 +140,62 @@ This is the **fifth invariant this project cannot express declaratively**, joini
 `(composer, slug)` uniqueness ([ADR-0008](0008-archive-slug-source.md)) and
 `featuredRank`-requires-`body` ([ADR-0003](0003-portfolio-content-model.md)).
 
+> ### The hash was impossible, and `'unsafe-inline'` is what shipped
+>
+> **Amended by
+> [AWK-44](https://linear.app/awkale/issue/AWK-44/the-public-headers-cutover-edit-csp-and-the-two-noindex-changes)
+> on 2026-08-05, when the header was actually written.** The reasoning above is kept
+> because it is right about the goal and wrong about one fact.
+>
+> **The fact: there is not one inline script. There are nine per page, and one of them
+> differs on every page.** Measured across four built pages. The theme script is
+> stable; so are React Router's scroll-restoration shim, `__reactRouterContext`, the
+> three streaming shims and the enqueue/close pair. But the **route import map** —
+> `import "/assets/manifest-…"; import * as route0 from …` — is per-route, and gave
+> four distinct hashes across four pages. At ~600 pages that is ~600 hashes, which a
+> single sitewide header cannot carry and a per-path header could only carry by
+> regenerating six hundred blocks every build.
+>
+> So `script-src 'self' 'sha256-<theme>'` would have **blocked eight of the nine
+> inline scripts on every page**: no hydration, no colour-mode control. And this
+> record's own decisions are what would have hidden it — no error monitoring, no
+> request log, and a CI assertion that checks the page *set*, not whether a page
+> works. Silent, sitewide, invisible to its own tests.
+>
+> **What shipped: `script-src 'self' 'unsafe-inline'`.** This record rejected that on
+> the grounds it "would readmit exactly what this record bans", and that conflated two
+> different threats. What this record bans is **third-party client-side beacons**;
+> `'self'` still blocks `<script src="…">` from any other origin, so a future
+> analytics snippet still fails loudly and the property this policy exists to enforce
+> is intact. What `'unsafe-inline'` gives up is hardening against **injected inline
+> script**, which requires attacker-controlled content — and this site has none: no
+> user-generated content, no query-parameter rendering, no remote HTML. The rejection
+> was of the right thing for the wrong reason.
+>
+> `style-src` needs `'unsafe-inline'` too, measured rather than assumed: the built
+> output carries **114 inline `style=` attributes**, all React Aria's visually-hidden
+> text.
+>
+> **Note for anyone tightening this later: browsers IGNORE `'unsafe-inline'` when a
+> hash or nonce is present.** Adding a hash "as well" silently disables the keyword
+> and blocks the eight scripts all over again. It is one or the other.
+>
+> **The route to the strict policy, if it is ever wanted, is dropping `<Scripts />`**
+> — no hydration, no client bundle, one inline script, one stable hash. Considered and
+> rejected: it costs React interactivity, which means rewriting the colour-mode
+> control in vanilla JS and hand-building the archive-search combobox that
+> [ADR-0011](0011-input-surface.md) assigns to `react-aria-components`. Reopening two
+> settled records to harden against a threat this site does not have is a poor trade.
+>
+> **So this is no longer the fifth undeclarable invariant.** There is no hash to keep
+> in sync, and AWK-39's assertion list loses that item. The other four stand.
+>
+> Verified when written, against the real policy in a browser: no CSP violation
+> logged, the theme script runs and stamps `class` and `data-theme` on `<html>`, all
+> three self-hosted faces load, and the colour-mode control still switches
+> light↔dark and persists. That last check matters because a blocked inline script
+> would have shown up as the wrong colour mode and nothing else.
+
 ### `form-action 'self'` — supplied later, and it was a real gap
 
 > **Added by

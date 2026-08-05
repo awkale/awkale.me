@@ -16,6 +16,42 @@
 /*
   X-Robots-Tag: noindex, nofollow
 
+# --- Content-Security-Policy: sitewide, and it OUTLIVES the block above -------
+#
+# ADR-0010 wanted this so "no third-party client-side beacons" is a constraint the
+# browser enforces rather than a convention the next edit can break silently.
+#
+# DELIBERATELY A SEPARATE /* BLOCK from the staging guard, which gets deleted at
+# cutover. Netlify merges headers from every matching rule, so both apply — verified
+# locally, because if only the first match won, deleting the staging block would take
+# this with it, or this would suppress the noindex.
+#
+# `script-src 'self' 'unsafe-inline'` — and the reasoning is amended into ADR-0010.
+# The record chose `'sha256-…'` over the theme script believing there was ONE inline
+# script. There are NINE per page, and React Router's route import map differs on
+# every one, so a static hash list is impossible and a nonce needs a server that
+# `ssr: false` does not have. `'self'` still blocks `<script src="…">` from any other
+# origin, which is the property ADR-0010 actually wanted; what `'unsafe-inline'`
+# gives up is hardening against INJECTED inline script, which needs attacker-
+# controlled content, and this site renders none — no user input, no query-param
+# rendering, no remote HTML. NOTE browsers IGNORE `'unsafe-inline'` when a hash or
+# nonce is present, so never add one here expecting belt-and-braces.
+#
+# `style-src` needs it too, measured not assumed: 114 inline `style=` attributes in
+# the built output, all React Aria's visually-hidden text.
+#
+# `img-src 'self'` with no `data:` — ADR-0013. Netlify Image CDN serves from this
+# origin (`/.netlify/images`), so AWK-40 needs no change here.
+#
+# `form-action 'self'` — ADR-0011, and load-bearing: form-action has NO fallback to
+# default-src, so without this line the policy would permit a POST to any origin.
+#
+# `connect-src` is intentionally absent; it falls back to default-src 'self'. A
+# dynamic import counts as script, not connect, so the search index in AWK-41 needs
+# nothing added.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
+
 # --- /contact/sent/ : noindex, permanently ------------------------------------
 #
 # ADR-0011. A real prerendered page with no inbound purpose — it exists only because
