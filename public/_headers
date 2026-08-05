@@ -16,6 +16,26 @@
 /*
   X-Robots-Tag: noindex, nofollow
 
+# --- /contact/sent/ : noindex, permanently ------------------------------------
+#
+# ADR-0011. A real prerendered page with no inbound purpose — it exists only because
+# a native POST has to land somewhere. It must never be indexed.
+#
+# THIS RULE IS CURRENTLY REDUNDANT AND MUST NOT BE DELETED FOR THAT REASON. The
+# sitewide staging block above covers it incidentally today; removing that block at
+# cutover is precisely what exposes this page. Landing the rule first, while it is
+# still a no-op, is the only way it cannot be forgotten in the same edit that makes
+# it necessary — which is the coupling AWK-44 exists to manage.
+#
+# Both spellings are listed deliberately. Netlify normalises trailing slashes when
+# matching REDIRECTS; it is not documented as doing so for HEADERS, and the served
+# canonical form here is slash-ful while the prerender enumerator is slash-free. Two
+# lines cost nothing; a missed match costs an indexed page nobody wanted.
+/contact/sent
+  X-Robots-Tag: noindex
+/contact/sent/
+  X-Robots-Tag: noindex
+
 # --- fonts --------------------------------------------------------------------
 # Self-hosted, content-hashed at build, so they can be cached hard. These are the
 # latin-subset woff2 files in public/fonts — see that directory's README for the
