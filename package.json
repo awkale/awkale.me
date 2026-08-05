@@ -6,7 +6,7 @@
     "dev": "react-router dev",
     "build": "react-router build",
     "typecheck": "react-router typegen && tsc",
-    "prepare": "git config core.hooksPath .githooks",
+    "prepare": "git config core.hooksPath .githooks || true",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",

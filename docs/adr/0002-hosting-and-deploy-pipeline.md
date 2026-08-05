@@ -219,6 +219,53 @@ Delivery token, held in Netlify env vars alongside `CONTENTFUL_SPACE_ID` and
 must never enter CI — it stays local, in `~/.contentful-cma-token`, because the
 repository is public.
 
+**Local dev emulates Netlify, via `@netlify/vite-plugin`.**
+
+> **Added by
+> [AWK-34](https://linear.app/awkale/issue/AWK-34/set-up-the-netlify-site-reclaim-awkalenetlifyapp-connect-the-repo)
+> on 2026-08-05.**
+
+`bun run dev` loads the plugin's middleware, which emulates redirects, headers,
+environment variables, images and blobs. It is **dev-and-build tooling, not a runtime
+dependency, and not a Functions deployment** — it activates `netlify/functions/` only
+if that directory exists, and [ADR-0011](0011-input-surface.md) says it never will.
+Verified rather than assumed when it was adopted: the publish directory's shape is
+identical with and without it, no functions or edge output appears, and the page
+count does not move.
+
+What it buys is testing the parts of this record that used to be untestable before a
+deploy. `public/_redirects` relies on Netlify normalising trailing slashes — every
+inbound URL from the old Jekyll site carries one — and that was an assumption written
+in a comment until all thirteen redirects were run against the emulator in both forms
+and passed.
+
+> ### ⚠️ Netlify's own Vite guide will break this site
+>
+> That guide tells SPA frameworks, **naming React Router**, to add:
+>
+> ```toml
+> [[redirects]]
+> from = "/*"
+> to = "/index.html"
+> status = 200
+> ```
+>
+> Correct for a client-rendered SPA. **Wrong here, and destructively so.**
+> [ADR-0009](0009-static-rendering-layer.md) settles `ssr: false` + `prerender`, so
+> every route already has real HTML on disk. A catch-all would serve an empty
+> hydration shell for every unknown path across the whole archive, and would stop
+> [ADR-0001](0001-url-structure.md)'s reserved paths — `/music`, `/2-or-3-things` —
+> from 404ing, which is the only thing that reserves them.
+> [AWK-17](https://linear.app/awkale/issue/AWK-17/spike-the-637-route-prerender-build)
+> verified both halves live.
+>
+> This is worth a record and not just a code comment, because the instruction comes
+> from **the host's own documentation for this exact framework**. Anyone who reaches
+> for that page while debugging a 404 will find advice that looks authoritative and
+> is wrong for this site. The warning is repeated in `vite.config.ts`,
+> `netlify.toml` and `public/_redirects`; `scripts/curl-sweep.sh` asserts the 404s
+> that would break if it were ever added.
+
 **The nine gist targets are recorded here.** ADR-0001's redirect ledger names the
 cheatsheet URLs but not their gists. All eight sheets live under
 `gist.github.com/awkale/`, with `/cheatsheets/` itself going to
