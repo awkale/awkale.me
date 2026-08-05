@@ -23,3 +23,9 @@ scripts/contentful/*.log
 *.log
 .cache/
 .netlify/
+
+# Browser-session artifacts from the Playwright MCP — page snapshots and console
+# logs, written into the repo root whenever a browser drives the site. Regenerable,
+# timestamped, and of no value once read. `*.log` above already caught the console
+# files, which is why only the .yml snapshots ever showed up.
+.playwright-mcp/
