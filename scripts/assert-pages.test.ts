@@ -89,6 +89,17 @@ describe.skipIf(!built)('built output', () => {
       expect(readFileSync(ico).byteLength).toBeGreaterThan(0)
     })
 
+    it('ships a real ICO container, not PNG bytes in an .ico coat', () => {
+      // The old site's file was bare PNG named .ico. It worked, but only because
+      // browsers sniff content — the reason to keep an .ico at all is the clients
+      // that do not. This asserts the ICONDIR header (reserved=0, type=1) so a
+      // regression back to a renamed PNG fails here rather than silently in
+      // whatever parses strictly.
+      const ico = readFileSync(join(CLIENT, 'favicon.ico'))
+
+      expect([...ico.subarray(0, 4)]).toEqual([0, 0, 1, 0])
+    })
+
     it('publishes the SVG too, since Safari and Chrome want different ones', () => {
       const svg = join(CLIENT, 'icon.svg')
 

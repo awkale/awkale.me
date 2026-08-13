@@ -43,6 +43,7 @@ See `docs/agents/domain.md`.
 | `scripts/curl-sweep.sh` | Post-cutover redirect sweep. ADR-0010's mitigation for having no request log. |
 | `Wikipedia BSO Archive.xlsx` | The raw source the parser reads. |
 | `app/tokens.css` | Design values. A spec artifact, per ADR-0004's AWK-22 amendment. |
+| `docs/design/favicon.ai` | The 2015 favicon source, moved in under AWK-50. Both `public/favicon.ico` and `public/icon.svg` are **generated from it** — regenerate, never hand-edit. The artwork is live text in Clarendon LT Std, subset to `/A` and `/K`. |
 | `.githooks/pre-commit` | Blocks a commit that is unformatted or fails lint. See ADR-0014. |
 
 ## Commands

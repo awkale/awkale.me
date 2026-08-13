@@ -51,11 +51,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           the file is the half that cannot be skipped, this link is the half
           everything else reads.
 
-          NO `type` attribute, deliberately. public/favicon.ico is 32x32 PNG
-          data despite the extension (it is the old site's 363-byte file, byte
-          for byte), so naming a type would either misdescribe the bytes or
-          contradict the extension. Browsers sniff the content and render it
-          correctly; asserting the wrong MIME is what would break them.
+          public/favicon.ico is a REAL ICO container — two frames, 16 and 32, as
+          classic BMP rather than PNG-in-ICO, so a strict ICO parser reads it and
+          not just a browser that sniffs. It replaced the old site's 363-byte
+          file, which was bare PNG bytes wearing an .ico extension; that worked
+          everywhere it was asked to, but only because browsers sniff content.
 
           Do NOT read the source order of this <head> as the shipped order.
           React Router hoists <Links /> output, so in build/client the inline
@@ -69,17 +69,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
           `type`; Safari does not support SVG favicons at all and falls back to
           the .ico. Dropping either one loses a real set of clients.
 
-          One caveat on how far the .ico reaches: it is PNG bytes, so it serves
-          anything that sniffs content — every browser — but a consumer that
-          parses the ICO container strictly will reject it, header and all. That
-          is the same file the old site served for a decade, so this is not a
-          regression; it is just narrower than "the .ico covers everything else".
-
           Colour is one value for both schemes (#f76b15) rather than a
-          prefers-color-scheme rule. A theme-aware fill worked, but only in the
-          browsers that take the SVG — Safari would still have shown a near-black
-          mark from the .ico, so the inversion bought a consistency it could not
-          finish.
+          prefers-color-scheme rule, and both files carry it. A theme-aware fill
+          shipped first and was dropped: it only ever applied in the browsers
+          that take the SVG, so Safari kept showing a near-black mark from the
+          .ico and the inversion bought a consistency it could not finish. One
+          mid-orange reads against a white and a near-black tab strip alike.
+
+          Both files are generated from docs/design/favicon.ai, which is now in
+          the repo. Regenerate rather than hand-editing either one.
         */}
         <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />

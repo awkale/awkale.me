@@ -138,10 +138,9 @@ echo "   (/ and /favicon.ico were the only old root URLs that were not redirects
 # asserted as 404 until then, because a permanently-red line in the one mitigation
 # ADR-0010 leaves us is how the whole sweep stops being run.
 #
-# Status only, deliberately. The bytes are 32x32 PNG data despite the .ico
-# extension, so Netlify serves them as image/vnd.microsoft.icon and browsers sniff
-# past the mismatch — asserting a content-type here would encode that quirk as a
-# requirement, and the fix for it (an icon.svg) would then have to edit this line.
+# Status only, deliberately. What the bytes ARE is asserted in
+# scripts/assert-pages.test.ts against the built output, which is cheaper and more
+# precise than inferring a format from a live content-type header.
 expect_status "$BASE/favicon.ico" 200
 #
 # Both halves, because both are load-bearing and for different clients: Safari has
