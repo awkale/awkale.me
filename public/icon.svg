@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<!-- awkale.me — AK in Clarendon LT Std. Outlines extracted from the embedded CFF
+     subset of the 2015 favicon.ai, placed with that file's own text matrix
+     (19pt at 0.6396,10.459 in a 32x32 box), y-flipped for SVG. AWK-50.
+
+     ONE colour for both schemes, on purpose: #f76b15 carries against a white and
+     a near-black tab strip alike, so the mark needs no prefers-color-scheme rule.
+     A theme-aware fill was tried and dropped — it only ever applied in the
+     browsers that take the SVG, leaving Safari on the .ico regardless.
+
+     DO NOT hand-edit the path data. It is generated; retyping it silently
+     corrupts a contour. Regenerate from the .ai instead. -->
+<g fill="#f76b15" transform="translate(0.6396 21.541) scale(0.019 -0.019)">
+<path d="M331 0V74H253C234 74 221 78 221 92C221 101 223 107 225 113L258 213H485L518 113C520 107 522 98 522 89C522 79 514 74 491 74H412V0H760V74C707 74 673 81 655 128L455 663H315L124 128C107 81 72 74 19 74V0ZM287 287 367 528H369L456 287Z"/>
+<path transform="translate(778 0)" d="M433 0H815V74H763C741 74 714 82 687 119L474 412L615 535C656 571 685 589 745 589H782V663H431V589H494C506 589 512 584 512 576C512 567 504 557 489 544L274 348V553C274 579 284 589 315 589H374V663H22V589H93C124 589 134 579 134 553V128C134 95 121 74 75 74H22V0H374V74H315C284 74 274 84 274 110V231L379 321L521 115C527 106 530 98 530 92C530 77 516 74 500 74H433Z"/>
+</g>
+</svg>

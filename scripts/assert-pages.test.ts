@@ -75,6 +75,54 @@ describe.skipIf(!built)('built output', () => {
     expect(page('contact/sent')).not.toContain('<form')
   })
 
+  describe('the favicon', () => {
+    // Two halves, and shipping one without the other is the failure mode. The
+    // file at the literal path is what browsers request UNPROMPTED on a first
+    // visit, with no markup involved; the <link> is what everything else reads.
+    // AWK-50 exists because this repo had neither.
+    it('publishes the file at the exact path browsers ask for', () => {
+      const ico = join(CLIENT, 'favicon.ico')
+
+      expect(existsSync(ico)).toBe(true)
+      // Non-empty, because Vite copying a 0-byte file would satisfy existsSync
+      // and still serve a broken icon.
+      expect(readFileSync(ico).byteLength).toBeGreaterThan(0)
+    })
+
+    it('publishes the SVG too, since Safari and Chrome want different ones', () => {
+      const svg = join(CLIENT, 'icon.svg')
+
+      expect(existsSync(svg)).toBe(true)
+      expect(readFileSync(svg).byteLength).toBeGreaterThan(0)
+    })
+
+    it('keeps the mark on the one colour that works on both schemes', () => {
+      // The whole reason there is no prefers-color-scheme rule here: #f76b15
+      // reads against a white and a near-black tab strip alike. Asserted because
+      // a colour edit back toward the 2015 near-black would be invisible in
+      // every other check and would disappear into a dark tab strip.
+      expect(readFileSync(join(CLIENT, 'icon.svg'), 'utf8')).toContain('#f76b15')
+    })
+
+    // Every PRERENDERED page, which is not quite every emitted .html file:
+    // `emittedPages` collects only index.html, so build/client/__spa-fallback.html
+    // is outside it. Left that way on purpose — the page-set assertion above
+    // compares this same helper against `prerenderPaths()`, so widening it here
+    // would break that. The fallback is also unreachable while there is no
+    // catch-all redirect, which AWK-17 established there must never be.
+    // BOTH hrefs, not just the substring `rel="icon"`. Checking only the latter
+    // passes with either link present, which would let a later edit delete the
+    // .ico link and take Safari's icon out site-wide with a green suite.
+    it('declares both of them on every prerendered page', () => {
+      const undeclared = emittedPages(CLIENT).filter((p) => {
+        const html = page(p === '/' ? '.' : p.slice(1))
+        return !html.includes('href="/favicon.ico"') || !html.includes('href="/icon.svg"')
+      })
+
+      expect(undeclared).toEqual([])
+    })
+  })
+
   it('publishes the mailbox address on no page at all', () => {
     // The strongest form of ADR-0011's rule, and cheap to check exhaustively:
     // sweep every emitted page rather than trusting the two that could leak it.

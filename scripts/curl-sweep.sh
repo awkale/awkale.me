@@ -133,15 +133,22 @@ echo
 echo "== the old site's remaining inventory =="
 echo "   (/ and /favicon.ico were the only old root URLs that were not redirects)"
 #
-# /favicon.ico 404s, and that is TODAY'S EXPECTED STATE, not a pass by accident: the
-# old site shipped a 363-byte favicon.ico at the root and this repo ships none — no
-# file in public/, no <link rel="icon"> in root.tsx. Browsers request the path
-# unprompted, so the cutover turns a 200 into a 404 for every visitor.
+# /favicon.ico now 200s — AWK-50 shipped the file (public/favicon.ico, the old
+# site's 363-byte mark byte for byte) and declared it in root.tsx. This line was
+# asserted as 404 until then, because a permanently-red line in the one mitigation
+# ADR-0010 leaves us is how the whole sweep stops being run.
 #
-# Asserted as 404 rather than 200 so this sweep can pass. A permanently-red line in
-# the one mitigation ADR-0010 leaves us is how the whole sweep stops being run.
-# FLIP THIS TO 200 when a favicon ships — AWK-50.
-expect_status "$BASE/favicon.ico" 404
+# Status only, deliberately. The bytes are 32x32 PNG data despite the .ico
+# extension, so Netlify serves them as image/vnd.microsoft.icon and browsers sniff
+# past the mismatch — asserting a content-type here would encode that quirk as a
+# requirement, and the fix for it (an icon.svg) would then have to edit this line.
+expect_status "$BASE/favicon.ico" 200
+#
+# Both halves, because both are load-bearing and for different clients: Safari has
+# no SVG-favicon support and falls back to the .ico, while Chrome and Firefox take
+# the SVG. Checking only one leaves the other free to be renamed or shadowed by a
+# header rule with this sweep still green — and it is the only live check there is.
+expect_status "$BASE/icon.svg" 200
 
 echo
 printf 'passed %s, failed %s\n' "$pass" "$fail"
