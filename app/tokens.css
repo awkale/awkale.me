@@ -188,6 +188,21 @@
   --face-serif: 'Fraunces', ui-serif, Georgia, serif;
   --face-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --face-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ← YOURS. The small uppercase label above a heading, in its two variants:
+     `.eyebrow` for body and section labels, `.kicker` for a page header. The
+     rules themselves are in app.css's base layer, beside .tabular — only the
+     values live here, so preview/tokens.html can bind its own specimen to them
+     rather than keeping a private copy that drifts.
+
+     They ARE two variants, not one typed twice: before AWK-48 the wider
+     tracking appeared on the four page-header kickers and nowhere else, while
+     the body eyebrows split 8/4 between 0.09em and 0.1em with no pattern. The
+     first distinction was real and is kept; the second was drift and is gone. */
+  --eyebrow-size: 0.66rem;
+  --eyebrow-tracking: 0.09em;
+  --kicker-size: 0.72rem;
+  --kicker-tracking: 0.14em;
 }
 
 /* --- typeset presets ------------------------------------------------------ */

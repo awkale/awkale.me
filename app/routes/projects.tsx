@@ -55,13 +55,7 @@ export default function Projects() {
 }
 
 function Th({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <th
-      className={`border-b border-border px-2 py-1.5 text-left text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase ${className}`}
-    >
-      {children}
-    </th>
-  )
+  return <th className={`eyebrow border-b border-border px-2 py-1.5 text-left font-medium ${className}`}>{children}</th>
 }
 
 function Td({ children, className = '' }: { children: React.ReactNode; className?: string }) {

@@ -20,7 +20,7 @@ export default function Concert() {
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
-        <p className="text-[0.72rem] tracking-[0.14em] text-muted-foreground uppercase">Concert</p>
+        <p className="kicker">Concert</p>
         <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">{formatDate(concert.date)}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {[concert.hall, concert.conductor, concert.orchestra].filter(Boolean).join(' · ')}
@@ -29,15 +29,9 @@ export default function Concert() {
         <table className="mt-6 w-full border-collapse text-[0.8rem]">
           <thead>
             <tr>
-              <th className="w-10 border-b border-border px-2 py-1.5 text-right text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase">
-                #
-              </th>
-              <th className="border-b border-border px-2 py-1.5 text-left text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase">
-                Composer
-              </th>
-              <th className="border-b border-border px-2 py-1.5 text-left text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase">
-                Work
-              </th>
+              <th className="eyebrow w-10 border-b border-border px-2 py-1.5 text-right font-medium">#</th>
+              <th className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">Composer</th>
+              <th className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">Work</th>
             </tr>
           </thead>
           <tbody>

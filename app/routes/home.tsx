@@ -46,7 +46,7 @@ export default function Home() {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <dt className="text-[0.66rem] tracking-[0.1em] text-muted-foreground uppercase">{label}</dt>
+      <dt className="eyebrow">{label}</dt>
       <dd className="tabular mt-0.5 text-2xl">{value}</dd>
     </div>
   )

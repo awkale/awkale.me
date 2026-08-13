@@ -121,7 +121,7 @@ export default function Contact() {
         </form>
 
         <section className="mt-10 border-t border-border-subtle pt-5">
-          <h2 className="contact-eyebrow">Elsewhere</h2>
+          <h2 className="eyebrow">Elsewhere</h2>
           <ul className="mt-2 grid list-none gap-1 p-0 text-sm">
             {PROFILES.map((p) => (
               <li key={p.label}>

@@ -67,8 +67,16 @@
              color:var(--muted-foreground); background:var(--card) }
 
   /* the dense table, at real density */
+  /* This th IS the site's `.eyebrow`, at the weight the real table headers use
+     (font-medium). Bound to the --eyebrow-* tokens rather than restating them,
+     so the specimen cannot drift from the app the way the sixteen route-file
+     copies did before AWK-48. The rule itself lives in app.css's base layer,
+     which this page does not load — hence the selector here and the shared
+     values there. `.rlabel` above is deliberately NOT bound: it matches
+     `.contact-label`'s local treatment, which stayed separate. */
   table { width:100%; border-collapse:collapse; font-size:.8rem }
-  th { text-align:left; font-size:.66rem; letter-spacing:.09em; text-transform:uppercase;
+  th { text-align:left; font-size:var(--eyebrow-size); letter-spacing:var(--eyebrow-tracking);
+       text-transform:uppercase;
        color:var(--muted-foreground); font-weight:500; padding:.4rem .55rem;
        border-bottom:1px solid var(--border) }
   td { padding:.4rem .55rem; border-bottom:1px solid var(--border-subtle); vertical-align:baseline }

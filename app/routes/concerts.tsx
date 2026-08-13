@@ -96,7 +96,7 @@ function FacetRow({ label, items }: { label: string; items: { name: string; n: n
 function Th({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <th
-      className={`sticky top-[3.6rem] border-b border-border bg-background px-2 py-1.5 text-left text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase ${className}`}
+      className={`eyebrow sticky top-[3.6rem] border-b border-border bg-background px-2 py-1.5 text-left font-medium ${className}`}
     >
       {children}
     </th>

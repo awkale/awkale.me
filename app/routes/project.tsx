@@ -23,25 +23,23 @@ export default function Project() {
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <article className="mx-auto max-w-[var(--width-content)]">
         <header>
-          <p className="text-[0.72rem] tracking-[0.14em] text-muted-foreground uppercase">
-            Case study · {project.organization}
-          </p>
+          <p className="kicker">Case study · {project.organization}</p>
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">{project.title}</h1>
           <p className="mt-3 max-w-[52ch] text-base text-muted-foreground">{project.summary}</p>
 
           <dl className="mt-5 flex flex-wrap gap-8 border-t border-border-subtle pt-4">
             <div>
-              <dt className="text-[0.68rem] tracking-[0.1em] text-muted-foreground uppercase">Years</dt>
+              <dt className="eyebrow">Years</dt>
               <dd className="tabular mt-0.5 text-sm">{project.years}</dd>
             </div>
             <div>
-              <dt className="text-[0.68rem] tracking-[0.1em] text-muted-foreground uppercase">Live</dt>
+              <dt className="eyebrow">Live</dt>
               <dd className="mt-0.5 text-sm">
                 {project.liveUrl ? <a href={project.liveUrl}>{project.liveUrl.replace('https://', '')}</a> : '—'}
               </dd>
             </div>
             <div>
-              <dt className="text-[0.68rem] tracking-[0.1em] text-muted-foreground uppercase">Technologies</dt>
+              <dt className="eyebrow">Technologies</dt>
               <dd className="mt-0.5 text-sm">{project.technologies.join(' · ')}</dd>
             </div>
           </dl>

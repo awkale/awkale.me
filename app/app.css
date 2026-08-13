@@ -153,4 +153,32 @@
     font-family: var(--face-mono);
     font-variant-numeric: tabular-nums;
   }
+
+  /* The small uppercase label above a heading. Two variants, values in
+     tokens.css: `.eyebrow` heads a section or labels a cell, `.kicker` sits at
+     the top of a page header.
+
+     Here in the base layer rather than a components/ file because it has no
+     owning component — .tabular above is the same shape of thing and the same
+     reason. That does mean a Tailwind utility BEATS these rules, since
+     utilities are a later layer: a stray text-[0.7rem] on an .eyebrow would
+     win silently. AWK-48 removed all sixteen such utilities, so the way to
+     keep that true is to not reintroduce one.
+
+     Neither rule sets font-weight, on purpose. The seven table-header eyebrows
+     carry font-medium and the five dt/p ones do not — a real distinction that
+     predates AWK-48, so the weight stays with the table headers that want it
+     rather than being flattened into every eyebrow on the site. */
+  .eyebrow,
+  .kicker {
+    font-size: var(--eyebrow-size);
+    letter-spacing: var(--eyebrow-tracking);
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  .kicker {
+    font-size: var(--kicker-size);
+    letter-spacing: var(--kicker-tracking);
+  }
 }

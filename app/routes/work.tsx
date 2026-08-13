@@ -19,7 +19,7 @@ export default function Work() {
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
-        <p className="text-[0.72rem] tracking-[0.14em] text-muted-foreground uppercase">
+        <p className="kicker">
           <Link to="/concerts/composers/beethoven-ludwig-van/" className="no-underline hover:underline">
             {byline(work)}
           </Link>
@@ -42,10 +42,7 @@ export default function Work() {
           <thead>
             <tr>
               {['Date', 'Hall', 'Conductor'].map((h) => (
-                <th
-                  key={h}
-                  className="border-b border-border px-2 py-1.5 text-left text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase"
-                >
+                <th key={h} className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">
                   {h}
                 </th>
               ))}
@@ -75,7 +72,7 @@ export default function Work() {
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[0.66rem] tracking-[0.09em] text-muted-foreground uppercase">{label}</dt>
+      <dt className="eyebrow">{label}</dt>
       <dd className="mt-0.5 text-sm">{children}</dd>
     </div>
   )

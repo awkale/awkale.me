@@ -27,16 +27,17 @@
   gap: 0.3rem;
 }
 
-/* One rule, two names: `.contact-label` labels a field, `.contact-eyebrow` heads
-   the profile-links section. Same treatment, different jobs — worth two selectors
-   and not worth two rules.
+/* A field's label. This used to share one rule with `.contact-eyebrow`, which
+   headed the profile-links section; AWK-48 extracted that into the site-wide
+   `.eyebrow` in app.css and the section heading now uses it.
 
-   The repo has ~14 hand-tuned copies of this uppercase eyebrow in route files as
-   Tailwind utilities, and their values have already drifted (0.66–0.72rem,
-   0.09–0.14em). Extracting ONE site-wide `.eyebrow` is the right fix and is not
-   this ticket; this at least keeps the contact surface down to a single copy. */
-.contact-label,
-.contact-eyebrow {
+   `.contact-label` did NOT follow it there, deliberately. The two were the same
+   treatment doing two different jobs — labelling a form control, and heading a
+   section — and folding a field label into a heading rule means the next time
+   one of them needs to move, both move. It keeps its own values here, which is
+   also why they are literals rather than the --eyebrow-* tokens: reaching for
+   those would re-couple what this rule exists to separate. */
+.contact-label {
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;

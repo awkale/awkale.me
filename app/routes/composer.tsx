@@ -28,7 +28,7 @@ export default function Composer() {
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
-        <p className="text-[0.72rem] tracking-[0.14em] text-muted-foreground uppercase">
+        <p className="kicker">
           <Link to="/concerts/composers/" className="no-underline hover:underline">
             Composers
           </Link>
@@ -42,10 +42,7 @@ export default function Composer() {
           <thead>
             <tr>
               {['Work', 'Period', 'Forms', 'Performances'].map((h) => (
-                <th
-                  key={h}
-                  className="border-b border-border px-2 py-1.5 text-left text-[0.66rem] font-medium tracking-[0.09em] text-muted-foreground uppercase"
-                >
+                <th key={h} className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">
                   {h}
                 </th>
               ))}
