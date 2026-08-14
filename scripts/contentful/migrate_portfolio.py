@@ -1,16 +1,30 @@
 #!/usr/bin/env python3
-"""Create the portfolio content types from portfolio-schema.json. Stdlib only.
+"""Create content types from a creation schema. Stdlib only.
 
     python3 scripts/contentful/migrate_portfolio.py --dry-run   # report, write nothing
     python3 scripts/contentful/migrate_portfolio.py             # create the types
 
-AWK-31. Schema only — this writes no entry data, so it creates two empty types
-and nothing authors anything into them until AWK-43.
+    # any other creation schema, same guarantees
+    python3 scripts/contentful/migrate_portfolio.py \\
+        --schema scripts/contentful/recording-schema.json --dry-run
+
+AWK-31. Schema only — this writes no entry data, so it creates empty types and
+nothing authors anything into them until AWK-43.
+
+THE NAME IS NARROWER THAN THE SCRIPT, and that is deliberate. `--schema` was
+added under AWK-32 so `recording` could be created without a third near-identical
+applier, and the file kept its name so AWK-31's records — the README table, the
+AGENTS.md path table, its commit message — still name a script that exists. What
+this applies is any schema shaped like portfolio-schema.json: a `createTypes`
+array of whole content types. It is NOT a general migrator, and in particular it
+is still the wrong tool for appending to a populated type — that is
+migrate_schema.py, and the guard below is what keeps the distinction honest
+rather than merely documented.
 
 Sibling of migrate_schema.py (AWK-30), and deliberately a separate script: that
 one APPENDS optional fields to four types holding 1,155 entries between them
 (concert 249, composer 244, conductor 37, work 625 — counted 2026-08-14), this
-one CREATES two types that have never existed. The safety properties that make
+one CREATES types that have never existed. The safety properties that make
 appending safe are not the ones that make creating safe, and conflating them
 would mean one script whose guarantees depend on which branch it took.
 
@@ -18,10 +32,11 @@ Safety properties:
   * CREATION IS THE COMMON CASE, and it is checked first. A type is created only
     after a GET proves it absent, and the creating PUT carries no version header
     so a concurrent create loses the race loudly (409) rather than clobbering.
-  * ORDER IS PRESERVED FROM THE FILE, never sorted. `imageGroup` must exist
-    before `project`, because `project.body` restricts embedded blocks to
-    `imageGroup` by id and Contentful rejects a linkContentType naming a type
-    that does not exist.
+  * ORDER IS PRESERVED FROM THE FILE, never sorted. In portfolio-schema.json
+    `imageGroup` must exist before `project`, because `project.body` restricts
+    embedded blocks to `imageGroup` by id and Contentful rejects a
+    linkContentType naming a type that does not exist. A schema whose types have
+    no such dependency (recording-schema.json) simply does not exercise this.
   * ADDITIVE on a type that already exists. A field already present by id is left
     exactly as it is, never reshaped, so a re-run after a partial failure resumes
     rather than duplicating, and a hand-edit in the web app is reported as drift.
@@ -43,10 +58,10 @@ from pathlib import Path
 SPACE = os.environ.get("CONTENTFUL_SPACE_ID", "3iiyvj5u5c9h")
 ENV = os.environ.get("CONTENTFUL_ENVIRONMENT_ID", "master")
 BASE = f"https://api.contentful.com/spaces/{SPACE}/environments/{ENV}"
-SCHEMA = Path(__file__).parent / "portfolio-schema.json"
+DEFAULT_SCHEMA = Path(__file__).parent / "portfolio-schema.json"
 
 FLAGS = {"--dry-run"}
-TAKES_VALUE = {"--token-file"}
+TAKES_VALUE = {"--token-file", "--schema"}
 
 
 def _parse_argv(argv):
@@ -55,10 +70,20 @@ def _parse_argv(argv):
     Testing membership without validating the rest means `--dryrun`, `--dry_run`
     or `-n` all read as "not a dry run" and create two content types in the
     production space. A typo must not be the difference between a report and a
-    migration. Same reasoning as migrate_schema.py, same failure avoided."""
+    migration. Same reasoning as migrate_schema.py, same failure avoided.
+
+    A REPEATED argument is rejected too, which matters only for the value flags
+    and matters there a lot: the values are read back with `sys.argv.index`, which
+    finds the FIRST occurrence, so `--schema a.json --schema b.json` would apply
+    `a.json` while an operator who typed the second one reads the run as applying
+    `b.json`. Last-wins is the conventional expectation and first-wins is the
+    implementation, so the disagreement is settled by refusing rather than by
+    picking a side and documenting it."""
     seen, i = set(), 0
     while i < len(argv):
         arg = argv[i]
+        if arg in seen:
+            sys.exit(f"{arg} given more than once")
         if arg in TAKES_VALUE:
             if i + 1 >= len(argv):
                 sys.exit(f"{arg} needs a path")
@@ -68,7 +93,8 @@ def _parse_argv(argv):
         if arg not in FLAGS:
             sys.exit(
                 f"unknown argument {arg!r}\n"
-                f"usage: migrate_portfolio.py [--dry-run] [--token-file PATH]"
+                f"usage: migrate_portfolio.py [--dry-run] [--schema PATH]"
+                f" [--token-file PATH]"
             )
         seen.add(arg)
         i += 1
@@ -77,6 +103,46 @@ def _parse_argv(argv):
 
 ARGS = _parse_argv(sys.argv[1:])
 DRY = "--dry-run" in ARGS
+
+
+def _read_schema_path():
+    """--schema PATH, else portfolio-schema.json beside this script.
+
+    Resolved AFTER _parse_argv rather than at import, so an unrecognized argument
+    still fails before anything reads a file — a typo must not be the difference
+    between a report and a migration, and that guarantee is worth nothing if the
+    schema is chosen before the arguments are validated.
+
+    Missing is a hard exit, not a traceback: the likely cause is a mistyped path,
+    and the likely NEXT action after a confusing stack trace is to re-run without
+    the flag, which would silently apply the portfolio schema instead.
+
+    THE WRONG SHAPE IS THE LIKELIER SLIP, and it gets the same treatment. There
+    are three declarations in this directory and only two of them belong to this
+    applier: `--schema archive-schema.json` names a real file that this script
+    cannot apply, because that one holds `types`/`addFields` for migrate_schema.py
+    rather than `createTypes`. Without this check it reaches apply_schema() and
+    dies on `KeyError: 'createTypes'` — the exact confusing traceback the previous
+    paragraph exists to avoid, arrived at by a different route."""
+    if "--schema" not in ARGS:
+        return DEFAULT_SCHEMA
+    path = Path(sys.argv[sys.argv.index("--schema") + 1])
+    if not path.is_file():
+        sys.exit(f"--schema {path} does not exist")
+    try:
+        declared = json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        sys.exit(f"--schema {path} is not valid JSON: {e}")
+    if "createTypes" not in declared:
+        sys.exit(
+            f"--schema {path} has no `createTypes` — this applier CREATES whole\n"
+            f"content types. A schema with `types`/`addFields` (archive-schema.json)\n"
+            f"appends fields to existing ones; apply that with migrate_schema.py."
+        )
+    return path
+
+
+SCHEMA = _read_schema_path()
 
 
 def _read_token():
@@ -392,10 +458,14 @@ def apply_schema():
 
 
 def main():
+    # The schema name is in the header because it is now a choice. An operator
+    # reading only "WRITING to 3iiyvj5u5c9h/master" cannot tell which types are
+    # about to be created, and --schema is exactly the argument most likely to be
+    # forgotten on a re-run months later.
     if DRY:
-        print(f"DRY RUN — {SPACE}/{ENV} — nothing will be written")
+        print(f"DRY RUN — {SPACE}/{ENV} — {SCHEMA.name} — nothing will be written")
     else:
-        print(f"WRITING to {SPACE}/{ENV}")
+        print(f"WRITING to {SPACE}/{ENV} — {SCHEMA.name}")
 
     created, appended, stranded, drift, refused = apply_schema()
 
@@ -422,7 +492,7 @@ def main():
         # operator reading "0 type(s) created" would conclude the space matches the
         # spec when a field has been reshaped by hand underneath it.
         print(f"\n{drift} item(s) differ from the spec and were NOT modified.")
-        print("Reconcile them in the Contentful web app, or update portfolio-schema.json.")
+        print(f"Reconcile them in the Contentful web app, or update {SCHEMA.name}.")
     if refused:
         print(f"\n{refused} type(s) skipped to avoid invalidating existing entries.")
     if drift or refused:

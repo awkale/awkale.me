@@ -52,7 +52,22 @@ does not do.
 
 ## The `recording` type
 
-The twelfth content type in the space.
+The fourteenth content type in the space.
+
+> **"The twelfth" was correct when written and is corrected to "the fourteenth"
+> by [AWK-32](https://linear.app/awkale/issue/AWK-32/create-the-recording-content-type-and-curate-the-bso-channel).**
+> This record and [AWK-31](https://linear.app/awkale/issue/AWK-31) both claimed
+> slot twelve — AWK-31 calls `project` and `imageGroup` "the twelfth and
+> thirteenth" — because both were written against an 11-type space and neither
+> anticipated the other landing first. AWK-31 applied on 2026-08-14 and this
+> followed it, so the space went 11 → 13 → 14.
+>
+> Nothing about the decision changes; an ordinal was never load-bearing. It is
+> corrected rather than left because a reader checking the record against the
+> space would find a mismatch and have no way to tell whether the *count* drifted
+> or the *type* did. `scripts/contentful/portfolio-schema.json` predicted this
+> collision when it landed — its opening `note` says so in as many words — and
+> that is the reason it was caught here rather than in the space.
 
 | Field | Type | Req. | Notes |
 | --- | --- | --- | --- |
@@ -91,7 +106,7 @@ reference together, and Contentful arrays hold links or symbols but never tuples
 Parallel `urls[]` / `items[]` arrays would misalign silently on reorder — exactly
 what ADR-0003 rejected for `assets[]` / `captions[]`. Encoding `"label | url"` into
 a symbol is the same shape wearing a disguise. So the pair needs its own entity, and
-a twelfth type is the honest cost of a real relationship.
+one more content type is the honest cost of a real relationship.
 
 ## Why `concert` is required: the occasion is the point
 
@@ -142,7 +157,11 @@ to be re-attempted and worth writing down.
 
 1. **Publish date ≠ performance date.** The Tchaikovsky Violin Concerto with Kinga
    Augustyn was published 2023-04-01 and performed **2022-12-18** (`pi-20221218-3`,
-   her only Program Item) — 3.5 months out. Upload batches lag by arbitrary amounts.
+   her only Program Item) — 3.5 months out. Upload batches lag by arbitrary amounts,
+   and they do not lag *together*: the Nimrod from that same concert was published
+   2023-06-14, nearly six months after the performance and ten weeks after the
+   Tchaikovsky. So neither "the publish date approximates the performance" nor
+   "videos uploaded together share an occasion" survives contact with the corpus.
 2. **Title matching lands on the wrong occasion.** *Huapango* resolves to a 2000
    concert two decades from the recording, per the encore above. Where a Work was
    played more than once — 52 twice, 2 three times — the title cannot
@@ -157,7 +176,24 @@ a tour montage, a slideshow, and *Taking Note*). The orchestra's SoundCloud is a
 
 One practical note for whoever does it: the channel's RSS feed
 (`youtube.com/feeds/videos.xml?channel_id=UCsDWWl_zTBj3K2_dFH6HMdg`) is readable
-without JavaScript, which the channel page is not.
+without JavaScript, which the channel page is not. It returns the **fifteen most
+recent uploads and no more**, which is a YouTube limit rather than a channel one —
+so the pass below covers the channel's recent tail, not its history.
+
+> **That pass was done under AWK-32 and is recorded per video in
+> [`docs/archive/recording-curation.md`](../archive/recording-curation.md).**
+> Three videos are seedable, against **two** Program Items on one Concert
+> (`cnc-20221218`): the Tchaikovsky at both granularities on `pi-20221218-3`, and
+> a *Nimrod* on `pi-20221218-2` — a work with exactly one occurrence in 249
+> concerts, whose video names its conductor and matches. Three are the Mexico
+> batch, blocked on a tour date that no source available here records. Five are
+> absent from the archive entirely, and one of those is the near-miss this record
+> should have predicted: the channel's Handel is **Op. 6 No. 11**, the archive's is
+> **Op. 6 No. 10**.
+>
+> The count in this section stands; AWK-32's ticket text undercounts the in-scope
+> videos at one, having described the two Tchaikovsky uploads twice and left the
+> Nimrod uncategorised.
 
 ## Surfaces
 

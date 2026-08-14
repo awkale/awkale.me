@@ -7,14 +7,15 @@ Two steps: parse the spreadsheet into a normalized entity graph, then push that
 graph to the Contentful Management API.
 
 Schema is a separate concern with **two** scripts of its own — see below. One
-appends fields to existing archive types, one creates the portfolio types. They
-are separate because the properties that make appending safe are not the ones
-that make creating safe.
+appends fields to existing archive types, one creates whole types. They are
+separate because the properties that make appending safe are not the ones that
+make creating safe. There are **three** declarations across those two appliers.
 
 | Declaration | Applier | Ticket | Does |
 | --- | --- | --- | --- |
 | `archive-schema.json` | `migrate_schema.py` | AWK-30 | Appends 10 optional fields to 4 archive types |
 | `portfolio-schema.json` | `migrate_portfolio.py` | AWK-31 | Creates `imageGroup` and `project` |
+| `recording-schema.json` | `migrate_portfolio.py --schema` | AWK-32 | Creates `recording` |
 
 Both take `--dry-run`, both reject unrecognized arguments, and both re-activate a
 type stranded by a half-finished run.
@@ -214,6 +215,100 @@ distinctness in the build instead.
 three vocabularies, the required set, the RichText restrictions, the creation
 order, and the deliberate absences above. Same limits as the archive guard: it
 asserts the file, not the space, and it cannot catch a wrong decision.
+
+## The `recording` content type
+
+`recording-schema.json` declares [ADR-0012](../../docs/adr/0012-performance-recordings.md)'s
+one type. **Applied 2026-08-14** — the space now holds 14 content types.
+
+```bash
+# report -- writes nothing, and this is the safe default
+python3 scripts/contentful/migrate_portfolio.py \
+    --schema scripts/contentful/recording-schema.json --dry-run
+
+# create the type and activate it
+python3 scripts/contentful/migrate_portfolio.py \
+    --schema scripts/contentful/recording-schema.json
+```
+
+Five fields, of which **four are required**: `url` (required, unique) · `label`
+(required) · `kind` (required, `video` or `audio`) · `concert` (required) ·
+`programItem` (**the only optional one** — empty means the recording covers the
+whole concert rather than one item).
+
+### Why it reuses `migrate_portfolio.py` instead of a third script
+
+The safety property that matters here is the one that makes **creation** safe —
+a GET proves the type absent, the creating PUT carries no version header so a
+concurrent create 409s rather than clobbering, and required fields are refused on
+a type that already holds entries. That is exactly `migrate_portfolio.py`, and
+copying ~300 lines to change one filename would mean the next fix to that logic
+has to land in two places.
+
+So it grew a `--schema PATH`, defaulting to `portfolio-schema.json` — AWK-31's
+invocation is unchanged, and the file kept its name so AWK-31's records still
+name a script that exists. **The name is narrower than the script.** It applies
+any schema shaped like `portfolio-schema.json`: a `createTypes` array of whole
+types. It is still the wrong tool for appending to a populated type; that is
+`migrate_schema.py`.
+
+A mistyped `--schema` path exits rather than falling back to the default, because
+the failure mode of falling back is applying the *portfolio* schema while an
+operator reads a report about recordings.
+
+### It is the fourteenth type, not the twelfth
+
+ADR-0012 says "the twelfth content type in the space" and AWK-31 says `project`
+and `imageGroup` are "the twelfth and thirteenth". Both were written against an
+11-type space; AWK-31 landed first, so the space went 11 → 13 → 14. ADR-0012 was
+corrected under AWK-32. Ordinals are the fragile way to say this, which is why
+`portfolio-schema.json` flagged the collision when it landed.
+
+### One validation is not in the record
+
+`url` carries Contentful's URL regexp alongside `unique: true`; ADR-0012
+specifies `Symbol, unique` and is silent on format. Added because the field's only
+consumer is an `<a href>`, so a non-URL value fails in a built page rather than at
+authoring time — and `project.liveUrl`/`repoUrl` already carry that exact pattern.
+It is a format check, not an editorial policy, which is the line
+`portfolio-schema.json` drew when it declined to trim RichText marks. Recorded
+under `beyondTheRecord` in the JSON and pinned by the test, so it can be reversed
+deliberately.
+
+### The sixth invariant Contentful cannot hold
+
+`recording.programItem` must belong to `recording.concert.program`. Both links
+can be individually valid while the pair is nonsense — and that is not
+hypothetical: it is precisely the Mexico-tour error ADR-0012's longest section
+exists to prevent, where the works *are* on `cnc-20200223`'s program but the
+performance was the tour, not the Brooklyn Museum night.
+
+Deferred to AWK-39. The harness is `scripts/assert-pages.test.ts` (built under
+AWK-17), but the check cannot run until entries are readable through the Delivery
+API. Note "joins the CI assertion" is aspirational in ADR-0012's sense: there is
+no CI in this repo, so it runs in `bun run test` and nothing runs it
+automatically.
+
+### Two absences are load-bearing
+
+* **No `date` field.** It derives from `concert`. The trap is specific: the RSS
+  feed hands you a `<published>` per video and it is the wrong date every time —
+  3.5 months out on the Tchaikovsky, ~6 months on the Nimrod from the same
+  concert.
+* **No uniqueness on the (`concert`, `programItem`) pair.** One Program Item
+  legitimately holds several recordings — the Tchaikovsky Violin Concerto is
+  published twice, first movement and complete, both `pi-20221218-3`.
+
+### Seeding is by hand, and the curation is written down
+
+ADR-0012's "seeding cannot be scripted" is a conclusion with three independent
+proofs, not a warning. The per-video pass lives in
+[`docs/archive/recording-curation.md`](../../docs/archive/recording-curation.md):
+of the fifteen uploads the feed returns, **three are seedable** (two Program
+Items, one Concert), three are blocked on a Mexico tour date no source here
+records, four are not performances, and five are absent from the archive.
+
+The type is created **empty**. Nothing in this repo authors a `recording` entry.
 
 ## Usage
 

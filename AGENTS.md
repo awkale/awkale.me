@@ -38,7 +38,8 @@ See `docs/agents/domain.md`.
 | `docs/research/` | Research output backing a decision — currently ADR-0009's rendering-layer comparison. |
 | `docs/agents/facts.md` | 62 findings — the AWK-5 map's 58 plus later additions, which carry an `Added by` line. Findings, not spec — verify before trusting. The file's own header still says fifty-nine; count with `grep -c '^\* '` rather than trusting either number. |
 | `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. |
-| `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. Also two schema declaration + applier pairs: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types) and `portfolio-schema.json` + `migrate_portfolio.py` (AWK-31, creates `project` and `imageGroup`). |
+| `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
+| `docs/archive/recording-curation.md` | Per-video verdicts for the BSO channel (AWK-32). Three of fifteen uploads are seedable. ADR-0012 forbids scripting this; the file is a worksheet, not an input. |
 | `public/_redirects` | The thirteen redirects. Never add a catch-all — see the file's own header. |
 | `scripts/curl-sweep.sh` | Post-cutover redirect sweep. ADR-0010's mitigation for having no request log. |
 | `Wikipedia BSO Archive.xlsx` | The raw source the parser reads. |
@@ -131,12 +132,19 @@ Contentful schema exists in the space** — `concert.attended`, `concert.satOut`
 are all absent from `master`. That is the real blocker, not the toolchain.
 
 > **All of that schema now exists.** AWK-30 applied the ten fields ADRs 0005–0008
-> decided and AWK-31 created ADR-0003's two portfolio types, both on 2026-08-14,
-> and every affected content type is activated. The space holds **13 content
-> types**, up from 11. There are two declaration + applier pairs —
-> `archive-schema.json` + `migrate_schema.py`, and `portfolio-schema.json` +
-> `migrate_portfolio.py` — and each takes `--dry-run`, which is how to check the
-> space rather than trusting this paragraph.
+> decided, AWK-31 created ADR-0003's two portfolio types, and AWK-32 created
+> ADR-0012's `recording`, all on 2026-08-14, and every affected content type is
+> activated. The space holds **14 content types**, up from 11. There are two
+> appliers over three declarations — `migrate_schema.py` reads
+> `archive-schema.json`; `migrate_portfolio.py` reads `portfolio-schema.json` by
+> default and `recording-schema.json` via `--schema PATH` — and each takes
+> `--dry-run`, which is how to check the space rather than trusting this
+> paragraph.
+>
+> **`recording` is the fourteenth type, and two accepted records call it the
+> twelfth.** ADR-0012 said "twelfth" and AWK-31 claimed twelve and thirteen for
+> `project`/`imageGroup`; both were written against an 11-type space. ADR-0012 is
+> corrected. Do not trust an ordinal in this repo — count with `--dry-run`.
 >
 > Three AWK-31 details that are easy to get wrong from the ticket alone: `project`
 > has **14 fields, not the 13 the ticket claims** (ADR-0003's table has fourteen
