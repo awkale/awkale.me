@@ -1,0 +1,306 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+import { describe, expect, it } from 'vitest'
+
+/**
+ * Guards archive-schema.json — the desired archive schema AWK-30 applies to
+ * Contentful.
+ *
+ * WHAT THIS CAN AND CANNOT CATCH. It restates the vocabularies the ADRs decided,
+ * so it catches a typo, a dropped value, a reordering, and any later edit that
+ * quietly widens a controlled list. It cannot catch a wrong *decision* — if
+ * ADR-0007 picked the wrong nine periods, this test agrees with it enthusiastically.
+ * It is a drift guard on a spec artifact, in the same spirit as app/tokens.css.
+ *
+ * It asserts the FILE, not the space. Nothing here proves the migration ran:
+ * that needs a CMA token, and ADR-0002 forbids one reaching CI. AWK-39's build
+ * assertions are what will eventually check the live data.
+ */
+const schema = JSON.parse(readFileSync(join(import.meta.dirname, 'archive-schema.json'), 'utf8')) as Schema
+
+type Field = {
+  id: string
+  name: string
+  type: string
+  linkType?: string
+  required: boolean
+  localized: boolean
+  validations?: { unique?: boolean; in?: string[]; linkContentType?: string[] }[]
+  items?: {
+    type: string
+    linkType?: string
+    validations?: { in?: string[]; linkContentType?: string[] }[]
+  }
+}
+
+type Schema = {
+  types: { id: string; addFields: Field[] }[]
+  gated: { id: string; flag: string; contentType: string; field: string; blockedBy: string }[]
+}
+
+function field(typeId: string, fieldId: string): Field {
+  const group = schema.types.find((t) => t.id === typeId)
+  if (!group) throw new Error(`no content type ${typeId} in archive-schema.json`)
+  const found = group.addFields.find((f) => f.id === fieldId)
+  if (!found) throw new Error(`no field ${typeId}.${fieldId} in archive-schema.json`)
+  return found
+}
+
+function inList(f: Field): string[] | undefined {
+  return f.validations?.find((v) => v.in)?.in ?? f.items?.validations?.find((v) => v.in)?.in
+}
+
+// IMSLP's vocabulary, adopted verbatim by ADR-0007. Order is IMSLP's own, which
+// is chronological rather than alphabetical, and is kept because the ADR quotes
+// it that way.
+const PERIODS = [
+  'Ancient',
+  'Medieval',
+  'Renaissance',
+  'Baroque',
+  'Classical',
+  'Romantic',
+  'Early 20th century',
+  'Modern',
+  'Jazz',
+]
+
+describe('archive-schema.json', () => {
+  it('declares every field AWK-30 exists to create, and no others', () => {
+    const declared = schema.types.flatMap((t) => t.addFields.map((f) => `${t.id}.${f.id}`))
+
+    expect(declared.sort()).toEqual(
+      [
+        'composer.period',
+        'composer.slug',
+        'concert.attended',
+        'concert.satOut',
+        'conductor.slug',
+        'work.arrangementOf',
+        'work.arrangementType',
+        'work.arranger',
+        'work.forms',
+        'work.period',
+      ].sort()
+    )
+  })
+
+  it('adds nothing required, so existing published entries stay valid', () => {
+    // This is the property that makes the migration safe to run against a space
+    // holding 1,228 archive records. One `required: true` would invalidate every
+    // entry of that type at once.
+    const required = schema.types.flatMap((t) => t.addFields.filter((f) => f.required).map((f) => `${t.id}.${f.id}`))
+
+    expect(required).toEqual([])
+  })
+
+  it('leaves work.genre alone', () => {
+    // ADR-0007 retires `genre`, but only AFTER the genre -> forms data migration
+    // in AWK-37. A `genre` entry appearing in this file would mean someone had
+    // brought a destructive change forward into the schema-only ticket.
+    const touched = schema.types.flatMap((t) => t.addFields.map((f) => f.id))
+
+    expect(touched).not.toContain('genre')
+  })
+
+  describe('period — ADR-0007', () => {
+    it("takes IMSLP's nine values verbatim, on both composer and work", () => {
+      expect(inList(field('composer', 'period'))).toEqual(PERIODS)
+      expect(inList(field('work', 'period'))).toEqual(PERIODS)
+    })
+
+    it("spells `Early 20th century` with IMSLP's lowercase c", () => {
+      // Called out because it is the one value a reasonable person would
+      // "correct" to `Early 20th Century`, and doing so breaks AWK-37's seed
+      // match against the wiki's category strings — silently, by matching nothing.
+      expect(PERIODS).toContain('Early 20th century')
+      expect(inList(field('work', 'period'))).not.toContain('Early 20th Century')
+    })
+
+    it('is a plain Symbol on both, so the work value can override the composer', () => {
+      expect(field('composer', 'period').type).toBe('Symbol')
+      expect(field('work', 'period').type).toBe('Symbol')
+    })
+  })
+
+  describe('forms — ADR-0007', () => {
+    const forms = field('work', 'forms')
+
+    it('is a multi-valued tag set, which is the whole repair', () => {
+      // The single-valued `genre` got the choice wrong ~15 times by answering
+      // "whichever form word appeared first in the title". Array is the fix.
+      expect(forms.type).toBe('Array')
+      expect(forms.items?.type).toBe('Symbol')
+    })
+
+    it('carries the 17 existing genre names plus ADR-0007s 8 additions', () => {
+      expect(inList(forms)).toEqual([
+        'Aria',
+        'Ballet',
+        'Cantata',
+        'Capriccio',
+        'Chamber work',
+        'Concerto',
+        'Concerto Grosso',
+        'Dance',
+        'Excerpt',
+        'Fantasia',
+        'Film music',
+        'March',
+        'Mass',
+        'Oratorio',
+        'Overture',
+        'Prelude',
+        'Rhapsody',
+        'Serenade',
+        'Sonata',
+        'Song cycle',
+        'Suite',
+        'Symphony',
+        'Tone Poem',
+        'Variations',
+        'Waltz',
+      ])
+    })
+
+    it('keeps every one of the 17 live genre entry names', () => {
+      // Sourced from bso-graph.json's `genre` type. Dropping one here would
+      // strand its assignments when AWK-37 migrates genre -> forms, and the loss
+      // would show up as works quietly losing a tag rather than as an error.
+      const live = [
+        'Aria',
+        'Ballet',
+        'Cantata',
+        'Concerto',
+        'Concerto Grosso',
+        'Fantasia',
+        'March',
+        'Mass',
+        'Overture',
+        'Prelude',
+        'Rhapsody',
+        'Serenade',
+        'Sonata',
+        'Suite',
+        'Symphony',
+        'Variations',
+        'Waltz',
+      ]
+
+      expect(live).toHaveLength(17)
+      expect(inList(forms)).toEqual(expect.arrayContaining(live))
+    })
+
+    it('holds the 8 additions with ADR-0007s exact casing', () => {
+      // `Song cycle`, `Chamber work` and `Film music` carry a lowercase second
+      // word in the ADR while `Tone Poem` does not. Inconsistent, and verbatim.
+      expect(inList(forms)).toEqual(
+        expect.arrayContaining([
+          'Tone Poem',
+          'Dance',
+          'Song cycle',
+          'Oratorio',
+          'Excerpt',
+          'Capriccio',
+          'Chamber work',
+          'Film music',
+        ])
+      )
+    })
+  })
+
+  describe('slug — ADR-0008', () => {
+    it('keeps unique on composer, as the honorific guard', () => {
+      // The slug rule strips `Sir` and `Dame`, so a future `Sir X` alongside an
+      // existing `X` derives the same slug and is rejected at publish — instead
+      // of silently shipping a second half-empty composer page, which is what
+      // Walton and Sullivan already did.
+      expect(field('composer', 'slug').validations).toContainEqual({ unique: true })
+    })
+
+    it('keeps unique on conductor too', () => {
+      // The ticket table omits `unique` here; ADR-0008's schema table specifies
+      // it. The ADR wins — it is the spec, and two real conductors sharing a name
+      // being blocked at 37 records is the same guard working.
+      expect(field('conductor', 'slug').validations).toContainEqual({ unique: true })
+    })
+
+    it('does not add a slug to work, which already has one', () => {
+      // work.slug is repurposed in place — its 625 hashed values overwritten —
+      // not created. Adding it would fail against the live type.
+      const workFields = schema.types.find((t) => t.id === 'work')?.addFields ?? []
+
+      expect(workFields.map((f) => f.id)).not.toContain('slug')
+    })
+  })
+
+  describe('arrangements — ADR-0005', () => {
+    it('links the arranger to composer rather than storing a string', () => {
+      // Six of the 23 in-scope arrangers already exist as composers. A string
+      // would leave Ravel-the-arranger unconnected to Ravel-the-composer.
+      const arranger = field('work', 'arranger')
+
+      expect(arranger.type).toBe('Link')
+      expect(arranger.linkType).toBe('Entry')
+      expect(arranger.validations).toContainEqual({ linkContentType: ['composer'] })
+    })
+
+    it('keeps all four verbs distinct', () => {
+      // Flattening these puts a factual error on the page: Ravel's Pictures is an
+      // orchestration and Mauceri's Psycho selections are an edition, not
+      // arrangements. This corrects the old project glossary.
+      expect(inList(field('work', 'arrangementType'))).toEqual([
+        'Arrangement',
+        'Orchestration',
+        'Transcription',
+        'Edition',
+      ])
+    })
+
+    it('points arrangementOf at another work', () => {
+      const of = field('work', 'arrangementOf')
+
+      expect(of.type).toBe('Link')
+      expect(of.validations).toContainEqual({ linkContentType: ['work'] })
+    })
+  })
+
+  describe('participation — ADR-0006', () => {
+    it('makes attended a Boolean with three meaningful states', () => {
+      // true published, false missed, UNSET not-his-history. Which is why it must
+      // not be required: unset is a value, and the 119 pre-tenure entries rely on
+      // it. The `required: false` sweep above is what enforces that.
+      expect(field('concert', 'attended').type).toBe('Boolean')
+      expect(field('concert', 'attended').required).toBe(false)
+    })
+
+    it('hangs satOut off concert, not programItem', () => {
+      // Twenty programItems are shared across fourteen concerts by seven
+      // two-night runs. A flag on the item cannot tell night one from night two,
+      // and sit-outs genuinely differ between nights.
+      const satOut = field('concert', 'satOut')
+
+      expect(satOut.type).toBe('Array')
+      expect(satOut.items?.linkType).toBe('Entry')
+      expect(satOut.items?.validations).toContainEqual({
+        linkContentType: ['programItem'],
+      })
+    })
+  })
+
+  describe('the work.slug gate', () => {
+    it('keeps removing unique out of the default run', () => {
+      // ADR-0008: "Write the assertion before removing unique: true. Otherwise
+      // there is a window in which nothing protects the invariant at all." That
+      // assertion is AWK-39, which AWK-30 blocks — so this cannot be a default.
+      const gate = schema.gated.find((g) => g.id === 'drop-work-slug-unique')
+
+      expect(gate).toBeDefined()
+      expect(gate?.flag).toBe('--drop-work-slug-unique')
+      expect(gate?.contentType).toBe('work')
+      expect(gate?.field).toBe('slug')
+      expect(gate?.blockedBy).toBe('AWK-39')
+    })
+  })
+})

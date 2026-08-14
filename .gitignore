@@ -15,6 +15,7 @@ dist/
 scripts/contentful/bso-graph.json
 scripts/contentful/import-state.json
 scripts/contentful/*.log
+__pycache__/
 
 .env
 .env.*

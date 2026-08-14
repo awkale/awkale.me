@@ -1,0 +1,284 @@
+{
+  "note": [
+    "Desired archive schema — every field the spec decided that `master` does not have.",
+    "AWK-30. Read by migrate_schema.py, asserted by archive-schema.test.ts.",
+    "",
+    "Each entry under `addFields` is a VERBATIM Contentful field object, so the",
+    "applier appends it as-is and never translates. Anything that is not a field",
+    "object lives at the group level, outside them.",
+    "",
+    "ADDITIVE ONLY. Nothing here removes or retypes a field. The two destructive",
+    "changes the spec calls for are deliberately absent:",
+    "  * `work.genre` is NOT deleted. ADR-0007 retires it, but only after the",
+    "    genre -> forms data migration (AWK-37). Deleting it here would drop 218",
+    "    assignments with nothing to migrate from.",
+    "  * `work.slug`'s `unique: true` is NOT removed by a default run. See `gated`.",
+    "",
+    "`work.slug` itself already exists and is repurposed in place, not added, so",
+    "it appears only under `gated`."
+  ],
+
+  "sources": {
+    "concert": "docs/adr/0006-performance-history-content-model.md",
+    "composer.slug": "docs/adr/0008-archive-slug-source.md",
+    "composer.period": "docs/adr/0007-period-and-form-taxonomy.md",
+    "conductor.slug": "docs/adr/0008-archive-slug-source.md",
+    "work.period": "docs/adr/0007-period-and-form-taxonomy.md",
+    "work.forms": "docs/adr/0007-period-and-form-taxonomy.md",
+    "work.arranger": "docs/adr/0005-composer-identity-and-arrangements.md",
+    "work.arrangementType": "docs/adr/0005-composer-identity-and-arrangements.md",
+    "work.arrangementOf": "docs/adr/0005-composer-identity-and-arrangements.md"
+  },
+
+  "vocabularyNotes": {
+    "period": [
+      "IMSLP's nine values, adopted verbatim and untranslated — ADR-0007.",
+      "`Early 20th century` is IMSLP's own casing. Capitalising `Century` would",
+      "silently break the seed match in AWK-37, which compares against the wiki's",
+      "category strings."
+    ],
+    "forms": [
+      "25 values: the 17 existing `genre` entry names, plus the 8 additions",
+      "ADR-0007 names for the 104 uncategorised works — Tone Poem, Dance,",
+      "Song cycle, Oratorio, Excerpt, Capriccio, Chamber work, Film music.",
+      "",
+      "Merged and sorted alphabetically so the list diffs cleanly and reads as one",
+      "vocabulary rather than two eras. Casing is ADR-0007's verbatim: `Song cycle`,",
+      "`Chamber work` and `Film music` really do carry a lowercase second word",
+      "while `Tone Poem` does not.",
+      "",
+      "`Aria` is kept even though ADR-0007 shows the live bucket is mostly",
+      "mislabelled excerpts — about four of the thirteen are genuine arias, and",
+      "`Excerpt` now exists to take the rest. The bucket was wrong, not the word.",
+      "",
+      "Extending this vocabulary later means editing this `in` list and re-running",
+      "the applier. There is no `genre` entry to create any more."
+    ],
+    "arrangementType": [
+      "ADR-0005's four verbs, matching what the source actually writes:",
+      "arr. on 24 records, orch. on 10, trans. on 1, ed. on 1."
+    ]
+  },
+
+  "types": [
+    {
+      "id": "concert",
+      "addFields": [
+        {
+          "id": "attended",
+          "name": "Attended",
+          "type": "Boolean",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "satOut",
+          "name": "Sat out",
+          "type": "Array",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false,
+          "items": {
+            "type": "Link",
+            "linkType": "Entry",
+            "validations": [{ "linkContentType": ["programItem"] }]
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "composer",
+      "addFields": [
+        {
+          "id": "slug",
+          "name": "Slug",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [{ "unique": true }],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "period",
+          "name": "Period",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [
+            {
+              "in": [
+                "Ancient",
+                "Medieval",
+                "Renaissance",
+                "Baroque",
+                "Classical",
+                "Romantic",
+                "Early 20th century",
+                "Modern",
+                "Jazz"
+              ]
+            }
+          ],
+          "disabled": false,
+          "omitted": false
+        }
+      ]
+    },
+
+    {
+      "id": "conductor",
+      "addFields": [
+        {
+          "id": "slug",
+          "name": "Slug",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [{ "unique": true }],
+          "disabled": false,
+          "omitted": false
+        }
+      ]
+    },
+
+    {
+      "id": "work",
+      "addFields": [
+        {
+          "id": "period",
+          "name": "Period",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [
+            {
+              "in": [
+                "Ancient",
+                "Medieval",
+                "Renaissance",
+                "Baroque",
+                "Classical",
+                "Romantic",
+                "Early 20th century",
+                "Modern",
+                "Jazz"
+              ]
+            }
+          ],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "forms",
+          "name": "Forms",
+          "type": "Array",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false,
+          "items": {
+            "type": "Symbol",
+            "validations": [
+              {
+                "in": [
+                  "Aria",
+                  "Ballet",
+                  "Cantata",
+                  "Capriccio",
+                  "Chamber work",
+                  "Concerto",
+                  "Concerto Grosso",
+                  "Dance",
+                  "Excerpt",
+                  "Fantasia",
+                  "Film music",
+                  "March",
+                  "Mass",
+                  "Oratorio",
+                  "Overture",
+                  "Prelude",
+                  "Rhapsody",
+                  "Serenade",
+                  "Sonata",
+                  "Song cycle",
+                  "Suite",
+                  "Symphony",
+                  "Tone Poem",
+                  "Variations",
+                  "Waltz"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "arranger",
+          "name": "Arranger",
+          "type": "Link",
+          "linkType": "Entry",
+          "localized": false,
+          "required": false,
+          "validations": [{ "linkContentType": ["composer"] }],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "arrangementType",
+          "name": "Arrangement type",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [{ "in": ["Arrangement", "Orchestration", "Transcription", "Edition"] }],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "arrangementOf",
+          "name": "Arrangement of",
+          "type": "Link",
+          "linkType": "Entry",
+          "localized": false,
+          "required": false,
+          "validations": [{ "linkContentType": ["work"] }],
+          "disabled": false,
+          "omitted": false
+        }
+      ]
+    }
+  ],
+
+  "gated": [
+    {
+      "id": "drop-work-slug-unique",
+      "flag": "--drop-work-slug-unique",
+      "contentType": "work",
+      "field": "slug",
+      "removeValidation": "unique",
+      "blockedBy": "AWK-39",
+      "why": [
+        "ADR-0008 removes `unique: true` from `work.slug` because the invariant the",
+        "URL scheme needs is `(composer, slug)`, which is composer-scoped, and",
+        "Contentful can only express space-wide uniqueness. 9 title families collide",
+        "globally across 20 records, so the space-wide constraint is what forced the",
+        "importer to hash in the first place.",
+        "",
+        "But ADR-0008 is equally explicit that the build assertion must be written",
+        "FIRST: 'Otherwise there is a window in which nothing protects the invariant",
+        "at all.' That assertion is AWK-39, which AWK-30 blocks — so a default run of",
+        "this script cannot satisfy the ordering, and does not try.",
+        "",
+        "Run this step only once AWK-39's `(composer, slug)` assertion is in the",
+        "build and passing. Until then `unique: true` is the only thing standing",
+        "between the space and 20 silently-colliding work slugs."
+      ]
+    }
+  ]
+}

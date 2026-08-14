@@ -38,7 +38,7 @@ See `docs/agents/domain.md`.
 | `docs/research/` | Research output backing a decision — currently ADR-0009's rendering-layer comparison. |
 | `docs/agents/facts.md` | 59 findings — the AWK-5 map's 58 plus later additions, which carry an `Added by` line. Findings, not spec — verify before trusting. |
 | `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. |
-| `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. |
+| `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. Also `archive-schema.json` + `migrate_schema.py` — the decided schema and the CMA applier for it (AWK-30). |
 | `public/_redirects` | The thirteen redirects. Never add a catch-all — see the file's own header. |
 | `scripts/curl-sweep.sh` | Post-cutover redirect sweep. ADR-0010's mitigation for having no request log. |
 | `Wikipedia BSO Archive.xlsx` | The raw source the parser reads. |
@@ -129,6 +129,14 @@ because Vitest runs without the `reactRouter()` plugin.
 Contentful schema exists in the space** — `concert.attended`, `concert.satOut`,
 `composer.slug`, `composer.period`, `work.forms` / `period` and the `project` type
 are all absent from `master`. That is the real blocker, not the toolchain.
+
+**The archive half of that now has a migration, and it has not been run.** AWK-30
+added `scripts/contentful/archive-schema.json` and `migrate_schema.py`, which
+create the ten archive fields ADRs 0005–0008 decided. Applying them is CMA work
+needing a human with `~/.contentful-cma-token` — that token must never enter CI
+(ADR-0002) — so **the space is still unchanged until someone runs it.** Verify
+against the space rather than against this paragraph before believing either way.
+The `project` type is separate and still has no migration at all.
 
 > This section previously read *"There is no build… no dependencies installed, so
 > the `.tsx` files do not typecheck yet"*, which had been false since the AWK-22

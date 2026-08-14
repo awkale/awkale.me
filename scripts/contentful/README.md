@@ -6,6 +6,100 @@ Imports `Wikipedia BSO Archive.xlsx` (repo root) into the Contentful space
 Two steps: parse the spreadsheet into a normalized entity graph, then push that
 graph to the Contentful Management API.
 
+Schema is a separate concern with its own script — see below. It has to be,
+because none of the decided archive schema exists in the space yet.
+
+## Schema migration
+
+`archive-schema.json` is the desired archive schema — every field ADRs 0005–0008
+decided that `master` does not have. `migrate_schema.py` applies it.
+
+```bash
+# report what is missing -- writes nothing, and this is the safe default
+python3 scripts/contentful/migrate_schema.py --dry-run
+
+# add the 10 fields and re-activate the 4 content types
+python3 scripts/contentful/migrate_schema.py
+```
+
+Ten fields across four types: `concert.attended` / `satOut`, `composer.slug` /
+`period`, `conductor.slug`, and `work.period` / `forms` / `arranger` /
+`arrangementType` / `arrangementOf`.
+
+**Schema only — it writes no entry data**, so it is safe to run before the
+re-import and before any seeding pass. It is also **additive**: a field already
+present by id is left exactly as it is, so a re-run resumes, and a hand-edit made
+in the Contentful web app is reported as drift rather than silently overwritten.
+
+**Applying is the default; `--dry-run` is opt-in.** Unrecognized arguments are
+rejected rather than ignored, so a `--dryrun` typo fails instead of quietly
+writing to the space.
+
+**A drifted field exits non-zero.** Drift is never repaired automatically —
+reshaping a field is the class of change Contentful refuses anyway, and doing it
+silently would undo a deliberate hand-edit. Reconcile it in the web app, or
+update `archive-schema.json` to match.
+
+### Adding a field is two calls, and it can strand
+
+`PUT /content_types/{id}` writes a **draft**; `PUT /content_types/{id}/published`
+is what makes the field visible to the Delivery API. If the first lands and the
+second does not — exhausted retries, a dropped connection, Ctrl-C — the fields
+exist but nothing reading the CDA can see them, *and they read back as present*.
+
+The script detects that (`version > publishedVersion + 1`) and re-activates the
+type. Without it, every re-run would report `0 change(s) applied` over a
+permanently half-applied migration, which is the worst available failure: silent,
+and indistinguishable from success.
+
+**Every field it adds is optional.** That is what makes adding one to a type
+holding published entries safe — no existing entry becomes invalid. `attended`
+in particular *must* stay optional, because unset is one of its three meaningful
+states (ADR-0006): the 119 pre-tenure concerts rely on it.
+
+### Two things it deliberately does not do
+
+**It does not delete `work.genre`.** [ADR-0007](../../docs/adr/0007-period-and-form-taxonomy.md)
+retires the field, but only after the `genre` → `forms` data migration. Deleting
+it here would drop 218 assignments with nothing left to migrate from. Contentful
+also deletes a field in two phases (`omitted`, then `deleted`), which is a second
+reason it does not belong in a schema-only pass.
+
+**It does not remove `unique: true` from `work.slug` on a default run.** That is
+behind its own flag:
+
+```bash
+python3 scripts/contentful/migrate_schema.py --drop-work-slug-unique
+```
+
+It asks for confirmation, and refuses to run unattended without `--yes`. **That
+prompt is not a check** — the script cannot see whether AWK-39's assertion is in
+the build. `blockedBy` in `archive-schema.json` is a note to a human, so running
+the flag to find out whether the gate is satisfied would simply remove the
+constraint.
+
+[ADR-0008](../../docs/adr/0008-archive-slug-source.md) removes the constraint
+because the invariant the URL scheme needs is `(composer, slug)` — composer-scoped,
+which Contentful cannot express — and the space-wide constraint is what forced the
+importer to hash in the first place. But the same ADR is explicit that the build
+assertion must be written **first**: *"Otherwise there is a window in which nothing
+protects the invariant at all."* That assertion is AWK-39, which AWK-30 blocks, so
+a default run cannot satisfy the ordering and does not try.
+
+**Run the flag only once AWK-39's `(composer, slug)` assertion is in the build and
+passing.** Until then `unique: true` is the only thing standing between the space
+and 20 work slugs colliding across 9 title families.
+
+### What guards the file
+
+`archive-schema.test.ts` runs in `bun run test` and pins the vocabularies — the
+nine IMSLP periods, the 25 form values, the four arrangement verbs — plus the
+shapes that carry a decision, such as every added field being optional.
+
+It asserts the *file*, not the space: nothing here proves the migration ran,
+because that needs a CMA token and ADR-0002 forbids one reaching CI. It also
+cannot catch a wrong decision, only drift away from a recorded one.
+
 ## Usage
 
 ```bash
