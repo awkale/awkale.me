@@ -1,10 +1,13 @@
 /**
  * PLACEHOLDER DATA — delete once the Contentful CDA is wired.
  *
- * None of the decided schema exists in the space yet (`concert.attended`,
- * `concert.satOut`, `composer.slug`, `composer.period`, `work.forms`, the
- * `project` type), so the routes below read this instead. Real figures, so the
- * structures are honest about density:
+ * The archive schema now EXISTS in the space (AWK-30 added `concert.attended`,
+ * `concert.satOut`, `composer.slug`, `composer.period`, `work.forms` and the
+ * rest), but every one of those fields is EMPTY and no CDA token is configured,
+ * so the routes below still read this instead. Seeding is AWK-36 and AWK-37;
+ * wiring the CDA is AWK-39. The `project` type is still absent entirely.
+ *
+ * Real figures, so the structures are honest about density:
  *
  *   121 concerts · 322 works · 147 composers · 16 conductors · 5 halls
  *   6 concerts missed · 4 items sat out

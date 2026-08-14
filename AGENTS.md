@@ -130,13 +130,25 @@ Contentful schema exists in the space** — `concert.attended`, `concert.satOut`
 `composer.slug`, `composer.period`, `work.forms` / `period` and the `project` type
 are all absent from `master`. That is the real blocker, not the toolchain.
 
-**The archive half of that now has a migration, and it has not been run.** AWK-30
-added `scripts/contentful/archive-schema.json` and `migrate_schema.py`, which
-create the ten archive fields ADRs 0005–0008 decided. Applying them is CMA work
-needing a human with `~/.contentful-cma-token` — that token must never enter CI
-(ADR-0002) — so **the space is still unchanged until someone runs it.** Verify
-against the space rather than against this paragraph before believing either way.
-The `project` type is separate and still has no migration at all.
+> **The archive half of that is done.** AWK-30 applied the ten fields ADRs
+> 0005–0008 decided, on 2026-08-14, and all four content types are activated.
+> `scripts/contentful/archive-schema.json` is the declared schema and
+> `migrate_schema.py` applied it; re-run it with `--dry-run` to check the space
+> rather than trusting this paragraph. **The `project` type is still absent** and
+> has no migration.
+
+**Schema is not data.** Every field AWK-30 added is empty — it wrote no entry
+data — and no CDA token is configured here, so `app/data/sample.ts` is still what
+the routes read. A field that exists and is empty looks exactly like a field that
+does not exist, to anything reading the Delivery API. Seeding is AWK-36 and
+AWK-37; wiring the CDA is AWK-39.
+
+**Two fields deliberately did not change, and both are traps.** `work.genre` is
+still there — it goes only after AWK-37 migrates it into `forms`. `work.slug`
+still carries `unique: true` — it comes off only after AWK-39's `(composer, slug)`
+assertion exists, which ADR-0008 requires in that order. `migrate_schema.py`
+keeps the second behind `--drop-work-slug-unique`, and that flag is **not** a
+gate the script can enforce: it cannot see whether AWK-39 landed.
 
 > This section previously read *"There is no build… no dependencies installed, so
 > the `.tsx` files do not typecheck yet"*, which had been false since the AWK-22
