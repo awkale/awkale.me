@@ -160,10 +160,12 @@ the routes read. A field that exists and is empty looks exactly like a field tha
 does not exist, to anything reading the Delivery API. Seeding is AWK-36 and
 AWK-37; wiring the CDA is AWK-39.
 
-The one exception is `recording`, which holds **three entries as drafts** —
-AWK-32's curated BSO videos, all on `cnc-20221218`. Drafts, so the Delivery API
-would not serve them even once a token exists; publishing is a deliberate
-separate act. `project` and `imageGroup` are still empty (AWK-43).
+The one exception is `recording`, which holds **three published entries** —
+AWK-32's curated BSO videos, all on `cnc-20221218`. They are the only real
+content in the space outside the imported archive, so they are the first thing
+AWK-39 can read through the CDA to prove the wiring end to end, and the only
+data the sixth invariant (`programItem ∈ concert.program`) can be asserted
+against. `project` and `imageGroup` are still empty (AWK-43).
 
 **Two fields deliberately did not change, and both are traps.** `work.genre` is
 still there — it goes only after AWK-37 migrates it into `forms`. `work.slug`

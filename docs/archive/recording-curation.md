@@ -42,7 +42,7 @@ Fifteen videos, three seedable.
 | 14 | 2021-04-09 | BSO Mexico 2020 — TCHAIKOVSKY "Mozartiana" | ⛔ blocked: tour Concert does not exist |
 | 15 | 2021-03-26 | Tchaikovsky — Serenade for Strings — Elegie | ✗ not in the archive |
 
-## The three, authored 2026-08-14 as drafts
+## The three, authored and published 2026-08-14
 
 All three are the same Concert — `cnc-20221218`, 2022-12-18, Brooklyn Museum of
 Art, Nicholas Armstrong — whose full program is `La Boutique Fantasque` ·
@@ -54,12 +54,14 @@ Art, Nicholas Armstrong — whose full program is `La Boutique Fantasque` ·
 | `2zKNekuWa2ClOC5wNT3nyr` | `https://www.youtube.com/watch?v=2wXcvF6Q85A` | Complete concerto | `video` | `cnc-20221218` | `pi-20221218-3` |
 | `4cT2XzTtTzcprqWD9YBuVE` | `https://www.youtube.com/watch?v=MOFEvJAIqlk` | First movement only | `video` | `cnc-20221218` | `pi-20221218-3` |
 
-**They are DRAFTS and publishing is deliberately a separate act**, the same split
-`import_to_contentful.py` makes. Two reasons here rather than its one: the three
-`label` values are a judgment call that wants a human eye before it is live, and
-`url`'s `unique: true` is only enforced at publish — so a duplicate can sit in
-drafts indefinitely and fail at the worst moment. Three entries make that
-harmless; it is worth knowing before there are thirty.
+**They were created as drafts and published separately**, the same split
+`import_to_contentful.py` makes, with the labels reviewed in between.
+
+**Publishing is what proved the `unique: true` on `url`.** Contentful enforces
+uniqueness at publish and not at draft, so three drafts with the same URL sit
+quietly until someone tries to publish the second. That is harmless at three
+entries and worth knowing before there are thirty: a duplicate is discovered at
+the moment it is least convenient, and the type's whole key rests on it.
 
 **The link targets were verified against Contentful, not against
 `bso-graph.json`.** The graph is parser output and the two are known to disagree —
