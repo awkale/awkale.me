@@ -106,11 +106,12 @@ It also matches the source. IMSLP files *Boléro* under both `Boleros` and
 Form is permitted to stay incomplete in a way period is not. Period carries the
 browse load; form is a refinement, so a Work with no form tags is not a defect.
 
-The existing seventeen `genre` entries are reused as the starting vocabulary and
-extended during curation — `Tone Poem`, `Dance`, `Song cycle`, `Oratorio`,
-`Excerpt`, `Capriccio`, `Chamber work` and `Film music` are the additions the 104
-uncategorised Works call for, with `Ballet` finally populated. This record fixes
-the mechanism, not the enumeration.
+The existing seventeen `genre` entries supply the starting vocabulary — their
+names, per the Schema correction below — extended during curation with
+`Tone Poem`, `Dance`, `Song cycle`, `Oratorio`, `Excerpt`, `Capriccio`,
+`Chamber work` and `Film music`, the additions the 104 uncategorised Works call
+for, and with `Ballet` finally populated. This record fixes the mechanism, not
+the enumeration.
 
 `Excerpt` is where the `Aria` bucket's accidental discovery lands. "Is this drawn
 from a larger staged work" is a real fact about a Work that the data records
@@ -159,13 +160,35 @@ composer  (existing type; listed fields are the additions)
 
 work      (existing type; listed fields are the additions)
 + period       Symbol, same `in` list, optional — overrides composer.period
-+ forms        Array<Link genre>, optional, unordered
++ forms        Array<Symbol>, optional, unordered, in [25 values]
 - genre        Link<genre> — removed after migration
 ```
 
 `period` follows the `in`-validated symbol precedent set by
-`soloist.instrument`; `forms` reuses the linked-entity `genre` records, changing
-only their cardinality and their name at the point of use.
+`soloist.instrument`; `forms` follows it too, over a vocabulary seeded from the
+seventeen `genre` entries' **names**.
+
+> **`forms` was `Array<Link genre>` and is corrected to `Array<Symbol>` by
+> [AWK-30](https://linear.app/awkale/issue/AWK-30/create-the-archive-schema-changes-in-contentful).**
+> This record said Link here while its own prose called Form "an unordered set of
+> tags", and [ADR-0008](0008-archive-slug-source.md) then described `period` and
+> `forms` together as "controlled symbols over a fixed vocabulary" whose filter
+> values are "slugified in the query string from code with no stored field".
+> Alex settled it as Symbol, which makes ADR-0008 consistent and this block the
+> outlier. Corrected rather than annotated, because a schema block is read to be
+> implemented and Contentful cannot change a field's type in place — so the cost
+> of the wrong reading is a migration, not a rewrite.
+>
+> The decision this changes is only the *carrier*. Everything the record argues —
+> that Form is multi-valued, that it is a filter and never a URL, that it may stay
+> incomplete while Period carries the browsing — is untouched.
+>
+> Two consequences follow. The vocabulary is now the seventeen `genre` names
+> rather than the entries themselves, so **extending it means editing an `in`
+> list, not creating a record**; the 25 values are held in
+> `scripts/contentful/archive-schema.json` and asserted by its test. And the
+> `genre` *type* has no remaining reader once the migration below runs, where
+> under the Link shape it would have survived as the vocabulary's home.
 
 ## Considered options
 
@@ -198,8 +221,10 @@ states that `composer` gains no new fields. `composer.period` breaks that. The
 rest of ADR-0005 is untouched.
 
 **`work.genre` cannot be changed in place.** Contentful does not permit altering
-an existing field's type, so moving from `Link` to `Array<Link>` is a new field,
-a migration, and a delete — not an edit. This is the same class of limit as the
+an existing field's type, so moving from `Link` to `Array<Symbol>` is a new
+field, a migration, and a delete — not an edit. The three steps are separately
+owned: AWK-30 adds `forms`, AWK-37 migrates the data, and only then can `genre`
+go. Deleting it earlier discards 218 assignments with nothing to migrate from. This is the same class of limit as the
 conditional-validation gaps already recorded on `sideBySide`
 ([ADR-0004](0004-design-system-and-tokens.md)) and `satOut`
 ([ADR-0006](0006-performance-history-content-model.md)).
