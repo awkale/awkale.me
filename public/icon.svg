@@ -8,6 +8,13 @@
      A theme-aware fill was tried and dropped — it only ever applied in the
      browsers that take the SVG, leaving Safari on the .ico regardless.
 
+     #f76b15 is DELIBERATELY NOT the site's accent. That is --ember-9 (#e05822),
+     which tokens.css generated the whole ramp from. This is Radix orange-9, kept
+     as an icon-only exception — decided in AWK-52, not an oversight, so please do
+     not "fix" it to match. It also cannot track the accent: a favicon renders in
+     isolation and cannot read a custom property, so an accent retune leaves this
+     file behind. Changing it means editing here, the .ico, and the test.
+
      DO NOT hand-edit the path data. It is generated; retyping it silently
      corrupts a contour. Regenerate from the .ai instead. -->
 <g fill="#f76b15" transform="translate(0.6396 21.541) scale(0.019 -0.019)">

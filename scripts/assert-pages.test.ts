@@ -3,6 +3,7 @@ import { join, relative, sep } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
+import { MODE_KEY } from '../app/lib/mode'
 import { prerenderPaths } from '../app/lib/prerender-paths'
 
 /**
@@ -112,6 +113,11 @@ describe.skipIf(!built)('built output', () => {
       // reads against a white and a near-black tab strip alike. Asserted because
       // a colour edit back toward the 2015 near-black would be invisible in
       // every other check and would disappear into a dark tab strip.
+      //
+      // And it is NOT the site's accent — that is --ember-9 (#e05822). The
+      // divergence is deliberate (AWK-52), which is why this assertion names a
+      // literal rather than importing a token: there is no token to import, and
+      // pointing it at the accent would quietly undo the decision.
       expect(readFileSync(join(CLIENT, 'icon.svg'), 'utf8')).toContain('#f76b15')
     })
 
@@ -132,6 +138,29 @@ describe.skipIf(!built)('built output', () => {
 
       expect(undeclared).toEqual([])
     })
+  })
+
+  // ADR-0004:468 — "Every page depends on the inline theme script… Anything that
+  // changes the root route's <head> must preserve it." That is the invariant, and
+  // it had nothing asserting it. AWK-51.
+  //
+  // What this does NOT assert is position within <head>. React Router hoists
+  // <Links /> output, so the script lands LAST there — after the stylesheet and
+  // every modulepreload — and no JSX ordering changes that. The ADR asks only that
+  // it be inline, blocking, in <head>, and run "before first paint" (:211), all of
+  // which hold. A test demanding it be first would fail on a correct build.
+  it('keeps the blocking theme script inline, in <head>, on every prerendered page', () => {
+    const broken = emittedPages(CLIENT).filter((p) => {
+      const html = page(p === '/' ? '.' : p.slice(1))
+      const headEnd = html.indexOf('</head>')
+      const script = html.indexOf(MODE_KEY)
+
+      // Present, inline (the key is in the document, not fetched), and before
+      // </head> — so it cannot drift into <body> unnoticed.
+      return script === -1 || headEnd === -1 || script > headEnd
+    })
+
+    expect(broken).toEqual([])
   })
 
   it('publishes the mailbox address on no page at all', () => {
