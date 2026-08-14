@@ -38,7 +38,7 @@ See `docs/agents/domain.md`.
 | `docs/research/` | Research output backing a decision — currently ADR-0009's rendering-layer comparison. |
 | `docs/agents/facts.md` | 62 findings — the AWK-5 map's 58 plus later additions, which carry an `Added by` line. Findings, not spec — verify before trusting. The file's own header still says fifty-nine; count with `grep -c '^\* '` rather than trusting either number. |
 | `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. |
-| `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
+| `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
 | `docs/archive/recording-curation.md` | Per-video verdicts for the BSO channel (AWK-32). Three of fifteen uploads are seedable. ADR-0012 forbids scripting this; the file is a worksheet, not an input. |
 | `docs/archive/program-19930726-liyo-dallas-brooks-hall.jpg` | Photographed printed program, Long Island Youth Orchestra at Dallas Brooks Hall, Melbourne, 1993-07-26. **A primary source for a concert no other source here holds** — not in the xlsx, not in `bso-graph.json`, and none of its orchestra, hall or conductors exist in the archive. Untranscribed. |
 | `public/_redirects` | The thirteen redirects. Never add a catch-all — see the file's own header. |
@@ -86,10 +86,27 @@ repo.
 
 **`bso-graph.json` is parser output, not Contentful state.** As of the last audit
 the two agree on every count except `hall` — the graph has 12, Contentful has 13.
-And live Contentful still disagrees with both the graph and the checklist on 8
-concerts, because the `shares` fix is applied to the parser but the re-import has
-not run. Read [ADR-0006](docs/adr/0006-performance-history-content-model.md) and
-the open Linear issues before trusting either source about concert programmes.
+Read [ADR-0006](docs/adr/0006-performance-history-content-model.md) and the open
+Linear issues before trusting either source about concert programmes.
+
+> This previously read *"live Contentful still disagrees with both the graph and
+> the checklist on 8 concerts, because the `shares` fix is applied to the parser
+> but the re-import has not run"*. **AWK-20 ran it on 2026-08-14** — the four
+> merged pairs now carry identical programs on both dates (lengths 3, 6, 6, 2),
+> and `2007-12-16` got its conductor and orchestra by hand. The graph and live
+> `concert.program` agree.
+
+**Counting entries through the CMA includes archived ones, and that will mislead
+you.** AWK-20 archived 16 superseded `programItem`s rather than deleting them, so
+`/entries?content_type=programItem` reports **823** while the live archive holds
+**807**. The Delivery API hides them, so only the management side sees the gap.
+Pass `sys.archivedAt[exists]=false` to get the real number — that filter is why
+`archive_orphans.py` is idempotent instead of re-reporting its own past work
+forever.
+
+The audited total of **2,384** is the eleven *archive* types only. The space now
+answers **2,387**, because AWK-32's three `recording` entries postdate that
+figure. Neither number is wrong; they count different sets.
 
 **A fresh clone shows seven route files erroring, and it is not a real failure.**
 Every route imports `./+types/<name>`, which React Router *generates* into

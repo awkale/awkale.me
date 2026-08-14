@@ -3,8 +3,10 @@
 Imports `Wikipedia BSO Archive.xlsx` (repo root) into the Contentful space
 `3iiyvj5u5c9h`, environment `master`.
 
-Two steps: parse the spreadsheet into a normalized entity graph, then push that
-graph to the Contentful Management API.
+Three steps: parse the spreadsheet into a normalized entity graph, push that
+graph to the Contentful Management API, then archive whatever the push
+superseded — the importer never deletes, so the third step is not optional
+after a merge.
 
 Schema is a separate concern with **two** scripts of its own — see below. One
 appends fields to existing archive types, one creates whole types. They are
@@ -325,9 +327,41 @@ python3 scripts/contentful/import_to_contentful.py
 
 # 4. publish (separate on purpose -- unpublishing thousands of entries is painful)
 python3 scripts/contentful/import_to_contentful.py --publish
+
+# 5. sweep up anything the re-import stranded -- writes nothing without the
+#    second form, and refuses outright if a concert still links to it
+python3 scripts/contentful/archive_orphans.py --dry-run
+python3 scripts/contentful/archive_orphans.py
 ```
 
-Step 1 needs `openpyxl`. Steps 2–4 are stdlib only.
+Step 1 needs `openpyxl`. Steps 2–5 are stdlib only.
+
+### Step 5 is not optional after a merge
+
+**The importer never deletes**, and program item ids derive from the *concert*
+id (`pi-{concert-date}-{index}`). So merging a two-performance run moves its
+items into the first date's namespace, creates them there, and abandons the
+second date's originals — referenced by nothing, but still counted and still in
+the space.
+
+`archive_orphans.py` derives that set as *live programItems minus the ones
+`bso-graph.json` accounts for*, refuses to touch anything a concert still links
+to, and unpublishes then archives the remainder. It is **archive, not delete**:
+reversible from the web app, and out of Delivery API results either way.
+
+Run under AWK-20 on 2026-08-14, which archived **16** — the 13 the ticket
+predicted from the `shares` fix, plus 3 more it did not. `cnc-20081213-2` is an
+older artifact of the row 912/913 duplicate header: live carried
+`pi-20081213-2-1…3` while the post-fix graph derives `pi-20081213-1…3` from a
+single concert row. The importer matches concerts **on date**, so it reused the
+existing entry and rewrote its program; the three superseded items were verified
+field-by-field as identical before being archived.
+
+**A count through the CMA still shows them.** `/entries` returns archived entries
+by default, so `programItem` reads 823 against 807 active. Every query in
+`archive_orphans.py` carries `sys.archivedAt[exists]=false` for that reason —
+without it the script re-reports its own previous run as a fresh set of orphans,
+forever. The Delivery API hides them, so the built site sees 807.
 
 ### Credentials
 
@@ -363,6 +397,9 @@ Space and environment can be overridden with `CONTENTFUL_SPACE_ID` and
   The one deliberate exception is `concert.program`, listed in `OVERRIDE`.
 * **Drafts first.** Publishing is a separate flag, and runs in dependency order
   so links always resolve.
+* **It never deletes or unlinks.** Anything a re-import supersedes is left in
+  place rather than removed, which is what makes the import safe to re-run and
+  why `archive_orphans.py` exists as a separate, deliberate second step.
 
 ## Sheet conventions the parser relies on
 
