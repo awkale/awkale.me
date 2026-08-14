@@ -14,10 +14,11 @@ limit, not a channel one, so this covers the channel's recent tail and not its
 history. Older uploads need the channel page, which does not render without
 JavaScript.
 
-**This file is the worksheet, not the data.** Nothing here is authored into
-Contentful by running anything; ADR-0012's *"seeding cannot be scripted"* is the
-whole point, and a script that read this file back would be that same script
-wearing a disguise. The verdicts below are for a human to act on in the web app.
+**This file is the worksheet, not the data.** ADR-0012's *"seeding cannot be
+scripted"* is the whole point, and a script that read this file back and seeded
+from it would be that same script wearing a disguise — it would run again one day
+against a channel that has moved on. The three entries below were typed in once,
+from verdicts reached by hand, and **nothing in this repo will reproduce them**.
 
 ## Verdicts
 
@@ -41,17 +42,31 @@ Fifteen videos, three seedable.
 | 14 | 2021-04-09 | BSO Mexico 2020 — TCHAIKOVSKY "Mozartiana" | ⛔ blocked: tour Concert does not exist |
 | 15 | 2021-03-26 | Tchaikovsky — Serenade for Strings — Elegie | ✗ not in the archive |
 
-## The three to author
+## The three, authored 2026-08-14 as drafts
 
 All three are the same Concert — `cnc-20221218`, 2022-12-18, Brooklyn Museum of
 Art, Nicholas Armstrong — whose full program is `La Boutique Fantasque` ·
 `"Enigma" Variation No. 9, Nimrod` · `Violin Concerto in D Major`.
 
-| `url` | `label` | `kind` | `concert` | `programItem` |
-| --- | --- | --- | --- | --- |
-| `https://www.youtube.com/watch?v=ONote9yGXEE` | Complete performance | `video` | `cnc-20221218` | `pi-20221218-2` |
-| `https://www.youtube.com/watch?v=2wXcvF6Q85A` | Complete concerto | `video` | `cnc-20221218` | `pi-20221218-3` |
-| `https://www.youtube.com/watch?v=MOFEvJAIqlk` | First movement only | `video` | `cnc-20221218` | `pi-20221218-3` |
+| Entry | `url` | `label` | `kind` | `concert` | `programItem` |
+| --- | --- | --- | --- | --- | --- |
+| `5k1O8x3ebT2aZ0JzI30Bkc` | `https://www.youtube.com/watch?v=ONote9yGXEE` | Complete performance | `video` | `cnc-20221218` | `pi-20221218-2` |
+| `2zKNekuWa2ClOC5wNT3nyr` | `https://www.youtube.com/watch?v=2wXcvF6Q85A` | Complete concerto | `video` | `cnc-20221218` | `pi-20221218-3` |
+| `4cT2XzTtTzcprqWD9YBuVE` | `https://www.youtube.com/watch?v=MOFEvJAIqlk` | First movement only | `video` | `cnc-20221218` | `pi-20221218-3` |
+
+**They are DRAFTS and publishing is deliberately a separate act**, the same split
+`import_to_contentful.py` makes. Two reasons here rather than its one: the three
+`label` values are a judgment call that wants a human eye before it is live, and
+`url`'s `unique: true` is only enforced at publish — so a duplicate can sit in
+drafts indefinitely and fail at the worst moment. Three entries make that
+harmless; it is worth knowing before there are thirty.
+
+**The link targets were verified against Contentful, not against
+`bso-graph.json`.** The graph is parser output and the two are known to disagree —
+`AGENTS.md` records a hall-count difference and eight concerts where live
+Contentful differs from both the graph and the participation checklist. All three
+ids above were read back from the space, published, before anything linked to
+them.
 
 All four other fields are **required** — only `programItem` is optional, and it is
 populated on all three because none of these is a concert-level recording.
