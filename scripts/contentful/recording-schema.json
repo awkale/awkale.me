@@ -140,9 +140,13 @@
     "",
     "It is a format check and not an editorial policy, which is the line",
     "portfolio-schema.json drew when it declined to trim RichText marks ADR-0003",
-    "never discussed. Remove it if the record is read as exhaustive rather than",
-    "as a minimum — recording-schema.test.ts pins it either way, so the decision",
-    "cannot drift silently."
+    "never discussed.",
+    "",
+    "SETTLED: Alex confirmed it stays (2026-08-14), so ADR-0012's table reads as a",
+    "minimum rather than as an exhaustive list. Left recorded rather than deleted",
+    "because the next reader comparing this file to the record will find a",
+    "validation the record does not mention, and 'someone decided this' is the",
+    "thing they need to know. recording-schema.test.ts pins it either way."
   ],
 
   "deferredInvariants": [
