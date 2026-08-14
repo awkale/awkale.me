@@ -228,6 +228,20 @@ important page of the site should depend on. A single nullable
 `featuredRank` carries selection and order in one field, so the contradictory
 state does not exist.
 
+> **One nullable rank does not remove every contradictory state.** Recorded while
+> [AWK-31](https://linear.app/awkale/issue/AWK-31/create-the-project-and-imagegroup-content-types)
+> applied this schema. The claim above holds against the *boolean-plus-order* pair
+> it was written to reject — those two fields can disagree, and one field cannot
+> disagree with itself. But nothing stops two projects both holding rank 1, which
+> reintroduces exactly the non-deterministic home-page order this record rejected a
+> bare boolean for. The paragraph overstates what the field shape buys.
+>
+> `unique: true` on `featuredRank` was considered and **not** applied: swapping
+> ranks 1 and 2 transiently requires a duplicate, and Contentful would block the
+> publish, which is a real cost on a 2–3 item list edited by hand. So distinctness
+> joins AWK-39's build assertions beside `featuredRank`-requires-`body` — the same
+> field, and now two rules rather than one.
+
 **Dates.** A single `date` is enough to sort the index but compresses a project
 that ran for months into one arbitrary day — which is precisely how the
 meaningless `2019-03-15` and `2019-03-16` on the two existing stubs came to

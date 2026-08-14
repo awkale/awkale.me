@@ -36,9 +36,9 @@ See `docs/agents/domain.md`.
 | `CONTEXT.md` | The ubiquitous language. Read before naming anything. |
 | `docs/adr/` | Fourteen accepted records. The spec. |
 | `docs/research/` | Research output backing a decision — currently ADR-0009's rendering-layer comparison. |
-| `docs/agents/facts.md` | 59 findings — the AWK-5 map's 58 plus later additions, which carry an `Added by` line. Findings, not spec — verify before trusting. |
+| `docs/agents/facts.md` | 62 findings — the AWK-5 map's 58 plus later additions, which carry an `Added by` line. Findings, not spec — verify before trusting. The file's own header still says fifty-nine; count with `grep -c '^\* '` rather than trusting either number. |
 | `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. |
-| `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. Also `archive-schema.json` + `migrate_schema.py` — the decided schema and the CMA applier for it (AWK-30). |
+| `scripts/contentful/` | Archive pipeline: parser, importer, and `bso-graph.json`. Also two schema declaration + applier pairs: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types) and `portfolio-schema.json` + `migrate_portfolio.py` (AWK-31, creates `project` and `imageGroup`). |
 | `public/_redirects` | The thirteen redirects. Never add a catch-all — see the file's own header. |
 | `scripts/curl-sweep.sh` | Post-cutover redirect sweep. ADR-0010's mitigation for having no request log. |
 | `Wikipedia BSO Archive.xlsx` | The raw source the parser reads. |
@@ -130,12 +130,21 @@ Contentful schema exists in the space** — `concert.attended`, `concert.satOut`
 `composer.slug`, `composer.period`, `work.forms` / `period` and the `project` type
 are all absent from `master`. That is the real blocker, not the toolchain.
 
-> **The archive half of that is done.** AWK-30 applied the ten fields ADRs
-> 0005–0008 decided, on 2026-08-14, and all four content types are activated.
-> `scripts/contentful/archive-schema.json` is the declared schema and
-> `migrate_schema.py` applied it; re-run it with `--dry-run` to check the space
-> rather than trusting this paragraph. **The `project` type is still absent** and
-> has no migration.
+> **All of that schema now exists.** AWK-30 applied the ten fields ADRs 0005–0008
+> decided and AWK-31 created ADR-0003's two portfolio types, both on 2026-08-14,
+> and every affected content type is activated. The space holds **13 content
+> types**, up from 11. There are two declaration + applier pairs —
+> `archive-schema.json` + `migrate_schema.py`, and `portfolio-schema.json` +
+> `migrate_portfolio.py` — and each takes `--dry-run`, which is how to check the
+> space rather than trusting this paragraph.
+>
+> Three AWK-31 details that are easy to get wrong from the ticket alone: `project`
+> has **14 fields, not the 13 the ticket claims** (ADR-0003's table has fourteen
+> rows and the ticket says to copy the record); `technologies`' allowed list was
+> **never specified in any record**, so its eleven values were derived under
+> AWK-31 and do not yet cover Agent A or Cision; and `body` permits
+> `entry-hyperlink` to **any** entry type, because ADR-0003 restricts embedded
+> *blocks* and a hyperlink is not one.
 
 **Schema is not data.** Every field AWK-30 added is empty — it wrote no entry
 data — and no CDA token is configured here, so `app/data/sample.ts` is still what

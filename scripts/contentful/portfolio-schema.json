@@ -1,0 +1,422 @@
+{
+  "note": [
+    "The two portfolio content types, taking the space from 11 types to 13.",
+    "AWK-31. Read by migrate_portfolio.py, asserted by portfolio-schema.test.ts.",
+    "",
+    "Counted that way ON PURPOSE. AWK-31 calls these 'the twelfth and thirteenth',",
+    "but ADR-0012 calls `recording` 'the twelfth content type in the space' — two",
+    "accepted claims on slot twelve, because both were written against an 11-type",
+    "space and neither anticipated the other landing first. These two landed, so",
+    "`recording` will be the FOURTEENTH. Ordinals are the fragile way to say this.",
+    "",
+    "Each entry under `fields` is a VERBATIM Contentful field object, so the applier",
+    "sends it as-is and never translates. Anything that is not a field object lives",
+    "at the group level, outside them. Same convention as archive-schema.json.",
+    "",
+    "CREATION, not migration. `/projects` is 100% greenfield — no project or",
+    "case-study type has ever existed in this space — so unlike archive-schema.json",
+    "this file declares whole types, and its required fields are safe because the",
+    "types have no entries. The applier will NOT append a required field to a type",
+    "that already holds entries; see migrate_portfolio.py.",
+    "",
+    "ORDER IS LOAD-BEARING. `imageGroup` comes first because `project.body`",
+    "restricts its embedded blocks to `imageGroup` by id, and Contentful rejects a",
+    "linkContentType naming a type that does not exist. Creating `project` first",
+    "fails the migration on its first write. Do not sort this array.",
+    "",
+    "Entries take Contentful's AUTO-GENERATED ids. The archive's `cmp-`/`cnc-`/",
+    "`wrk-`/`pi-` ids exist only because import_to_contentful.py computes them;",
+    "projects are authored by hand, so they need no prefix convention at all."
+  ],
+
+  "sources": {
+    "project": "docs/adr/0003-portfolio-content-model.md",
+    "imageGroup": "docs/adr/0003-portfolio-content-model.md",
+    "coverImage delivery": "docs/adr/0013-asset-image-delivery.md",
+    "which entries ship": "https://linear.app/awkale/issue/AWK-21"
+  },
+
+  "vocabularyNotes": {
+    "disciplines": [
+      "ADR-0003's two values. Design and Development are what the site is about;",
+      "the record's own first line calls them out as the primary focus."
+    ],
+    "technologies": [
+      "ADR-0003 specifies `in: […], explicit allowed list` and NEVER ENUMERATES IT.",
+      "Neither does AWK-31. So these eleven are derived under AWK-31 from the five",
+      "projects AWK-21 ships, using only what this repo and docs/agents/facts.md can",
+      "actually support:",
+      "",
+      "  awkale.me   React, React Router, TypeScript, Tailwind CSS, Vite and",
+      "              Netlify (@netlify/vite-plugin) are all in package.json.",
+      "              Contentful is NOT — no CDA client is installed yet, so that",
+      "              value comes from the space this script writes to and from",
+      "              ADR-0002, not from a dependency.",
+      "  Waterfall   React, TypeScript, Storybook, Figma, AG Grid, Supernova.",
+      "              `ux.dv01.co` is the Supernova docs site (facts.md); AG Grid is",
+      "              named in the design system's own Patterns section.",
+      "",
+      "HONEST GAP: nothing here sourced Agent A's stack or the 2019 Cision tooling,",
+      "so those three entries are under-covered and AWK-43 will likely need to add",
+      "values before authoring them.",
+      "",
+      "Alphabetical, so the `in` list diffs cleanly. Extending it means editing this",
+      "list and re-running the applier — ADR-0003 accepts that cost explicitly, and",
+      "rejected free text because nothing then prevents `React`, `react` and",
+      "`ReactJS` becoming three tags that silently break grouping on the index."
+    ],
+    "layout": [
+      "ADR-0003's three, verbatim including the camelCase: `sideBySide`, `grid`,",
+      "`fullWidth`. These are stored values a component switches on, not display",
+      "strings, which is why they are not Title Case like `period` and `forms`."
+    ]
+  },
+
+  "createTypes": [
+    {
+      "id": "imageGroup",
+      "name": "Image group",
+      "description": "An ordered set of assets with a layout hint, embedded in a project's body. Captions and alt text come from each Asset, not from here.",
+      "displayField": "label",
+      "fields": [
+        {
+          "id": "label",
+          "name": "Label",
+          "type": "Symbol",
+          "localized": false,
+          "required": true,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "images",
+          "name": "Images",
+          "type": "Array",
+          "localized": false,
+          "required": true,
+          "validations": [],
+          "disabled": false,
+          "omitted": false,
+          "items": {
+            "type": "Link",
+            "linkType": "Asset",
+            "validations": []
+          }
+        },
+        {
+          "id": "layout",
+          "name": "Layout",
+          "type": "Symbol",
+          "localized": false,
+          "required": true,
+          "validations": [{ "in": ["sideBySide", "grid", "fullWidth"] }],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "caption",
+          "name": "Caption",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        }
+      ]
+    },
+
+    {
+      "id": "project",
+      "name": "Project",
+      "description": "A piece of design or development work presented at /projects. An empty body means the project is listed in the index and has no page of its own.",
+      "displayField": "title",
+      "fields": [
+        {
+          "id": "title",
+          "name": "Title",
+          "type": "Symbol",
+          "localized": false,
+          "required": true,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "slug",
+          "name": "Slug",
+          "type": "Symbol",
+          "localized": false,
+          "required": true,
+          "validations": [{ "unique": true }],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "summary",
+          "name": "Summary",
+          "type": "Symbol",
+          "localized": false,
+          "required": true,
+          "validations": [{ "size": { "max": 160 } }],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "organization",
+          "name": "Organization",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "role",
+          "name": "Role",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "disciplines",
+          "name": "Disciplines",
+          "type": "Array",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false,
+          "items": {
+            "type": "Symbol",
+            "validations": [{ "in": ["Design", "Development"] }]
+          }
+        },
+        {
+          "id": "technologies",
+          "name": "Technologies",
+          "type": "Array",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false,
+          "items": {
+            "type": "Symbol",
+            "validations": [
+              {
+                "in": [
+                  "AG Grid",
+                  "Contentful",
+                  "Figma",
+                  "Netlify",
+                  "React",
+                  "React Router",
+                  "Storybook",
+                  "Supernova",
+                  "Tailwind CSS",
+                  "TypeScript",
+                  "Vite"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "startDate",
+          "name": "Start date",
+          "type": "Date",
+          "localized": false,
+          "required": true,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "endDate",
+          "name": "End date",
+          "type": "Date",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "featuredRank",
+          "name": "Featured rank",
+          "type": "Integer",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "coverImage",
+          "name": "Cover image",
+          "type": "Link",
+          "linkType": "Asset",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "liveUrl",
+          "name": "Live URL",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [
+            {
+              "regexp": {
+                "pattern": "^(ftp|http|https):\\/\\/(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(\\/|\\/([\\w#!:.?+=&%@!\\-/]))?$",
+                "flags": null
+              }
+            }
+          ],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "repoUrl",
+          "name": "Repository URL",
+          "type": "Symbol",
+          "localized": false,
+          "required": false,
+          "validations": [
+            {
+              "regexp": {
+                "pattern": "^(ftp|http|https):\\/\\/(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(\\/|\\/([\\w#!:.?+=&%@!\\-/]))?$",
+                "flags": null
+              }
+            }
+          ],
+          "disabled": false,
+          "omitted": false
+        },
+        {
+          "id": "body",
+          "name": "Body",
+          "type": "RichText",
+          "localized": false,
+          "required": false,
+          "validations": [
+            {
+              "enabledMarks": ["bold", "italic", "underline", "code", "superscript", "subscript", "strikethrough"]
+            },
+            {
+              "enabledNodeTypes": [
+                "heading-1",
+                "heading-2",
+                "heading-3",
+                "heading-4",
+                "heading-5",
+                "heading-6",
+                "ordered-list",
+                "unordered-list",
+                "hr",
+                "blockquote",
+                "embedded-entry-block",
+                "embedded-asset-block",
+                "table",
+                "asset-hyperlink",
+                "entry-hyperlink",
+                "hyperlink"
+              ]
+            },
+            {
+              "nodes": {
+                "embedded-entry-block": [{ "linkContentType": ["imageGroup"] }]
+              }
+            }
+          ],
+          "disabled": false,
+          "omitted": false
+        }
+      ]
+    }
+  ],
+
+  "richTextNotes": [
+    "`paragraph` and `text` are deliberately absent from `enabledNodeTypes`, and",
+    "that does NOT forbid paragraphs. They are structural nodes, always permitted,",
+    "and outside the toggleable set — verified against a content type authored in",
+    "the Contentful web app, whose full set is the list above plus",
+    "`embedded-entry-inline`.",
+    "",
+    "`embedded-entry-inline` IS dropped, and it is the only place this file trims",
+    "Contentful's default. The `nodes` validation constrains embedded-entry-BLOCK",
+    "only, so leaving the inline variant enabled would let an author inline-embed",
+    "any entry in the space — a concert, a work, a composer — into a case study,",
+    "and 'embedded blocks restricted to imageGroup and assets' would be false.",
+    "",
+    "Resource nodes (`embedded-resource-block`/`-inline`, `resource-hyperlink`)",
+    "address entries in OTHER spaces. This space has one environment and no",
+    "siblings, so they are surfaces with nothing legitimate behind them.",
+    "",
+    "KNOWN GAP, deliberately left open: `entry-hyperlink` and `asset-hyperlink`",
+    "stay enabled, which lets body text hyperlink to any entry in the space. A",
+    "hyperlink is not an embedded block, so ADR-0003's restriction does not reach",
+    "it, and cross-linking a case study to an archive page is plausibly wanted. But",
+    "AWK-39's RichText renderer must resolve such a link to a URL or emit a dead",
+    "href — there is no schema constraint stopping a link to an entry type the",
+    "renderer knows nothing about. Restrict it here if that turns out to be",
+    "unwanted; do not discover it in a rendered page.",
+    "",
+    "Marks are NOT trimmed. ADR-0003 restricts embedded blocks and says nothing",
+    "about formatting, so narrowing them would be this file inventing an editorial",
+    "policy no record decided."
+  ],
+
+  "deferredInvariants": [
+    {
+      "id": "side-by-side-is-two-images",
+      "assertedBy": "AWK-39",
+      "why": [
+        "`layout: sideBySide` means exactly two images and the other two layouts mean",
+        "N, but a Contentful array's size min/max cannot depend on another field's",
+        "value. A `max: 2` on `images` would cap `grid` and `fullWidth` too — the",
+        "wizard item alone needs five.",
+        "",
+        "So `images` carries NO size validation at all, and the consequence is",
+        "permanent: the sideBySide component must tolerate N forever, however AWK-39's",
+        "assertion is written. An assertion catches bad data at build time; it does",
+        "not stop a three-asset sideBySide group existing in the space."
+      ]
+    },
+    {
+      "id": "featured-rank-requires-body",
+      "assertedBy": "AWK-39",
+      "why": [
+        "The fourth invariant Contentful cannot hold, after `sideBySide`'s image",
+        "count, `satOut`'s subset rule and `(composer, slug)`'s scoped uniqueness.",
+        "",
+        "Both fields are independently optional and must stay that way — three of the",
+        "five entries AWK-21 ships are index-only, so requiring `body` breaks them,",
+        "and `featuredRank` is unset on all three. But a featured project with no",
+        "`body` has no page, so its home-page card either does not click at all or",
+        "clicks off-site to `liveUrl` while the card beside it opens a case study.",
+        "That is on the front door, where 2-3 cards carry the whole positioning.",
+        "",
+        "SECOND HALF, recorded under AWK-31 because the schema does not deliver what",
+        "ADR-0003 claims for it. The record chose one nullable `featuredRank` over a",
+        "boolean plus an order integer 'so the contradictory state does not exist' —",
+        "but nothing stops two projects both being rank 1, which reintroduces exactly",
+        "the non-deterministic home-page order the record rejected a bare boolean for.",
+        "",
+        "`unique: true` on `featuredRank` was considered and NOT applied: swapping",
+        "ranks 1 and 2 transiently needs a duplicate, and Contentful would block the",
+        "publish, which is a real cost on a 2-3 item list edited by hand. Assert",
+        "distinctness in the build instead, alongside the requires-body rule."
+      ]
+    }
+  ]
+}

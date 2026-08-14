@@ -6,8 +6,18 @@ Imports `Wikipedia BSO Archive.xlsx` (repo root) into the Contentful space
 Two steps: parse the spreadsheet into a normalized entity graph, then push that
 graph to the Contentful Management API.
 
-Schema is a separate concern with its own script — see below. It has to be,
-because none of the decided archive schema exists in the space yet.
+Schema is a separate concern with **two** scripts of its own — see below. One
+appends fields to existing archive types, one creates the portfolio types. They
+are separate because the properties that make appending safe are not the ones
+that make creating safe.
+
+| Declaration | Applier | Ticket | Does |
+| --- | --- | --- | --- |
+| `archive-schema.json` | `migrate_schema.py` | AWK-30 | Appends 10 optional fields to 4 archive types |
+| `portfolio-schema.json` | `migrate_portfolio.py` | AWK-31 | Creates `imageGroup` and `project` |
+
+Both take `--dry-run`, both reject unrecognized arguments, and both re-activate a
+type stranded by a half-finished run.
 
 ## Schema migration
 
@@ -99,6 +109,111 @@ shapes that carry a decision, such as every added field being optional.
 It asserts the *file*, not the space: nothing here proves the migration ran,
 because that needs a CMA token and ADR-0002 forbids one reaching CI. It also
 cannot catch a wrong decision, only drift away from a recorded one.
+
+## Portfolio content types
+
+`portfolio-schema.json` declares ADR-0003's two types and `migrate_portfolio.py`
+creates them. **Applied 2026-08-14** — the space now holds 13 content types.
+
+```bash
+# report what is missing -- writes nothing, and this is the safe default
+python3 scripts/contentful/migrate_portfolio.py --dry-run
+
+# create the two types and activate them
+python3 scripts/contentful/migrate_portfolio.py
+```
+
+`imageGroup` (4 fields) and `project` (**14** fields — see below). Schema only:
+it writes no entry data, so both types are created empty and stay that way until
+AWK-43 authors the five entries.
+
+### Why this is a second script rather than a flag on the first
+
+`migrate_schema.py` appends **optional** fields to four types holding 1,155
+entries between them (`concert` 249, `composer` 244, `conductor` 37, `work` 625,
+counted 2026-08-14), and *every field being optional* is the property that makes
+it safe. Note that the 1,228 quoted in `facts.md` and ADR-0007 is a different
+five-type set — it includes `hall` and `soloist` and excludes `concert` — so it is
+not the figure that describes this risk.
+This schema is mostly **required** fields, which is safe only because the types
+have no entries. Those are different guarantees, and one script whose safety
+depends on which branch it took is a script whose safety nobody can state.
+
+### Three things the ticket gets wrong or leaves open
+
+**`project` has 14 fields, not 13.** AWK-31's summary says 13; ADR-0003's schema
+table has fourteen rows, and the ticket itself says to copy the tables from the
+record rather than re-deriving them. The record won. The field set is asserted in
+`portfolio-schema.test.ts`, so the count cannot drift silently.
+
+**`technologies`' allowed list was never specified.** ADR-0003 writes
+`in: […], explicit allowed list` and enumerates nothing, and neither does the
+ticket. The eleven live values were derived under AWK-31 from `package.json` and
+`docs/agents/facts.md`. They cover awkale.me and the Waterfall Design System and
+**do not cover Agent A or the 2019 Cision tooling** — AWK-43 will likely need to
+extend the list and republish the type. `vocabularyNotes.technologies` in the JSON
+records the derivation and the gap.
+
+**`body` permits `entry-hyperlink` to any entry type.** ADR-0003 restricts
+embedded *blocks* to `imageGroup` and assets, and a hyperlink is not a block, so
+nothing stops a case study hyperlinking a `work` or a `concert`. Left open
+deliberately — cross-linking to an archive page is plausibly wanted — but AWK-39's
+RichText renderer has to resolve such a link or emit a dead href.
+
+### Creation order is load-bearing
+
+`imageGroup` is declared first because `project.body` restricts its embedded
+blocks to `imageGroup` *by id*, and Contentful rejects a `linkContentType` naming
+a type that does not exist. Creating `project` first fails the migration on its
+first write. The applier walks the file in order and never sorts;
+`portfolio-schema.test.ts` pins the order so a later tidy-up cannot alphabetize it.
+
+### It refuses to add a required field to a populated type
+
+Only reachable on a re-run against a type that already exists. Adding a required
+field to a type holding entries invalidates **every one of them at once** — they
+all fail validation on a field none of them has a value for. So before appending
+any required field the applier counts the type's entries and refuses if there are
+any, exiting non-zero. Populate the field by hand first, or add it as optional.
+
+On the greenfield path this branch never runs, which is exactly why it is worth
+having: the dangerous case is the second run, months later, against a type that
+by then holds the five project entries.
+
+### Two invariants are deliberately absent
+
+Both are handed to AWK-39's build assertions, and both are recorded under
+`deferredInvariants` in the JSON with the reasoning:
+
+* **`sideBySide` means two images**, but a Contentful array's `size` cannot depend
+  on another field's value — a `max: 2` would cap `grid` and `fullWidth` too, and
+  the wizard item alone needs five. So `images` carries no size validation, and
+  the consequence is permanent: **the component must tolerate N forever.** An
+  assertion catches bad data at build time; it does not stop a three-asset
+  `sideBySide` group existing in the space.
+* **`featuredRank` requires a non-empty `body`**, or the home page gets a card
+  that does not click. Both fields must stay independently optional — three of the
+  five entries that ship are index-only.
+
+`portfolio-schema.test.ts` asserts these are *absent*. An absence is invisible on
+inspection, so without the test the next reader adds a `max: 2` in good faith and
+breaks an invariant that lives somewhere else entirely.
+
+**A third gap, found while implementing and not in any record:** ADR-0003 chose a
+single nullable `featuredRank` over a boolean-plus-order pair *"so the
+contradictory state does not exist"* — but nothing stops two projects both being
+rank 1, which reintroduces the same non-deterministic home-page order the record
+rejected a bare boolean for. `unique: true` was considered and **not** applied,
+because swapping ranks 1 and 2 transiently needs a duplicate and Contentful would
+block the publish — a real cost on a 2–3 item hand-edited list. Assert
+distinctness in the build instead.
+
+### What guards the file
+
+`portfolio-schema.test.ts` runs in `bun run test` and pins the field sets, the
+three vocabularies, the required set, the RichText restrictions, the creation
+order, and the deliberate absences above. Same limits as the archive guard: it
+asserts the file, not the space, and it cannot catch a wrong decision.
 
 ## Usage
 
