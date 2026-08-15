@@ -312,6 +312,67 @@ records, four are not performances, and five are absent from the archive.
 
 The type is created **empty**. Nothing in this repo authors a `recording` entry.
 
+## Participation seeding
+
+`seed_participation.py` writes `concert.attended` and `concert.satOut` from
+[`docs/archive/participation-checklist.md`](../../docs/archive/participation-checklist.md).
+AWK-36. ADR-0006 made every route participation-driven, so this one pass is what
+generates the site's page set — **121 concerts, 322 works, 147 composers = 590
+routed pages**.
+
+```bash
+# regenerate the plan -- offline, no token, no space access
+python3 scripts/contentful/seed_participation.py --plan
+
+# report what would change -- writes nothing, and this is the safe default
+python3 scripts/contentful/seed_participation.py
+
+# write, then publish
+python3 scripts/contentful/seed_participation.py --apply --publish
+```
+
+Ran on 2026-08-15: 127 concerts written and published, 121 `true` against 6
+`false`, 4 carrying a `satOut` link.
+
+### Dry run is the default here, unlike every other script
+
+`import_to_contentful.py` and `archive_orphans.py` write unless told otherwise.
+This one reports unless told to `--apply`, because participation is **destructive
+to the sitemap**: a stray `attended: false` does not annotate a page, it deletes
+one, and after the apex cutover it 404s a live URL.
+
+### The date is the identity, and the derived id is not
+
+The plan keys on **date** and carries `graphId` only to join `bso-graph.json`.
+Addressing the CMA by the derived id 404s on four of the 127: the importer matches
+concerts on date and reuses whatever entry it finds, so 33 hand-curated concerts
+live under Contentful auto-ids — 2001-05-24 is `1LPJsOTpuDin0YfbRM2RPW` — and
+`cnc-20081213-2` still carries the suffix left by the row 912/913 duplicate header.
+
+### satOut is resolved, never constructed
+
+Program item ids are positional and derive from the **concert** id, so a run's
+second night carries the first night's ids. Building `pi-{own date}-{index}` is
+wrong for 20 items across 14 concerts. Every link is read out of that concert's own
+`program` array instead, and the run refuses outright if the live `program`
+disagrees with the graph's — a stale graph aims `satOut` at a renumbered item, and
+Contentful cannot validate `satOut ⊆ program` itself.
+
+### Three states, and the third is not a default
+
+`true` played, `false` was-around-and-missed, **unset** arrived via the BSO seed
+and was never Alex's history. The 119 pre-tenure concerts are absent from
+`participation.json` entirely, so they cannot be written even by accident. After
+the run the space holds 121 / 6 / 122 — and 122 is those 119 plus the 3 undated
+concerts.
+
+### What guards the file
+
+`participation.test.ts` re-derives the whole plan from the checklist and the graph
+independently, rather than reading the generator's output, and asserts the page
+counts ADR-0006 predicts. It asserts the FILE, not the space; proving the space
+matches is AWK-39's build assertion.
+
 ## Usage
 
 ```bash

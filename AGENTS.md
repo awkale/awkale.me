@@ -37,8 +37,9 @@ See `docs/agents/domain.md`.
 | `docs/adr/` | Fourteen accepted records. The spec. |
 | `docs/research/` | Research output backing a decision — currently ADR-0009's rendering-layer comparison. |
 | `docs/agents/facts.md` | 62 findings — the AWK-5 map's 58 plus later additions, which carry an `Added by` line. Findings, not spec — verify before trusting. The file's own header still says fifty-nine; count with `grep -c '^\* '` rather than trusting either number. |
-| `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. |
-| `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
+| `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. **Seeded into Contentful under AWK-36** — tick the boxes here and regenerate, never hand-edit the plan. |
+| `scripts/contentful/participation.json` | The seeding plan derived from that checklist. Generated, guarded by `participation.test.ts`. Keys on **date**; `graphId` is a join key, not an address. |
+| `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), `seed_participation.py` (AWK-36's participation pass — **dry run is its default**, unlike its siblings), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
 | `docs/archive/recording-curation.md` | Per-video verdicts for the BSO channel (AWK-32). Three of fifteen uploads are seedable. ADR-0012 forbids scripting this; the file is a worksheet, not an input. |
 | `docs/archive/program-19930726-liyo-dallas-brooks-hall.jpg` | Photographed printed program, Long Island Youth Orchestra at Dallas Brooks Hall, Melbourne, 1993-07-26. **A primary source for a concert no other source here holds** — not in the xlsx, not in `bso-graph.json`, and none of its orchestra, hall or conductors exist in the archive. Untranscribed. |
 | `public/_redirects` | The thirteen redirects. Never add a catch-all — see the file's own header. |
@@ -136,10 +137,17 @@ and `bun run typecheck` both pass, and the repo carries `package.json`,
 `bun.lock`, `netlify.toml`, `react-router.config.ts`, `vite.config.ts` and
 self-hosted fonts. It is not yet connected to Netlify.
 
-**There is a test suite too, as of ADR-0014**: 31 tests across four files — the
-built-output page assertion, the prerender enumerator's guards, `/contact/`'s form
-attributes, and `public/_redirects`. `test`, `lint` and `format:check` all pass. Two gaps that older
-tickets still assume: there is **no CI** in this repo at all (no `.github/`), so
+**There is a test suite too, as of ADR-0014**: **118 tests across eight files** —
+the built-output page assertion, the prerender enumerator's guards, `/contact/`'s
+form attributes, `public/_redirects`, the three schema declarations, and AWK-36's
+participation plan. `test`, `lint` and `format:check` all pass.
+
+> This previously read *"31 tests across four files"*, which counted the suite as
+> ADR-0014 first shipped it and went stale as the schema declarations arrived with
+> their own guards. Corrected 2026-08-15 under AWK-36, which contributed 20 of the
+> 118. Count with `bun run test` rather than trusting this number either.
+
+Two gaps that older tickets still assume: there is **no CI** in this repo at all (no `.github/`), so
 "joins the CI page assertion" means `scripts/assert-pages.test.ts` and nothing
 automatic; and route components taking loader data are untestable as written,
 because Vitest runs without the `reactRouter()` plugin.
@@ -177,6 +185,18 @@ data — and no CDA token is configured here, so `app/data/sample.ts` is still w
 the routes read. A field that exists and is empty looks exactly like a field that
 does not exist, to anything reading the Delivery API. Seeding is AWK-36 and
 AWK-37; wiring the CDA is AWK-39.
+
+> **Participation is now seeded.** AWK-36 ran on 2026-08-15: `concert.attended` on
+> all 127 in-scope concerts (121 `true`, 6 `false`) and `satOut` on the 4 that sat
+> a work out, all published. The space answers 121 / 6 / 122 unset, and that 122 is
+> the 119 pre-tenure concerts plus the 3 undated ones. So the page set ADR-0006
+> predicts — **121 concerts, 322 works, 147 composers = 590 routed pages** — is
+> real data now, not a projection, and it is the second thing AWK-39 can read
+> through the CDA after the three recordings.
+>
+> `app/data/sample.ts` is still what the routes read regardless: seeding filled
+> the space, not the build. **AWK-37 is still outstanding** — `work.forms` and
+> `period`, `composer.period` and the `genre` migration are all still empty.
 
 The one exception is `recording`, which holds **three published entries** —
 AWK-32's curated BSO videos, all on `cnc-20221218`. They are the only real
