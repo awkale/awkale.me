@@ -48,5 +48,17 @@ NODE_VERSION = "22"
 # committed. ADR-0002 specifies CONTENTFUL_SPACE_ID (3iiyvj5u5c9h),
 # CONTENTFUL_ENVIRONMENT (master) and a read-only Delivery token. The CFPAT-…
 # Content Management token must NEVER enter CI; it stays local in
-# ~/.contentful-cma-token. None are needed yet — nothing reads the CDA, and none
-# of the decided schema exists in the space.
+# ~/.contentful-cma-token.
+#
+# ALL THREE ARE NOW REQUIRED, as of AWK-39 — this previously read "none are needed
+# yet". The build reads the Delivery API for every path it prerenders, so a
+# missing one is not a degraded build, it is an empty site. app/lib/contentful.ts
+# asserts them before fetching anything so that fails loudly instead.
+#
+# The names in the dashboard, verified 2026-08-15: CONTENTFUL_SPACE_ID and
+# CONTENTFUL_ENVIRONMENT are all-scopes with one value across every deploy
+# context; CONTENTFUL_DELIVERY_TOKEN is scoped to Builds, Functions and Runtime
+# and holds FOUR values across four contexts. That last asymmetry is the one to
+# watch — a context whose token is empty builds a green, contentless site.
+#
+# See .env.example, which carries the same three names for local builds.

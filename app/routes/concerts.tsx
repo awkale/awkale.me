@@ -1,7 +1,8 @@
 import { ToggleButton } from 'react-aria-components'
 import { Link } from 'react-router'
 
-import { COUNTS, CONCERTS, FACETS } from '../data/sample'
+import { loadArchive } from '../lib/archive'
+import type { Route } from './+types/concerts'
 
 /**
  * The dense surface, and the one that decided direction B.
@@ -14,22 +15,58 @@ import { COUNTS, CONCERTS, FACETS } from '../data/sample'
  * Filters live in the query string so a filtered view stays linkable, which is
  * why facets need no routes of their own — the decision that keeps this section
  * at ~590 pages instead of ~870.
+ *
+ * Every count here is COMPUTED from the published set rather than quoted. ADR-0006
+ * replaced a fixed page count with a rule, and said so explicitly: the number moves
+ * down as the checklist is filled in and up as pre-BSO programmes are added, so
+ * anything needing it must derive it.
  */
-export default function Concerts() {
+export async function loader() {
+  const { concerts, works, composers } = await loadArchive()
+
+  const tally = (values: (string | null)[]) => {
+    const counts = new Map<string, number>()
+    for (const value of values) {
+      if (value) counts.set(value, (counts.get(value) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .map(([name, n]) => ({ name, n }))
+      .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
+  }
+
+  const conductors = tally(concerts.map((c) => c.conductor))
+  const halls = tally(concerts.map((c) => c.hall))
+
+  return {
+    concerts,
+    facets: { conductors, halls },
+    counts: {
+      concerts: concerts.length,
+      works: works.length,
+      composers: composers.length,
+      conductors: conductors.length,
+      halls: halls.length,
+    },
+  }
+}
+
+export default function Concerts({ loaderData }: Route.ComponentProps) {
+  const { concerts, facets, counts } = loaderData
+
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
         <h1 className="font-display text-2xl font-semibold tracking-tight">Performance history</h1>
 
         <p className="mt-2 text-sm text-muted-foreground">
-          <span className="tabular">{COUNTS.concerts}</span> concerts · <span className="tabular">{COUNTS.works}</span>{' '}
-          works · <span className="tabular">{COUNTS.composers}</span> composers ·{' '}
-          <span className="tabular">{COUNTS.conductors}</span> conductors ·{' '}
-          <span className="tabular">{COUNTS.halls}</span> halls
+          <span className="tabular">{counts.concerts}</span> concerts · <span className="tabular">{counts.works}</span>{' '}
+          works · <span className="tabular">{counts.composers}</span> composers ·{' '}
+          <span className="tabular">{counts.conductors}</span> conductors ·{' '}
+          <span className="tabular">{counts.halls}</span> halls
         </p>
 
-        <FacetRow label="Conductor" items={FACETS.conductors} />
-        <FacetRow label="Hall" items={FACETS.halls} />
+        <FacetRow label="Conductor" items={facets.conductors} />
+        <FacetRow label="Hall" items={facets.halls} />
 
         <table className="mt-5 w-full border-collapse text-[0.8rem]">
           <thead>
@@ -42,14 +79,14 @@ export default function Concerts() {
             </tr>
           </thead>
           <tbody>
-            {CONCERTS.map((c) => (
-              <tr key={c.slug} className="hover:bg-muted">
+            {concerts.map((c) => (
+              <tr key={c.id} className="hover:bg-muted">
                 <Td className="tabular">
                   <Link to={`/concerts/${c.slug}/`} className="no-underline hover:underline">
                     {c.date}
                   </Link>
                 </Td>
-                <Td>{c.hall}</Td>
+                <Td>{c.hall ?? '—'}</Td>
                 {/* 2007-12-16 has no conductor, which also hides it from the
                     conductor filter. The em dash is the honest rendering. */}
                 <Td className={c.conductor ? '' : 'text-muted-foreground'}>{c.conductor ?? '—'}</Td>
@@ -57,7 +94,7 @@ export default function Concerts() {
                 <Td className="text-muted-foreground">
                   {c.program
                     .slice(0, 2)
-                    .map((i) => i.work)
+                    .map((i) => i.label)
                     .join(', ')}
                   {c.program.length > 2 ? '…' : ''}
                 </Td>

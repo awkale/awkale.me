@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
-import { PROJECTS } from '../data/sample'
+import { loadArchive } from '../lib/archive'
+import type { Route } from './+types/projects'
 
 /**
  * Direction B renders the index as a table rather than a card grid.
@@ -10,13 +11,29 @@ import { PROJECTS } from '../data/sample'
  * component varying on data presence, not two. The title is a link only when a
  * body exists; otherwise it is flat text. A card that looks clickable but is
  * not is worse than an obviously flat one.
+ *
+ * The `project` type is EMPTY in Contentful as of AWK-39 — creating the five
+ * entries is AWK-43 — so this index legitimately renders no rows today. That is
+ * the fail-closed behaviour working: nothing publishes until something is
+ * authored.
  */
-export default function Projects() {
+export async function loader() {
+  const { projects } = await loadArchive()
+
+  return { projects }
+}
+
+export default function Projects({ loaderData }: Route.ComponentProps) {
+  const { projects } = loaderData
+  const withBody = projects.filter((p) => p.hasBody).length
+
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
         <h1 className="font-display text-2xl font-semibold tracking-tight">Projects</h1>
-        <p className="mt-1 max-w-[56ch] text-sm text-muted-foreground">Two carry case studies. Three are index-only.</p>
+        <p className="mt-1 max-w-[56ch] text-sm text-muted-foreground">
+          {projects.length === 0 ? 'Nothing published yet.' : `${withBody} of ${projects.length} carry case studies.`}
+        </p>
 
         <table className="mt-6 w-full border-collapse text-sm">
           <thead>
@@ -29,8 +46,8 @@ export default function Projects() {
             </tr>
           </thead>
           <tbody>
-            {PROJECTS.map((p) => (
-              <tr key={p.slug} className="hover:bg-muted">
+            {projects.map((p) => (
+              <tr key={p.id} className="hover:bg-muted">
                 <Td className="tabular text-muted-foreground">{p.featuredRank ?? '—'}</Td>
                 <Td>
                   {p.hasBody ? (

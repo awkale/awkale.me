@@ -39,7 +39,11 @@ See `docs/agents/domain.md`.
 | `docs/agents/facts.md` | 62 findings — the AWK-5 map's 58 plus later additions, which carry an `Added by` line. Findings, not spec — verify before trusting. The file's own header still says fifty-nine; count with `grep -c '^\* '` rather than trusting either number. |
 | `docs/archive/participation-checklist.md` | What Alex played: 6 concerts missed, 4 items sat out, across 127. **Seeded into Contentful under AWK-36** — tick the boxes here and regenerate, never hand-edit the plan. |
 | `scripts/contentful/participation.json` | The seeding plan derived from that checklist. Generated, guarded by `participation.test.ts`. Keys on **date**; `graphId` is a join key, not an address. |
-| `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), `seed_participation.py` (AWK-36's participation pass — **dry run is its default**, unlike its siblings), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
+| `.env.example` | The three build variables, with the token blank. Committed on purpose — `.gitignore` carries a `!.env.example` exception — because the NAMES are what has to be right, and a wrong one renders an empty site rather than erroring. |
+| `app/lib/contentful.ts` | The CDA client. No SDK: `fetch`, pagination, retry. Asserts the three env vars before fetching anything. |
+| `app/lib/archive.ts` | **The one build-time sweep.** Three consumers — `prerenderPaths`, `buildEnd`'s search index, and every route loader — all read `loadArchive()`, which fetches once and memoizes. A second enumeration is the thing this exists to prevent. |
+| `app/lib/invariants.ts` | The seven checks Contentful cannot express as validations. See ADR-0008's amendment on the hashed-slug shape. |
+| `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), `seed_participation.py` (AWK-36's participation pass — **dry run is its default**, unlike its siblings), `backfill_slugs.py` (AWK-39's slug pass — dry run also its default; it does the two **honorific** merges and leaves the 25 **arranger** ones to AWK-23), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
 | `docs/archive/recording-curation.md` | Per-video verdicts for the BSO channel (AWK-32). Three of fifteen uploads are seedable. ADR-0012 forbids scripting this; the file is a worksheet, not an input. |
 | `docs/archive/program-19930726-liyo-dallas-brooks-hall.jpg` | Photographed printed program, Long Island Youth Orchestra at Dallas Brooks Hall, Melbourne, 1993-07-26. **A primary source for a concert no other source here holds** — not in the xlsx, not in `bso-graph.json`, and none of its orchestra, hall or conductors exist in the archive. Untranscribed. |
 | `public/_redirects` | The thirteen redirects. Never add a catch-all — see the file's own header. |
@@ -137,15 +141,18 @@ and `bun run typecheck` both pass, and the repo carries `package.json`,
 `bun.lock`, `netlify.toml`, `react-router.config.ts`, `vite.config.ts` and
 self-hosted fonts. It is not yet connected to Netlify.
 
-**There is a test suite too, as of ADR-0014**: **118 tests across eight files** —
+**There is a test suite too, as of ADR-0014**: **191 tests across twelve files** —
 the built-output page assertion, the prerender enumerator's guards, `/contact/`'s
-form attributes, `public/_redirects`, the three schema declarations, and AWK-36's
-participation plan. `test`, `lint` and `format:check` all pass.
+form attributes, `public/_redirects`, the three schema declarations, AWK-36's
+participation plan, and AWK-39's four new files (the seven invariants, the env
+assertion, the sweep's participation rules, and the RichText renderer).
+`test`, `lint` and `format:check` all pass.
 
-> This previously read *"31 tests across four files"*, which counted the suite as
-> ADR-0014 first shipped it and went stale as the schema declarations arrived with
-> their own guards. Corrected 2026-08-15 under AWK-36, which contributed 20 of the
-> 118. Count with `bun run test` rather than trusting this number either.
+> This previously read *"31 tests across four files"*, then *"118 across eight"*.
+> Both were true when written and went stale within a ticket or two. Corrected
+> 2026-08-15 under AWK-39, which contributed 73. **Count with `bun run test`
+> rather than trusting this number either** — that instruction is the durable part
+> of this paragraph.
 
 Two gaps that older tickets still assume: there is **no CI** in this repo at all (no `.github/`), so
 "joins the CI page assertion" means `scripts/assert-pages.test.ts` and nothing
@@ -156,6 +163,23 @@ because Vitest runs without the `reactRouter()` plugin.
 Contentful schema exists in the space** — `concert.attended`, `concert.satOut`,
 `composer.slug`, `composer.period`, `work.forms` / `period` and the `project` type
 are all absent from `master`. That is the real blocker, not the toolchain.
+
+> **`app/data/sample.ts` is DELETED.** AWK-39 pointed the build at the Delivery
+> API on 2026-08-15: `bun run build` sweeps Contentful once, enumerates **609
+> paths** (6 static · 121 concerts · 322 works · 160 composers · 0 projects, from
+> 370 qualifying pairs) and emits `build/client/search-index.json` from the same
+> sweep. **The build now requires the three environment variables** — see
+> `.env.example`. Its display helpers moved to `app/lib/format.ts`.
+>
+> **The sweep costs ~0.3 s cold and ~30 ms warm** against a ~7 s local build and
+> Netlify's 900 s limit, so it is not a term worth optimising. It was the last
+> unmeasured item in the build budget.
+>
+> One route is deliberately inert: **`app/routes/project.tsx` has no `loader`**,
+> because with `ssr: false` React Router permits one only on a route matched by a
+> prerender path, and `/projects/:slug` matches none while `project` holds zero
+> entries. Exporting one is a hard build failure, not a warning. The route's own
+> comment says exactly what AWK-43 must restore.
 
 > **All of that schema now exists.** AWK-30 applied the ten fields ADRs 0005–0008
 > decided, AWK-31 created ADR-0003's two portfolio types, and AWK-32 created
@@ -211,6 +235,12 @@ still carries `unique: true` — it comes off only after AWK-39's `(composer, sl
 assertion exists, which ADR-0008 requires in that order. `migrate_schema.py`
 keeps the second behind `--drop-work-slug-unique`, and that flag is **not** a
 gate the script can enforce: it cannot see whether AWK-39 landed.
+
+> **`unique: true` is off `work.slug` as of 2026-08-15.** AWK-39 landed the
+> assertion first, per ADR-0008's ordering, then ran the gated flag. So
+> `app/lib/invariants.ts` is now the ONLY thing standing between the space and 26
+> space-wide colliding work slugs — the constraint will not catch them any more,
+> and it is a one-way door. `work.genre` is unchanged and still AWK-37's.
 
 > This section previously read *"There is no build… no dependencies installed, so
 > the `.tsx` files do not typecheck yet"*, which had been false since the AWK-22

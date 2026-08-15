@@ -1,78 +1,46 @@
 /**
  * The prerender path enumerator.
  *
- * Lives here rather than inline in react-router.config.ts so the CI page
- * assertion can import the same function the build uses — AWK-17 built and proved
- * that assertion, and its value depends on both sides deriving the page set from
- * one place rather than agreeing by hand.
+ * Lives here rather than inline in react-router.config.ts so the page assertion
+ * can import the same function the build uses — AWK-17 built and proved that
+ * assertion, and its value depends on both sides deriving the page set from one
+ * place rather than agreeing by hand.
  *
- * PLACEHOLDER SOURCE. This reads app/data/sample.ts today because none of the
- * decided Contentful schema exists in the space yet — no `concert.attended`, no
- * `composer.slug`, no `project` type. Swapping the source for one Contentful
- * Delivery API sweep is the only change needed here; the shape is already right.
+ * It is now a thin consumer of app/lib/archive.ts's sweep, which reads the
+ * Contentful Delivery API. It used to read app/data/sample.ts and derive composer
+ * slugs from filing names; both are gone. Deriving was never the decision —
+ * ADR-0008 stores archive slugs precisely so a name correction and a URL can move
+ * independently, and a build-time `slugify` would have quietly re-coupled them.
  *
- * Two rules this must keep when that swap happens:
+ * The two guards below are the reason this is a function with a body rather than
+ * a one-line re-export. Both failures are silent in their own way:
  *
- *   - Paths are SLASH-FREE. A trailing slash is a hard build failure.
- *   - Enumeration must be exhaustive, and the rule is ADR-0006's, not a count:
- *     a concert page exists iff `attended`; a work page iff at least one
- *     (concert, item) pair is attended AND not in `satOut`; a composer page iff
- *     at least one of their works qualifies. Evaluated per PAIR, because 52 works
- *     were played twice and 2 three times.
+ *   - A TRAILING SLASH is a hard build failure. React Router matches the route as
+ *     `/projects` and refuses to SSR `/projects/`. Netlify then 301s the
+ *     slash-free form to the slash-ful one, so the served canonical address has
+ *     the slash and the prerender input does not. Two layers, both correct; only
+ *     this enumerator needs to know.
+ *   - A DUPLICATE means two records claiming one address. ADR-0001 keys concert
+ *     URLs by date, so a genuine double-header is data this has to catch rather
+ *     than silently collapse.
  */
-import { CONCERTS, COMPOSERS, PROJECTS, WORK } from '../data/sample'
-
-function composerSlug(filingName: string): string {
-  // ADR-0008: slugs are STORED in Contentful, not derived — this is a stand-in
-  // until composer.slug exists. Note the real rule strips honorifics (Sir/Dame)
-  // so `unique: true` on composer.slug becomes an active guard, and keeps
-  // generational markers (Strauss, Johann Sr. vs Johann II) because dropping them
-  // would silently merge four different Strausses.
-  return filingName
-    .toLowerCase()
-    .replace(/,\s*(sir|dame)\s+/g, ', ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
+import { loadArchive } from './archive'
 
 export async function prerenderPaths(): Promise<string[]> {
-  const paths = [
-    '/',
-    '/projects',
-    '/concerts',
-    '/concerts/composers',
-    // ADR-0011's two contact pages. Static, and the only entries here that are
-    // not derived from content — they exist whatever the archive holds. Both are
-    // prerendered like everything else, which is the whole reason Netlify's form
-    // scanner can see the form at deploy time.
-    '/contact',
-    '/contact/sent',
-  ]
-
-  // Case studies only. An empty `body` means index-only with no page, which is
-  // ADR-0003's central property: a stub graduates by filling one field.
-  for (const p of PROJECTS) {
-    if (p.hasBody) paths.push(`/projects/${p.slug}`)
-  }
-
-  for (const c of CONCERTS) {
-    paths.push(`/concerts/${c.slug}`)
-  }
-
-  for (const c of COMPOSERS) {
-    paths.push(`/concerts/composers/${composerSlug(c.name)}`)
-  }
-
-  // Works are addressed canonically under their composer (ADR-0001).
-  paths.push(`/concerts/composers/${composerSlug(WORK.composer)}/works/${WORK.slug}`)
+  const { paths } = await loadArchive()
 
   const seen = new Set<string>()
-  for (const p of paths) {
-    if (p.endsWith('/') && p !== '/') {
-      throw new Error(`prerender path has a trailing slash, which fails the build: ${p}`)
+  for (const path of paths) {
+    if (path.endsWith('/') && path !== '/') {
+      throw new Error(`prerender path has a trailing slash, which fails the build: ${path}`)
     }
-    if (seen.has(p)) throw new Error(`duplicate prerender path: ${p}`)
-    seen.add(p)
+    if (!path.startsWith('/')) {
+      throw new Error(`prerender path is not absolute: ${path}`)
+    }
+    if (seen.has(path)) {
+      throw new Error(`duplicate prerender path: ${path}`)
+    }
+    seen.add(path)
   }
 
   return paths

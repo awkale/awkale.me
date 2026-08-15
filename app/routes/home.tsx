@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
-import { COUNTS } from '../data/sample'
+import { loadArchive } from '../lib/archive'
+import type { Route } from './+types/home'
 
 /**
  * Home is a landing page distinct from the /projects/ index (ADR-0001).
@@ -8,8 +9,26 @@ import { COUNTS } from '../data/sample'
  * Structure is direction B: a masthead with the counts, then a directory of
  * routes. It gives immediate access to the indexes rather than selling anything,
  * which suits a section that is primarily a tool for its author.
+ *
+ * The counts are read from the sweep, never quoted. ADR-0006 replaced a fixed
+ * page count with a rule precisely because the number moves.
  */
-export default function Home() {
+export async function loader() {
+  const { concerts, works, composers, projects } = await loadArchive()
+
+  return {
+    counts: {
+      concerts: concerts.length,
+      works: works.length,
+      composers: composers.length,
+      projects: projects.length,
+    },
+  }
+}
+
+export default function Home({ loaderData }: Route.ComponentProps) {
+  const { counts } = loaderData
+
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
@@ -20,21 +39,21 @@ export default function Home() {
           </div>
 
           <dl className="flex gap-8">
-            <Stat label="Concerts" value={COUNTS.concerts} />
-            <Stat label="Works" value={COUNTS.works} />
-            <Stat label="Composers" value={COUNTS.composers} />
+            <Stat label="Concerts" value={counts.concerts} />
+            <Stat label="Works" value={counts.works} />
+            <Stat label="Composers" value={counts.composers} />
           </dl>
         </div>
 
         <div className="mt-8 overflow-hidden rounded-[var(--radius)] border border-border-subtle">
-          <DirRow to="/projects/" path="/projects" desc="Five pieces of design and development work" n="5" />
+          <DirRow to="/projects/" path="/projects" desc="Design and development work" n={String(counts.projects)} />
           <DirRow
             to="/concerts/"
             path="/concerts"
             desc="Performance history, indexed by composer and work"
-            n={String(COUNTS.concerts)}
+            n={String(counts.concerts)}
           />
-          <DirRow to="/concerts/composers/" path="/concerts/composers" desc="A–Z index" n={String(COUNTS.composers)} />
+          <DirRow to="/concerts/composers/" path="/concerts/composers" desc="A–Z index" n={String(counts.composers)} />
           {/* Reserved permanently for Alex's own original work (ADR-0001). */}
           <DirRow path="/music" desc="Reserved" n="—" />
         </div>

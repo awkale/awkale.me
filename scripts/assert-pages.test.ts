@@ -4,7 +4,6 @@ import { join, relative, sep } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { MODE_KEY } from '../app/lib/mode'
-import { prerenderPaths } from '../app/lib/prerender-paths'
 
 /**
  * The page assertion AWK-17 designed and this repo never had.
@@ -13,9 +12,13 @@ import { prerenderPaths } from '../app/lib/prerender-paths'
  * because that is the artifact Netlify publishes and whose HTML the form scanner
  * reads. Every other test here could pass while the deployed page is wrong.
  *
- * Both sides derive the page set from `prerenderPaths()`, which is the whole
- * reason that function lives in app/lib/ instead of inline in
- * react-router.config.ts. Agreeing by hand would defeat it.
+ * Both sides still derive the page set from one enumeration, but the comparison
+ * is now against build/.page-manifest.json — the paths the build's own sweep
+ * produced, written by `buildEnd`. This test used to call `prerenderPaths()`
+ * directly, which was correct while the source was a local module and became
+ * wrong the moment AWK-39 pointed it at the Delivery API: a unit test would need
+ * credentials and a live space to run, and would answer for TODAY's Contentful
+ * rather than for the build on disk.
  *
  * With `ssr: false`, a route missing from the enumerator does not degrade — AWK-17
  * proved it 404s in production, and would serve an empty hydration shell instead
@@ -27,7 +30,13 @@ import { prerenderPaths } from '../app/lib/prerender-paths'
  * CI can never silently skip it.
  */
 const CLIENT = join(import.meta.dirname, '..', 'build', 'client')
-const built = existsSync(CLIENT)
+const MANIFEST = join(import.meta.dirname, '..', 'build', '.page-manifest.json')
+const SEARCH_INDEX = join(CLIENT, 'search-index.json')
+// BOTH, because a build/client left over from before AWK-39 has pages but no
+// manifest, and comparing against a file that is not there fails in a way that
+// reads like a broken build rather than a stale one. `bun run test:ci` builds
+// first, so CI can never reach this skip.
+const built = existsSync(CLIENT) && existsSync(MANIFEST)
 
 function emittedPages(dir: string): string[] {
   const out: string[] = []
@@ -48,10 +57,41 @@ function page(path: string): string {
 }
 
 describe.skipIf(!built)('built output', () => {
-  it('emits exactly the page set the enumerator declares', async () => {
-    const expected = (await prerenderPaths()).sort()
+  it('emits exactly the page set the enumerator declares', () => {
+    const expected = (JSON.parse(readFileSync(MANIFEST, 'utf8')) as string[]).sort()
 
     expect(emittedPages(CLIENT).sort()).toEqual(expected)
+  })
+
+  // AWK-41's index and the page set are two consumers of ONE sweep, and this is
+  // what holds them to it. A work in the index with no page behind it is a
+  // search result that 404s; a page missing from the index is unfindable. Both
+  // are invisible without this comparison, since each artifact is internally
+  // consistent on its own.
+  describe('the search index', () => {
+    const entries = () =>
+      JSON.parse(readFileSync(SEARCH_INDEX, 'utf8')) as { kind: string; title: string; path: string }[]
+
+    it('is published where the header search can import it', () => {
+      expect(existsSync(SEARCH_INDEX)).toBe(true)
+      expect(entries().length).toBeGreaterThan(0)
+    })
+
+    it('points every entry at a page that was actually built', () => {
+      // Index paths carry the TRAILING SLASH, because they become `<Link to>`
+      // targets and each slash-free one costs a needless 301 across ~600 pages.
+      // The emitted set is slash-free, so the comparison has to strip.
+      const pages = new Set(emittedPages(CLIENT))
+      const dangling = entries().filter((e) => !pages.has(e.path === '/' ? '/' : e.path.replace(/\/$/, '')))
+
+      expect(dangling).toEqual([])
+    })
+
+    it('indexes site-wide, not just the archive', () => {
+      // A header search field that cannot find a case study is a site-wide
+      // search that quietly isn't one (AWK-41).
+      expect(new Set(entries().map((e) => e.kind))).toContain('concert')
+    })
   })
 
   describe('/contact/', () => {

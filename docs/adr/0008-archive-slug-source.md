@@ -269,6 +269,34 @@ hex characters as well as checking `(composer, slug)` uniqueness. This converts
 silent drift into a build failure, and is what makes leaving the parser alone safe
 rather than merely bounded.
 
+> **"`--` followed by six hex characters" describes a shape the data does not
+> hold, and an assertion written to it would never have fired.** Recorded while
+> [AWK-39](https://linear.app/awkale/issue/AWK-39/point-the-build-at-the-cda-and-wire-the-invariant-assertions)
+> implemented it. The importer's real form is
+> `<composer>--<title>-<6hex>` — `rachmaninoff-sergei-arr--cinq-etudes-tableaux-5bd833`
+> — so the hash trails the *title*, it does not follow the separator. Measured
+> across all 625 live values: **625 contain `--`, 625 end in `-[0-9a-f]{6}`, and
+> zero match `--[0-9a-f]{6}`.**
+>
+> `app/lib/invariants.ts` therefore checks **both markers independently**, since
+> either half alone is still not an address to ship. The `--` half cannot
+> false-positive, because slugify collapses runs of non-alphanumerics to a single
+> dash and a clean slug never holds two. The trailing-hex half can, in exactly one
+> shape: a title whose last word is six letters drawn from a–f. *Façade* is the
+> live near-miss, surviving only because the archive holds it as
+> "Music from Façade Suite Nos. 1 and 2". Kept anyway — a loud failure on a real
+> title is recoverable, and a hashed slug shipping silently across ~600 addresses
+> is the thing the assertion exists to stop.
+
+> **The collision figures have moved: 10 families across 26 records, not 9 across
+> 20.** Recounted from the live space under AWK-39 by cleaning all 625 slugs and
+> tallying space-wide duplicates. The record's table above is the state at the
+> time it was written; the archive has grown since. The composer-scoped invariant
+> is unaffected and holds exactly — **623 works with a composer produce 623
+> distinct `(composer, slug)` pairs, zero collisions.** The other two works carry
+> no composer link at all and so have no canonical address; they are
+> [AWK-38](https://linear.app/awkale/issue/AWK-38/fix-the-three-archive-data-gaps)'s.
+
 **Write the assertion before removing `unique: true`.** Otherwise there is a
 window in which nothing protects the invariant at all.
 
@@ -279,6 +307,39 @@ then the composer merge
 then the slug backfill. The merge **creates 24 composer records**, so
 `composer.slug` must be written *by the merge script* rather than by a later pass
 — a separate backfill would be written against records that did not yet exist.
+
+> **The sequencing deadlocked, and AWK-39 broke it by splitting the merge in
+> two.** AWK-39 needs stored slugs to enumerate a single composer or work page,
+> and AWK-23 had not been scheduled — so the build could not be pointed at the CDA
+> at all. The unblocking observation is that the two merges this record names are
+> *different in kind* from the 25 ADR-0005 names:
+>
+> * The **honorific** merges (Walton, Sullivan) are **forced**. The slug rule
+>   strips `Sir`, so both halves of each pair derive one slug, and
+>   `composer.slug` carries `unique: true` — the second publish is rejected. There
+>   is no backfill at all without resolving them, and this record already
+>   specifies the resolution exactly. `scripts/contentful/backfill_slugs.py` does
+>   them: repoint the works, then archive the honorific record.
+> * The **arranger** merges (25 records reading `(arr. by Respighi)` and similar)
+>   are **editorial**, involving judgements this record does not make — e.g.
+>   `English Carol (arr. by Davis/orch. Armstrong)` and
+>   `Salzman, Eric and Eger, Joseph (arr.)`. They stay in AWK-23. They slug
+>   validly, if ugly, and they are the entire gap between **161 composer records
+>   and this record's 147 people**.
+>
+> So the published composer count is **160 today, thirteen above the 147 this
+> record computes**, and it converges when AWK-23 runs. The Concert and Work
+> figures are unaffected — 121 and 322, exactly as computed above. The rule about
+> writing `composer.slug` from the merge script still holds for the records AWK-23
+> creates.
+>
+> **160 rather than 159, because only the Walton merge removes a page.** The
+> qualifying set held 161 composer *records*; merging `Walton, Sir William` into
+> `Walton, William` collapses two pages into one, and merging `Sullivan, Sir
+> Arthur` into `Sullivan, Arthur` collapses none — the works simply move onto the
+> clean record, which had no page before because its own performance was one of
+> the six Alex missed. That is this record's own "the split self-cancelled and
+> appeared in no count", observed from the other side.
 
 **AWK-23's scope grows.** It now also merges Walton and Sullivan, and performs the
 five `sortName` relocations. Neither was in ADR-0005's account of the work, and a
