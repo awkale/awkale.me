@@ -175,7 +175,14 @@ export function findViolations(archive: ArchiveShape): InvariantViolation[] {
       violations.push({
         rule: 'recording-item-on-concert-program',
         entry: recording.id,
-        detail: `points at concert ${recording.concertId}, which is not in the published archive`,
+        // `concert` is required on the type, so an EMPTY id here does not mean a
+        // wrong concert — it means the link resolves to nothing the Delivery API
+        // serves, i.e. an unpublished or deleted entry. Naming a blank id would
+        // send the reader looking for a concert that was never the problem.
+        detail:
+          recording.concertId === ''
+            ? `its concert link resolves to no published entry, so the recording is unreachable`
+            : `points at concert ${recording.concertId}, which is not in the published archive`,
       })
     } else if (!program.has(recording.programItemId)) {
       violations.push({

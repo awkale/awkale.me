@@ -143,6 +143,21 @@ describe('the per-pair rule', () => {
     expect(archive.works[0].performances.map((p) => p.date)).toEqual(['2018-04-22'])
   })
 
+  it('counts one performance per concert, not per programme row', async () => {
+    // A work listed across two rows of one programme — movements broken out, or
+    // a repeat — is still one evening. Counting it twice renders a duplicate row
+    // and makes the page say "twice" about a single night.
+    space.programItem.push(
+      entry('programItem', 'pi-2', { label: 'Symphony No. 5, finale', order: 2, work: link('wrk-fifth') })
+    )
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, program: [link('pi-1'), link('pi-2')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program).toHaveLength(2)
+    expect(archive.works[0].performances).toHaveLength(1)
+  })
+
   it('omits a sat-out item from the concert programme rather than marking it', async () => {
     // A Concert page's subject is Alex's appearance, so listing a work he sat out
     // would put music in his record that is not his.
@@ -200,16 +215,22 @@ describe('the page set', () => {
     expect(archive.paths.filter((p) => p !== '/' && p.endsWith('/'))).toEqual([])
   })
 
-  it('gives a project a page only when it has a body', async () => {
-    space.project = [
-      entry('project', 'prj-a', { title: 'Agent A', slug: 'agent-a', body: { content: [{}] } }),
-      entry('project', 'prj-b', { title: 'awkale.me', slug: 'awkale-me' }),
-    ]
+  it('gives no project a page while none has a body', async () => {
+    space.project = [entry('project', 'prj-b', { title: 'awkale.me', slug: 'awkale-me' })]
 
     const archive = await sweepFixture()
 
-    expect(archive.paths).toContain('/projects/agent-a')
-    expect(archive.paths).not.toContain('/projects/awkale-me')
+    expect(archive.paths.filter((p) => p.startsWith('/projects/'))).toEqual([])
+  })
+
+  it('fails the build the moment a project carries a body, rather than shipping the empty state', async () => {
+    // app/routes/project.tsx has no loader — React Router forbids one on a route
+    // no prerender path matches — so a newly authored body would prerender
+    // "Nothing here yet" and ship it as the case study, with nothing failing.
+    // ADR-0003 actively invites this: "a stub graduates by filling one field".
+    space.project = [entry('project', 'prj-a', { title: 'Agent A', slug: 'agent-a', body: { content: [{}] } })]
+
+    await expect(sweepFixture()).rejects.toThrow(/AWK-43/)
   })
 })
 
@@ -219,7 +240,10 @@ describe('the search index', () => {
   })
 
   it('covers every routed kind from the same sweep', async () => {
-    space.project = [entry('project', 'prj-a', { title: 'Agent A', slug: 'agent-a', body: { content: [{}] } })]
+    // Body-less on purpose: a body currently fails the build, and an index-only
+    // project is still indexed — a header search that cannot find a case study is
+    // a site-wide search that quietly isn't one (AWK-41).
+    space.project = [entry('project', 'prj-a', { title: 'Agent A', slug: 'agent-a' })]
 
     const archive = await sweepFixture()
 
@@ -307,6 +331,45 @@ describe('concert detail', () => {
     const archive = await sweepFixture()
 
     expect(archive.concerts[0].conductor).toBeNull()
+  })
+
+  it('drops a recording of a work he sat out', async () => {
+    // The invariant only requires `programItem ∈ program`, which a sat-out item
+    // still satisfies — so without an explicit filter the page omits the work
+    // from the programme and links a video of it three inches lower.
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, satOut: [link('pi-1')] })]
+    space.recording = [
+      entry('recording', 'rec-1', {
+        url: 'https://youtube.com/watch?v=x',
+        label: 'The piece he sat out',
+        kind: 'video',
+        concert: link('cnc-1'),
+        programItem: link('pi-1'),
+      }),
+    ]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program).toHaveLength(0)
+    expect(archive.concerts[0].recordings).toEqual([])
+  })
+
+  it('keeps a whole-concert recording even when something was sat out', async () => {
+    // He played the concert, whatever he sat out within it.
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, satOut: [link('pi-1')] })]
+    space.recording = [
+      entry('recording', 'rec-1', {
+        url: 'https://youtube.com/watch?v=x',
+        label: 'Complete performance',
+        kind: 'video',
+        concert: link('cnc-1'),
+        programItem: undefined,
+      }),
+    ]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].recordings).toHaveLength(1)
   })
 
   it('hangs a recording off the concert it belongs to', async () => {

@@ -129,8 +129,13 @@ async function getJson(url: string, token: string): Promise<Page> {
     if (result.ok) return result.page
 
     lastError = result.error
-    // eslint-disable-next-line no-await-in-loop
-    await sleep(result.waitMs)
+    // Not after the LAST attempt — there is nothing left to wait for, and the
+    // backoff doubles, so sleeping there burns a pointless 32 s per content type
+    // before a failure that is already decided.
+    if (attempt < MAX_ATTEMPTS - 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await sleep(result.waitMs)
+    }
   }
 
   throw new Error(`Contentful did not answer after ${MAX_ATTEMPTS} attempts: ${String(lastError)}`)

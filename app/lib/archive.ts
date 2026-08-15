@@ -293,6 +293,7 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       .filter((itemId) => !satOut.has(itemId))
       .map((itemId) => itemById.get(itemId))
       .filter((item): item is NonNullable<typeof item> => item !== undefined)
+    const playedIds = new Set(played.map((item) => item.sys.id))
 
     for (const item of played) {
       const itemId = item.sys.id
@@ -305,7 +306,13 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       if (workId !== null && work) {
         qualifyingWorks.add(workId)
         const list = performances.get(workId) ?? []
-        list.push({ date, slug: date, hall, conductor })
+        // ONE PERFORMANCE PER CONCERT, however many program items carry the work.
+        // A concert that lists a work across two rows — movements broken out, or
+        // a repeat — is still one evening, and counting it twice would render a
+        // duplicated row and make `times()` say "twice" about a single night.
+        if (!list.some((p) => p.date === date)) {
+          list.push({ date, slug: date, hall, conductor })
+        }
         performances.set(workId, list)
       }
 
@@ -330,7 +337,17 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
         .map((id) => orchestraById.get(id)?.fields.name)
         .filter((n): n is string => Boolean(n)),
       program: program.sort((a, b) => a.order - b.order),
-      recordings: recordingsByConcert.get(concert.sys.id) ?? [],
+      // A SAT-OUT ITEM'S RECORDING IS DROPPED WITH THE ITEM. The invariant only
+      // requires `programItem ∈ program`, which a sat-out item still satisfies —
+      // so without this filter a concert page omits the work from its programme
+      // and then links a video of it three inches lower, which is exactly the
+      // "music in his record that is not his" ADR-0006 exists to prevent.
+      //
+      // An item-less recording covers the whole concert and is kept regardless:
+      // he played the concert, whatever he sat out within it.
+      recordings: (recordingsByConcert.get(concert.sys.id) ?? []).filter(
+        (r) => r.programItemId === null || playedIds.has(r.programItemId)
+      ),
     })
   }
 
@@ -403,6 +420,29 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       body: (project.fields.body as RichTextNode | undefined) ?? null,
     }))
     .sort((a, b) => (a.featuredRank ?? Infinity) - (b.featuredRank ?? Infinity) || a.title.localeCompare(b.title))
+
+  // THE TRIPWIRE FOR app/routes/project.tsx, which currently has no `loader`.
+  //
+  // React Router forbids a `loader` on a route no prerender path matches, and
+  // `/projects/:slug` matches none while `project` holds zero bodies — so AWK-39
+  // shipped that route rendering a hardcoded empty state. The moment ANYONE fills
+  // one `body` field, a path appears, the route prerenders, `/projects/` links to
+  // it, the search index points at it, and it serves "Nothing here yet". Nothing
+  // fails. That is the silent-wrong-content shape this whole file exists to
+  // prevent, arriving through the one door ADR-0003 most encourages people to
+  // walk through: "a stub graduates by filling one field".
+  //
+  // So the first authored body fails the build instead, and says what to do.
+  const authored = publishedProjects.filter((p) => p.hasBody)
+  if (authored.length > 0) {
+    throw new Error(
+      `${authored.length} project(s) now carry a body — ${authored.map((p) => p.slug).join(', ')} — but ` +
+        `app/routes/project.tsx still has no loader, so each would prerender the "Nothing here yet" empty state ` +
+        `and ship it as the case study.\n\n` +
+        `This is AWK-43's cue. Restore the loader and the component exactly as that route's comment sets out; ` +
+        `app/lib/richtext.tsx is written and tested for the body. Then delete this check.`
+    )
+  }
 
   // --- the page set. Slash-free: a trailing slash is a hard build failure.
   const paths = [
