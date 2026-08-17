@@ -63,6 +63,31 @@ describe.skipIf(!built)('built output', () => {
     expect(emittedPages(CLIENT).sort()).toEqual(expected)
   })
 
+  // The failure this catches shipped to production once: every client-side
+  // navigation 404ing while a refresh worked perfectly, because the build writes
+  // `/concerts/2019-12-15.data` and the client — deriving the URL from a pathname
+  // that carries the canonical trailing slash — asks for
+  // `/concerts/2019-12-15/_.data`. Nothing in the HTML assertions above could see
+  // it, since the pages themselves were flawless.
+  //
+  // So this asserts the file the CLIENT WILL ACTUALLY REQUEST, computed the way
+  // the client computes it, rather than the file the build happens to write. If
+  // React Router changes the convention, this fails rather than the site.
+  it('publishes the data file client-side navigation asks for, at every path', () => {
+    const paths = JSON.parse(readFileSync(MANIFEST, 'utf8')) as string[]
+
+    const missing = paths.filter((p) => {
+      // Routes with no loader emit no data at all, and need none — a route React
+      // Router never fetches data for cannot 404 fetching it.
+      if (!existsSync(join(CLIENT, p === '/' ? '_.data' : `${p}.data`))) return false
+
+      // `_` stands in for the empty segment after the trailing slash.
+      return !existsSync(join(CLIENT, p === '/' ? '_.data' : `${p}/_.data`))
+    })
+
+    expect(missing).toEqual([])
+  })
+
   // AWK-41's index and the page set are two consumers of ONE sweep, and this is
   // what holds them to it. A work in the index with no page behind it is a
   // search result that 404s; a page missing from the index is unfindable. Both

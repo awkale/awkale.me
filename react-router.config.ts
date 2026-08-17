@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 import type { Config } from '@react-router/dev/config'
@@ -57,6 +57,54 @@ function write(path: string, data: unknown): void {
   writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`)
 }
 
+/**
+ * The trailing-slash bridge, and without it CLIENT-SIDE NAVIGATION 404s ON EVERY
+ * PAGE while a refresh works fine.
+ *
+ * Two individually-correct rules collide here, and the collision only became
+ * reachable when AWK-39 gave the routes loaders — before that there was no data
+ * to fetch:
+ *
+ *   - `prerender` REQUIRES slash-free paths, so React Router writes each route's
+ *     data to `/concerts/2019-12-15.data`.
+ *   - Every internal `<Link to>` carries a TRAILING SLASH, because the served
+ *     canonical address has one and a slash-free href costs a 301 per link.
+ *
+ * At runtime the client derives the data URL from the CURRENT PATHNAME, so
+ * `/concerts/2019-12-15/` asks for `/concerts/2019-12-15/_.data` — the `_`
+ * standing in for the empty last segment. That file does not exist, the fetch
+ * 404s, and the error boundary renders. A hard refresh is unaffected because the
+ * HTML is a real file and its data is inlined for hydration, which is exactly why
+ * this looks like "navigation is broken but the page is fine".
+ *
+ * So each data file is published under BOTH names. Copying is preferred over the
+ * two alternatives on the record: making links slash-free reinstates the 301 hop
+ * across ~600 pages, and a `_redirects` rule per path depth puts host config in
+ * charge of something the build can settle itself. `/` needs nothing — its data
+ * file already IS `_.data`.
+ *
+ * scripts/assert-pages.test.ts asserts the file the client will actually request
+ * exists for every prerendered path, so if React Router changes this convention
+ * the build fails instead of silently 404ing again.
+ */
+function bridgeTrailingSlashData(paths: string[]): number {
+  const client = join(BUILD_DIR, 'client')
+  let copied = 0
+
+  // `/` is skipped because its data file already IS `_.data`. A route with no
+  // loader emits no data file at all — `/contact`, `/contact/sent` and
+  // `/projects/:slug` today — and needs no bridge, since a route the client never
+  // fetches data for cannot 404 fetching it.
+  const bridgeable = paths.filter((path) => path !== '/' && existsSync(join(client, `${path}.data`)))
+
+  for (const path of bridgeable) {
+    copyFileSync(join(client, `${path}.data`), join(client, path, '_.data'))
+    copied++
+  }
+
+  return copied
+}
+
 export default {
   ssr: false,
   prerender: prerenderPaths,
@@ -72,11 +120,14 @@ export default {
     write(SEARCH_INDEX, archive.search)
     write(PAGE_MANIFEST, archive.paths)
 
+    const bridged = bridgeTrailingSlashData(archive.paths)
+
     const { concerts, works, composers, projects, pairs, paths } = archive.stats
     console.log(
       `\nContentful sweep — ${concerts} concerts · ${works} works · ${composers} composers · ` +
         `${projects} projects, from ${pairs} qualifying (concert, item) pairs\n` +
-        `  ${paths} paths prerendered · ${archive.search.length} search entries\n`
+        `  ${paths} paths prerendered · ${archive.search.length} search entries · ` +
+        `${bridged} data files bridged for trailing-slash navigation\n`
     )
   },
 } satisfies Config
