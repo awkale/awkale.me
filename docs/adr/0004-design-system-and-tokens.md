@@ -158,6 +158,11 @@ architecture stopped at two layers, AWK-22 would have had to retune every
 semantic token in both `:root` and `.dark`, where keeping light and dark in
 sympathy is the genuinely hard part.
 
+> **Amended 2026-08-18.** The hedge covers surfaces that resolve CSS, which is not
+> every surface this site ships. See
+> [the amendment](#amendment--the-hedge-does-not-cover-raster-or-isolated-svg-2026-08-18)
+> at the foot of this record.
+
 ## Extensions to the semantic contract
 
 Auditing what this site renders against what shadcn ships, most apparent gaps
@@ -756,3 +761,47 @@ values. A `red` scale was imported solely so `--destructive` points somewhere ho
 **`--accent` is shadcn's neutral hover surface. `--accent-9` … `--accent-12` is this
 site's brand ramp.** They differ by one hyphen and mean unrelated things. `--accent`
 must stay neutral or every hovered surface turns orange.
+
+## Amendment — the hedge does not cover raster or isolated SVG (2026-08-18)
+
+Filed from [AWK-52](https://linear.app/awkale/issue/AWK-52), which found the favicon
+disagreeing with the accent and no record saying whether that was deliberate.
+
+**The primitive-layer hedge is a claim about CSS, and it was written as though it
+were a claim about the site.** "The semantic layer and every component above it are
+untouched" holds for anything that resolves a custom property at paint time. Two
+kinds of asset never do:
+
+* **Raster.** `public/favicon.ico` is pixels. The hex is not greppable, not
+  diffable, and will not surface in any search for the value it contains.
+* **Isolated SVG.** `public/icon.svg` is loaded through `<link rel="icon">`, so it
+  renders outside the document and **cannot read `--accent-9`** — or any custom
+  property — no matter how the ramp is authored.
+
+So a primitive-layer swap repaints every surface except the one in the browser tab,
+and **nothing fails**. There is no build error, no failing assertion, no visual
+regression on any page. The two values simply diverge, and the divergence is
+invisible until someone puts the tab next to the page.
+
+### This is already the live state, on purpose
+
+The favicon is Radix stock `orange-9` (`#f76b15`); the brand colour is `--ember-9`
+(`#e05822`), from which `app/tokens.css:39-52` records the whole bespoke ramp was
+generated. AWK-52 settled that the favicon **keeps** `#f76b15` as an icon-only
+exception rather than matching the ramp. `public/icon.svg` says so in a comment,
+and `scripts/assert-pages.test.ts` asserts the literal — deliberately a literal,
+because there is no token to import and pointing it at the accent would undo the
+decision silently.
+
+### The general rule
+
+**Before treating the third layer as a swap-anything hedge, ask whether the surface
+resolves CSS.** If it does not, it is a hand-maintained copy of a value the ramp
+owns, and it needs a comment saying so at the site of the copy — the ramp cannot
+reach out and correct it. Two such surfaces exist today. A third would be an
+`og:image`, whenever one is authored.
+
+This is the same silent-divergence shape as
+[AWK-48](https://linear.app/awkale/issue/AWK-48)'s sixteen drifted eyebrow copies,
+one layer further out: there the fix was to extract a single rule, here no such
+extraction is possible, so the mitigation is documentation rather than deduplication.
