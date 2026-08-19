@@ -285,3 +285,102 @@ confirms rather than resolves that second, independent problem.
 **Composer attribution flows only through `work.composer`.**
 `programItem.composer` is null on all 384 in-scope program items, so it needs no
 relinking and should not be read as an attribution source.
+
+## Amendment — what the space actually held (2026-08-19)
+
+Filed from [AWK-23](https://linear.app/awkale/issue/AWK-23), which executed the
+migration and found three of this record's counts wrong. **The model is
+unchanged**; every correction is arithmetic or a fact that moved after this
+record was written. The migration followed live Contentful, per this record's own
+instruction to resolve canonical targets from the space rather than from a
+remembered shape.
+
+### Nineteen arrangers were created, not seventeen
+
+Twenty-three distinct arrangers appear across the 25 records, and only **four**
+already existed as clean composers — Ravel, Rimsky-Korsakov, Respighi and
+Schoenberg. This record's "six of the 23 in-scope arrangers already exist" counts
+**Respighi twice**, once for Rossini and once for Rachmaninoff. That is six
+*links* but four *people*, and the arranger is a link precisely so that the two
+collapse onto one record. AWK-23's own enumerated list carried all nineteen
+names; only the total was wrong.
+
+### Five canonical records were created, not seven
+
+`cmp-herrmann-bernard` and `cmp-weill-kurt` both exist clean, created 2026-07-30
+alongside the rest. **Herrmann and Weill are ordinary merges**, not arranger-only
+recreations, so "six composers exist only in arranged form" is really four —
+Addinsell, Badelt, Lecuona and Mancini — plus Zimmer, who is the only one of the
+sixteen with no clean record at all, exactly as this record says.
+
+Creates still total **24 against 25 deletes**, so the net figure holds. Only the
+composition was wrong.
+
+### The space held 242 records, not 244, so it ended at 241
+
+[AWK-39](https://linear.app/awkale/issue/AWK-39) archived `Walton, Sir William`
+and `Sullivan, Sir Arthur` in its honorific merge, between this record being
+written and the migration running. **244 → 243 was correct when written and is
+241 in practice.**
+
+### Everything else verified exactly
+
+The in-scope slice came out at **127 concerts, 384 program items, 348 works** and
+**25 of 37** contaminated records, with the 12 pre-tenure ones untouched —
+including all four bare `(arr.)` records. All three auto-id canonical targets
+resolved correctly through cleaned `sortName`: Mahler `2xlZPpzsieUWQMguPlmRip`,
+Rossini `6jOSl95P8vp0ng2xvHFeTz`, R. Strauss `5b96GjJ5laY9p8n8cLz6Pi`. Exactly 25
+works linked the 25 targets, one each, with **no pre-tenure work and no
+`programItem` among them**, so all 25 deleted with zero inbound links.
+
+The build now publishes **147 composers**, which is
+[ADR-0008](0008-archive-slug-source.md)'s predicted figure reached from the other
+direction. And the prediction in *The arranger is a composer, not a string* holds
+literally: the nineteen arranger-only records produce **no composer pages at
+all**, because the index derives from works. Ravel and Respighi keep theirs, on
+the strength of their own works.
+
+### Cleaning the names broke the page, because nothing read the new fields
+
+The arranger reached the rendered page **only** through the contaminated composer
+name. `app/lib/archive.ts` never read `work.arranger`, and `byline` in
+`app/lib/format.ts` was never passed one — so the moment the migration cleaned
+`composerName`, the 2019-12-15 programme rendered **the same line twice**:
+
+```
+Tchaikovsky, Pyotr Ilyich   The Nutcracker Suite
+Tchaikovsky, Pyotr Ilyich   The Nutcracker Suite
+```
+
+Which is precisely the failure `app/routes/concert.tsx` had written down as the
+reason the byline exists. The URLs still differed; the visible text did not. The
+data migration and the rendering were **one change wearing two hats**, and
+splitting them across tickets would have shipped that.
+
+So AWK-23 also threaded `arrangerName` and `arrangementType` through the sweep
+onto both `ProgramEntry` and `Work`, and taught `byline` the four verbs. The
+surname comes from the arranger's `lastName` rather than `sortName`, because the
+seventeen surname-only records are identical either way but Ravel files as
+`Ravel, Maurice` — and "orch. Ravel, Maurice" puts a filing name in a sentence.
+
+The work page renders the credit **outside** the link to the composer, since the
+arranger is a different person and this record gives them no page to point at.
+
+**The build assertion this record called for now exists.** "Contentful cannot
+express 'required if the other is present', so this is asserted in the build" was
+still unwritten; it is `arranger-needs-a-type` in `app/lib/invariants.ts`, the
+eighth check. It fires in **both** directions, because a type with no arranger is
+the half that reads as harmless — the credit silently disappears instead of
+rendering wrong, which is how it would survive review.
+
+### One trap this record did not anticipate
+
+`backfill_slugs.py` derived each arrangement's slug suffix from the **composer's
+contaminated `sortName`**, because `work.arranger` was empty when it was written.
+This migration empties that source and fills `work.arranger` instead, so the
+script had to be taught to read the new field first and fall back to the name
+only for the 12 pre-tenure records. Left alone it would have recomputed
+`the-nutcracker-suite` for Ellington's, colliding with Tchaikovsky's original on
+`(composer, slug)` now that both sit under one merged record — caught by its own
+pre-write collision check, but permanently blocking the script. Fixed under
+AWK-23.

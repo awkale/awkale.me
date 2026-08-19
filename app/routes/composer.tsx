@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { loadArchive } from '../lib/archive'
+import { arrangerCredit } from '../lib/format'
 import type { Route } from './+types/composer'
 
 /**
@@ -62,29 +63,41 @@ export default function Composer({ loaderData }: Route.ComponentProps) {
             </tr>
           </thead>
           <tbody>
-            {works.map((w) => (
-              <tr key={w.id} className="hover:bg-muted">
-                <td className="border-b border-border-subtle px-2 py-1.5 align-baseline">
-                  <Link
-                    to={`/concerts/composers/${w.composerSlug}/works/${w.slug}/`}
-                    className="no-underline hover:underline"
-                  >
-                    {w.title}
-                  </Link>
-                </td>
-                {/* Period and forms are AWK-37's, and empty until it runs. An em
+            {works.map((w) => {
+              const credit = arrangerCredit({ arranger: w.arrangerName, arrangementType: w.arrangementType })
+
+              return (
+                <tr key={w.id} className="hover:bg-muted">
+                  <td className="border-b border-border-subtle px-2 py-1.5 align-baseline">
+                    <Link
+                      to={`/concerts/composers/${w.composerSlug}/works/${w.slug}/`}
+                      className="no-underline hover:underline"
+                    >
+                      {w.title}
+                    </Link>
+                    {/* The third place the credit has to appear, and the one it is
+                      easiest to forget: this page is the ONLY view listing both
+                      Nutcracker Suites side by side, since the merge put them
+                      under one composer with character-identical titles. Without
+                      it the table shows the same row twice, pointing at two
+                      different URLs. Outside the Link because the link addresses
+                      the work and the credit describes it. */}
+                    {credit && <span className="text-muted-foreground"> {credit}</span>}
+                  </td>
+                  {/* Period and forms are AWK-37's, and empty until it runs. An em
                     dash is the honest rendering of a field nobody has filled. */}
-                <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
-                  {w.period ?? '—'}
-                </td>
-                <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
-                  {w.forms.length > 0 ? w.forms.join(', ') : '—'}
-                </td>
-                <td className="tabular border-b border-border-subtle px-2 py-1.5 align-baseline">
-                  {w.performances.length}
-                </td>
-              </tr>
-            ))}
+                  <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
+                    {w.period ?? '—'}
+                  </td>
+                  <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
+                    {w.forms.length > 0 ? w.forms.join(', ') : '—'}
+                  </td>
+                  <td className="tabular border-b border-border-subtle px-2 py-1.5 align-baseline">
+                    {w.performances.length}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

@@ -1,0 +1,112 @@
+{
+  "note": [
+    "The decisions AWK-23's migration executes, separated from the script that",
+    "applies them. Read by merge_composers.py, asserted by merge-composers.test.ts.",
+    "",
+    "Everything here is a DECISION, not a derivation. The 25 contaminated records,",
+    "their canonical targets, the arranger surnames and the 24 records to create are",
+    "all computed live from cleaned `sortName` -- deliberately, because ADR-0005",
+    "establishes that resolving them by id shape silently misses exactly the three",
+    "records holding hand-curated dates. What cannot be derived, and so lives here,",
+    "is the verb vocabulary, the two arrangement pairs, and the scope guard."
+  ],
+
+  "sources": {
+    "model": "docs/adr/0005-composer-identity-and-arrangements.md",
+    "slugs": "docs/adr/0008-archive-slug-source.md",
+    "ticket": "AWK-23"
+  },
+
+  "arrangementTypes": {
+    "note": [
+      "ADR-0005's four verbs, keyed by the marker the source actually writes inside",
+      "the composer's name. Flattening these to `Arrangement` would put a factual",
+      "error on 12 of the 25 pages: Ravel ORCHESTRATED Pictures, Roven TRANSCRIBED",
+      "Kindertotenlieder, and Mauceri EDITED the Psycho selections."
+    ],
+    "arr.": "Arrangement",
+    "orch.": "Orchestration",
+    "trans.": "Transcription",
+    "ed.": "Edition"
+  },
+
+  "arrangementOf": {
+    "note": [
+      "The only two pairs archive-wide where the archive holds BOTH the original and",
+      "the arrangement. Data, never detection: `work` is otherwise one entry per",
+      "(composer, title) throughout, so a rule matching same-titled works would have",
+      "nothing to find here and would false-link the moment a genuine second setting",
+      "is added.",
+      "",
+      "Kindertotenlieder's original is PRE-TENURE. The link therefore points at a",
+      "work with no route, deliberately -- ADR-0005's landmine. Any UI following it",
+      "must tolerate a target that has no page."
+    ],
+    "pairs": [
+      {
+        "arrangement": "wrk-the-nutcracker-suite-65bec1",
+        "original": "wrk-the-nutcracker-suite-c5dabb",
+        "why": "Ellington. Both titles are character-identically `The Nutcracker Suite`."
+      },
+      {
+        "arrangement": "wrk-kindertotenlieder-59801d",
+        "original": "wrk-kindertotenlieder-5aa6c1",
+        "why": "Roven. The original is pre-tenure and has no page."
+      }
+    ]
+  },
+
+  "scopeGuard": {
+    "note": [
+      "In scope means TENURE, not attendance: `concert.attended` is non-null. Unset",
+      "is the 122 pre-tenure seed rows (ADR-0006), `false` is the 6 concerts Alex",
+      "missed -- and those 6 are still his history, so their works are in scope.",
+      "Reading scope as `attended == true` yields 121/354/326 and only 17 of the 25",
+      "contaminated records, silently leaving 8 behind.",
+      "",
+      "These are ABORT thresholds, not documentation. `--force` downgrades them to",
+      "warnings. A drift here means the archive moved underneath this migration and",
+      "the scope must be re-derived by a human before 25 records are deleted.",
+      "",
+      "The first three are STRICT in both directions -- this migration does not",
+      "create or destroy a concert, a program item or a work, so they must read the",
+      "same before and after. The two contamination counts have TWO valid states,",
+      "and `afterMigration` holds the second: a completed run legitimately reports",
+      "0 in scope and 12 archive-wide. Without that, a re-run of a migration that",
+      "has already succeeded aborts on its own past work, which is exactly the",
+      "false alarm that teaches an operator to reach for --force."
+    ],
+    "inScopeConcerts": 127,
+    "inScopeProgramItems": 384,
+    "inScopeWorks": 348,
+    "inScopeContaminated": 25,
+    "contaminatedArchiveWide": 37,
+    "afterMigration": {
+      "inScopeContaminated": 0,
+      "contaminatedArchiveWide": 12
+    }
+  },
+
+  "correctionsToAdr0005": [
+    "Recorded here because the ADR states them as fact and live Contentful",
+    "disagrees. Verified 2026-08-19; the migration follows live, per the ADR's own",
+    "instruction to resolve canonical targets from the space rather than from a",
+    "remembered shape.",
+    "",
+    "* NINETEEN arrangers must be created, not seventeen. Twenty-three distinct",
+    "  arrangers appear across the 25 records and only FOUR already exist as clean",
+    "  composers -- Ravel, Rimsky-Korsakov, Respighi and Schoenberg. The ADR's",
+    "  `six` counts Respighi twice, once for Rossini and once for Rachmaninoff,",
+    "  which is six LINKS but four PEOPLE. AWK-23's own enumerated list has all",
+    "  nineteen names; only its total was wrong.",
+    "* FIVE canonical records must be created, not seven. `cmp-herrmann-bernard`",
+    "  and `cmp-weill-kurt` both exist clean, so Herrmann and Weill are ordinary",
+    "  merges rather than arranger-only recreations. The remaining five are",
+    "  Addinsell, Badelt, Lecuona, Mancini and Zimmer.",
+    "* Creates still total 24 against 25 deletes, so the ADR's net figure holds.",
+    "  Only its composition was wrong.",
+    "* The space holds 242 composer records, not 244: AWK-39 archived",
+    "  `Walton, Sir William` and `Sullivan, Sir Arthur` in its honorific merge.",
+    "  This migration therefore ends at 241, not the 243 the ticket predicts."
+  ]
+}

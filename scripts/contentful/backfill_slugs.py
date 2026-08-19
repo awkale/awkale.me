@@ -36,13 +36,11 @@ Safety properties:
   * Read-modify-write against X-Contentful-Version, so a concurrent edit in the
     web app loses the race loudly (409) rather than being silently overwritten.
 
-NOT IN SCOPE, deliberately -- these belong to AWK-23:
-  * The 25 records carrying `(arr. by ...)` in sortName. ADR-0005 splits each
-    into a clean composer plus a work.arranger link, creating ~24 records. They
-    slug validly here (`rachmaninoff-sergei-arr-by-respighi`), just ugly, and
-    they are the whole gap between 161 composer records and ADR-0008's 147
-    people. Their arranger surname IS read, to build work slugs -- see below.
-  * work.arranger, work.arrangementType and work.arrangementOf stay empty.
+NOT IN SCOPE, deliberately:
+  * The 12 PRE-TENURE records still carrying `(arr. by ...)` in sortName. They
+    slug validly here (`bach-johann-sebastian-arr-by-stokowski`), just ugly, and
+    ADR-0005 leaves them contaminated on purpose. Their arranger surname IS read,
+    to build work slugs -- see below.
   * conductor.slug. ADR-0008's table adds it, but nothing in AWK-39's page set
     reads it -- the conductor facet is a query-string filter, not a route.
 
@@ -211,9 +209,11 @@ def arranger_surname(sort_name):
     unconditionally -- not only where it collides, because a collision-only rule
     inverts the moment the original is added to the archive.
 
-    The arranger is read from the COMPOSER record because work.arranger is still
-    empty; populating it is AWK-23. So the suffix rule is satisfiable now rather
-    than blocked behind a ticket that has not been scheduled.
+    This is now the FALLBACK, not the primary source. AWK-23 ran on 2026-08-19
+    and moved the arranger onto `work.arranger` for the 25 in-scope records,
+    deleting the composer records this reads. What is left for it is the 12
+    pre-tenure records AWK-23 deliberately left contaminated, which have no
+    `work.arranger` and never will.
 
     Four real shapes, all handled: `(arr. by Respighi)`, `(arr.)` with no name at
     all, `(arr. by Rodzinski, 1944)` where a year trails the name, and
@@ -310,23 +310,43 @@ def plan(composers, works, program_items):
 
     collisions = {slug: ids for slug, ids in taken.items() if len(ids) > 1}
 
-    # --- pass 4: work slugs. The arranger comes from the work's CURRENT composer
-    # record, before the merge remaps it, because that is where the `(arr. by X)`
-    # text lives.
+    # --- pass 4: work slugs. TWO sources for the arranger surname, in this order.
+    #
+    # `work.arranger` FIRST, because AWK-23 has now populated it on the 25
+    # in-scope arrangements and simultaneously stripped the `(arr. by X)` text
+    # out of their composer records. Reading only the composer name would find
+    # nothing there any more and drop the suffix from all 25 -- which ADR-0008
+    # forbids unconditionally, and which would collide `the-nutcracker-suite`
+    # with Tchaikovsky's original on (composer, slug) now that both sit under the
+    # one merged record.
+    #
+    # The composer's `sortName` SECOND, for the 12 pre-tenure records AWK-23
+    # deliberately left contaminated. They have no `work.arranger` and never will,
+    # so their suffix still has to come from the name. Three of them say a bare
+    # `(arr.)` with no arranger, so nothing is appended and they keep the bare
+    # title slug -- they collide with nothing.
+    surname_of = {e["sys"]["id"]: field(e, "lastName") for e in composers}
     arranger_of = {e["sys"]["id"]: arranger_surname(field(e, "sortName")) for e in composers}
     work_slugs, pairs = [], defaultdict(list)
     for entry in works:
         wid = entry["sys"]["id"]
         link = field(entry, "composer")
+        arranger = field(entry, "arranger")
         title = field(entry, "title")
         if not title:
             print(f"  ! {wid} has no title and cannot be slugged")
             continue
         want = slugify(title)
-        if link:
+        suffix = surname_of.get(arranger["sys"]["id"]) if arranger else None
+        if suffix is None and link:
             suffix = arranger_of.get(link["sys"]["id"])
-            if suffix:
-                want = f"{want}-{slugify(suffix)}"
+        # Applied outside the `if link` below on purpose: an arrangement with no
+        # composer link still earns its suffix. It has no canonical URL either
+        # way, but a slug that silently changes meaning when a composer is later
+        # attached is worse than one that is simply unreachable for now.
+        if suffix:
+            want = f"{want}-{slugify(suffix)}"
+        if link:
             owner = merge.get(link["sys"]["id"], link["sys"]["id"])
             pairs[(owner, want)].append(wid)
         # A work with no composer link has no canonical URL -- works are addressed

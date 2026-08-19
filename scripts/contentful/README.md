@@ -373,6 +373,85 @@ independently, rather than reading the generator's output, and asserts the page
 counts ADR-0006 predicts. It asserts the FILE, not the space; proving the space
 matches is AWK-39's build assertion.
 
+## The arranger merge
+
+`merge_composers.py` executes [ADR-0005](../../docs/adr/0005-composer-identity-and-arrangements.md),
+and `merge-composers.json` holds the decisions it executes. **Applied 2026-08-19**
+under AWK-23; the space went from 242 composer records to 241.
+
+```bash
+# report what would change -- writes nothing, and this is the safe default
+python3 scripts/contentful/merge_composers.py
+
+# create 24 records, relink 25 works, delete 25 -- and publish all of it
+python3 scripts/contentful/merge_composers.py --apply
+```
+
+The archive stored the arranger inside `composer.firstName`, so one person existed
+as several records: `Modest Mussorgsky`, `Modest (orch. by Ravel) Mussorgsky`,
+`Modest (arr. by Peters) Mussorgsky` and `Modest (orch. by Rimsky-Korsakov)
+Mussorgsky` are four records for one man. This collapses them and moves the
+arranger onto `work.arranger`, a link.
+
+Five passes: create the five canonical composers that exist only in arranged form,
+create the nineteen arrangers who are not in the space yet, relink the 25 works
+(setting `arranger`, `arrangementType`, and `arrangementOf` on the two pairs),
+re-read the space to confirm nothing still points at the 25, then delete them.
+
+### `--apply` publishes, unlike every sibling script
+
+There is no drafts-only mode here and that is deliberate. `backfill_slugs.py` can
+leave drafts because the worst case is stale URLs; this script **deletes 25
+published records**, so a relink left unpublished while the delete still lands
+leaves the Delivery API serving 25 works whose composer link points at an entry
+that no longer exists. Staging that as drafts has no use worth the failure mode.
+
+### Delete is forced, and so is the order
+
+`composer.sortName` is `unique: true` and is the only unique field the type has.
+That is not incidental — **it is the mechanism that let the duplicates exist**, and
+it also means there is no "strip the text but keep both records" option: cleaning a
+duplicate's `sortName` while its canonical twin holds the clean value is rejected.
+Archiving does not help either, because an archived entry still consumes the unique
+value. So works are relinked **before** the old records are deleted, and the script
+re-reads inbound links from the space between the two rather than trusting its own
+plan.
+
+### Canonical targets resolve by cleaned `sortName`, never by id shape
+
+All eight hand-curated composers carry auto-generated ids — `cmp-mahler-gustav`
+**404s**, and the live record is `2xlZPpzsieUWQMguPlmRip`. Three of the merges pair
+an auto-id target with a derived-id source, so matching `cmp-<x>` against
+`cmp-<x>-arr-by-*` misses **exactly the three records holding curated dates**.
+
+### Scope is tenure, not attendance
+
+In scope means `concert.attended` is **non-null**. Unset is the pre-tenure seed
+rows; `false` is one of the 6 concerts Alex missed, which are still his history and
+whose works are still in scope. Reading scope as `attended == true` finds **17 of
+the 25** contaminated records and silently leaves 8 behind. The counts in
+`merge-composers.json` are abort thresholds that catch exactly that, and `--force`
+downgrades them to warnings.
+
+Those thresholds have **two** valid readings for the contamination counts —
+25/37 before and 0/12 after — because a migration that aborts on its own past work
+trains an operator to reach for `--force`, which disables the guard that matters.
+
+### It leaves 12 records contaminated on purpose
+
+37 records are contaminated archive-wide and 25 are in scope. The other 12 are
+pre-tenure, and four of them are a **different pattern entirely**: a bare `(arr.)`
+naming no arranger, where the arranger *is* the filed composer of traditional
+material and there is nothing to merge toward. One is not even a person — `English
+Carol`. A sweep over every `arr. by` match is wrong.
+
+### What guards the file
+
+`merge-composers.test.ts` pins the four verbs, cross-checks them against the `in`
+validation `archive-schema.json` puts on the field, pins the two arrangement pairs
+and the scope thresholds, and records the three counts this migration corrected in
+ADR-0005. It asserts the FILE, not the space.
+
 ## Usage
 
 ```bash

@@ -1,12 +1,13 @@
 /**
  * The invariants Contentful cannot express, asserted in the build.
  *
- * Five rules across five records, and every one of them exists because
+ * Six rules across six records, and every one of them exists because
  * Contentful validates a field against a LITERAL and never against another
  * field. Both links in a pair can be individually valid while the pair is
  * nonsense, and the schema has no way to say so:
  *
  *   satOut ⊆ program                    ADR-0006 — an array conditional on another array
+ *   arranger needs a type               ADR-0005 — two fields that are meaningless apart
  *   (composer, slug) unique             ADR-0008 — a scoped unique; Contentful has only space-wide
  *   the hashed slug shape               ADR-0008 — a format the importer emits and the URLs must not
  *   featuredRank requires body          ADR-0003 — a field conditional on another field's emptiness
@@ -14,10 +15,15 @@
  *   sideBySide holds two images         ADR-0004 — an array max conditional on a sibling symbol
  *   recording.programItem ⊆ concert     ADR-0012 — a link conditional on a link's array
  *
- * Seven checks for the ticket's five rules: the slug rule is shape AND
- * uniqueness, which fail independently and need separate messages, and
- * featuredRank grew a second rule when AWK-31 noticed that one nullable field
- * still cannot stop two projects both holding rank 1.
+ * Eight checks for six rules: the slug rule is shape AND uniqueness, which fail
+ * independently and need separate messages, and featuredRank grew a second rule
+ * when AWK-31 noticed that one nullable field still cannot stop two projects both
+ * holding rank 1.
+ *
+ * The arranger rule is AWK-23's, and ADR-0005 called for it before the data
+ * existed: "Contentful cannot express 'required if the other is present', so this
+ * is asserted in the build rather than the schema." It went in when that ticket
+ * populated the fields and made the byline depend on them.
  *
  * A SIXTH rule was listed alongside these for most of the project's life — the
  * CSP's inline-script hash (ADR-0010). It is gone rather than deferred: AWK-44
@@ -39,7 +45,13 @@ export type InvariantViolation = {
 
 export type ArchiveShape = {
   concerts: { id: string; program: string[]; satOut: string[] }[]
-  works: { id: string; slug: string; composerId: string | null }[]
+  works: {
+    id: string
+    slug: string
+    composerId: string | null
+    arrangerId: string | null
+    arrangementType: string | null
+  }[]
   projects: { id: string; slug: string; featuredRank: number | null; hasBody: boolean }[]
   imageGroups: { id: string; label: string; layout: string; imageCount: number }[]
   recordings: { id: string; label: string; concertId: string; programItemId: string | null }[]
@@ -95,6 +107,25 @@ export function findViolations(archive: ArchiveShape): InvariantViolation[] {
         rule: 'work-slug-not-hashed',
         entry: work.id,
         detail: `slug \`${work.slug}\` is still the importer's hashed form, so its URL leaks an import convention`,
+      })
+    }
+
+    // ADR-0005: "a work with an `arranger` and no `arrangementType` cannot be
+    // rendered correctly, and Contentful cannot express 'required if the other is
+    // present', so this is asserted in the build rather than the schema."
+    //
+    // Both directions. A type with no arranger is the shape that reads as
+    // harmless and is not: the byline has a verb and nobody to attach it to, so
+    // the credit silently vanishes rather than rendering wrong — which is how it
+    // survives a page review.
+    if ((work.arrangerId === null) !== (work.arrangementType === null)) {
+      violations.push({
+        rule: 'arranger-needs-a-type',
+        entry: work.id,
+        detail:
+          work.arrangerId === null
+            ? `arrangementType is \`${work.arrangementType}\` but no arranger is linked`
+            : `an arranger is linked but arrangementType is empty, so the credit cannot be rendered`,
       })
     }
 

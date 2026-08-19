@@ -11,8 +11,31 @@ import { type ArchiveShape, assertInvariants, findViolations } from './invariant
  * two individually-valid links that are collectively absurd. A test built on
  * obviously-bad data would pass while the realistic case walked through.
  */
-function shape(over: Partial<ArchiveShape> = {}): ArchiveShape {
-  return { concerts: [], works: [], projects: [], imageGroups: [], recordings: [], ...over }
+type Work = ArchiveShape['works'][number]
+
+/**
+ * Works are given loosely and completed here, so a case states only the fields
+ * its rule reads. Without that, adding `arrangerId` and `arrangementType` under
+ * AWK-23 meant editing twelve slug cases that have nothing to do with arrangers,
+ * and every future field on `work` would do the same.
+ */
+function shape(over: Partial<Omit<ArchiveShape, 'works'>> & { works?: Partial<Work>[] } = {}): ArchiveShape {
+  const { works, ...rest } = over
+  return {
+    concerts: [],
+    projects: [],
+    imageGroups: [],
+    recordings: [],
+    ...rest,
+    works: (works ?? []).map((w) => ({
+      id: '',
+      slug: '',
+      composerId: null,
+      arrangerId: null,
+      arrangementType: null,
+      ...w,
+    })),
+  }
 }
 
 const rules = (input: ArchiveShape) => findViolations(input).map((v) => v.rule)
@@ -45,6 +68,49 @@ describe('satOut ⊆ program (ADR-0006)', () => {
     })
 
     expect(findViolations(input)).toEqual([])
+  })
+})
+
+describe('arranger needs a type (ADR-0005)', () => {
+  it('accepts a work with neither, which is 593 of 625', () => {
+    const input = shape({ works: [{ id: 'wrk-a', slug: 'symphony-no-2', composerId: 'cmp-sibelius-jean' }] })
+
+    expect(findViolations(input)).toEqual([])
+  })
+
+  it('accepts a work carrying both', () => {
+    const input = shape({
+      works: [
+        {
+          id: 'wrk-the-nutcracker-suite-65bec1',
+          slug: 'the-nutcracker-suite-ellington',
+          composerId: 'cmp-tchaikovsky-pyotr-ilyich',
+          arrangerId: 'cmp-ellington',
+          arrangementType: 'Arrangement',
+        },
+      ],
+    })
+
+    expect(findViolations(input)).toEqual([])
+  })
+
+  it('rejects an arranger with no type, because the credit cannot be rendered', () => {
+    const input = shape({
+      works: [{ id: 'wrk-a', slug: 'pictures', composerId: 'cmp-mussorgsky-modest', arrangerId: 'cmp-ravel-maurice' }],
+    })
+
+    expect(rules(input)).toEqual(['arranger-needs-a-type'])
+  })
+
+  it('rejects a type with no arranger, which is the half that reads as harmless', () => {
+    // This one has a verb and nobody to attach it to, so the credit silently
+    // disappears from the page rather than rendering wrong — which is exactly
+    // how it survives review.
+    const input = shape({
+      works: [{ id: 'wrk-a', slug: 'pictures', composerId: 'cmp-mussorgsky-modest', arrangementType: 'Orchestration' }],
+    })
+
+    expect(rules(input)).toEqual(['arranger-needs-a-type'])
   })
 })
 

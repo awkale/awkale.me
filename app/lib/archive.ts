@@ -54,6 +54,7 @@ import {
   linkIds,
   readConfig,
 } from './contentful'
+import { byline } from './format'
 import type { ImageAsset } from './images'
 import { type ArchiveShape, assertInvariants } from './invariants'
 
@@ -68,7 +69,15 @@ type ConcertFields = {
   attended: boolean
 }
 type ProgramItemFields = { label: string; order: number; work: Link; soloists: Link[] }
-type WorkFields = { title: string; slug: string; composer: Link; period: string; forms: string[] }
+type WorkFields = {
+  title: string
+  slug: string
+  composer: Link
+  period: string
+  forms: string[]
+  arranger: Link
+  arrangementType: string
+}
 type ComposerFields = { firstName: string; lastName: string; sortName: string; slug: string; period: string }
 type HallFields = { name: string; slug: string }
 type ConductorFields = { firstName: string; lastName: string }
@@ -100,6 +109,16 @@ export type ProgramEntry = {
   workSlug: string | null
   composerSlug: string | null
   composerName: string | null
+  /**
+   * The arranger's SURNAME, and the verb that earned the credit.
+   *
+   * Both or neither — ADR-0005 sets them together, and `arranger-needs-a-type`
+   * in app/lib/invariants.ts fails the build if only one arrives. Until AWK-23
+   * ran, this reached the page inside `composerName` instead, as
+   * `Pyotr Ilyich (arr. by Ellington) Tchaikovsky`.
+   */
+  arrangerName: string | null
+  arrangementType: string | null
 }
 
 export type Concert = {
@@ -124,6 +143,9 @@ export type Work = {
   composerId: string
   composerSlug: string
   composerName: string
+  /** The arranger's surname and the verb — see ProgramEntry. Both or neither. */
+  arrangerName: string | null
+  arrangementType: string | null
   period: string | null
   forms: string[]
   performances: Performance[]
@@ -266,6 +288,48 @@ function name(entry: Entry<{ firstName: string; lastName: string }> | undefined)
 }
 
 /**
+ * The arranger's SURNAME, resolved through `work.arranger` (AWK-23, ADR-0005).
+ *
+ * `lastName` rather than `sortName`, and that is the decision rather than a
+ * shortcut. Seventeen of the arrangers were created surname-only — the programmes
+ * said "arr. by Ellington" and nothing more, and ADR-0005 rejected researching
+ * full names as misattribution risk — so their `sortName` IS the bare surname
+ * already. The four who are also composers are not: Ravel files as
+ * `Ravel, Maurice`, and rendering "orch. Ravel, Maurice" would put a filing name
+ * in a sentence. `lastName` is required on `composer`, so it is always there.
+ *
+ * Shared by both mapping sites on purpose. A programme row and a work page
+ * disagreeing about who arranged something is the kind of drift that survives
+ * review, because each looks right on its own.
+ */
+function arrangerNameOf(
+  work: Entry<WorkFields> | undefined,
+  composerById: Map<string, Entry<ComposerFields>>
+): string | null {
+  const arrangerId = work ? linkId(work.fields.arranger) : null
+  if (arrangerId === null) return null
+
+  const arranger = composerById.get(arrangerId)
+  // THROW rather than return null. `arranger-needs-a-type` asserts on the raw
+  // LINK, so a link resolving to nothing satisfies it and the credit then
+  // vanishes from the page with the build green — the exact silent
+  // disappearance that invariant exists to prevent, one level further down.
+  //
+  // The 19 arranger-only records are the likely victims: they hold no works, so
+  // they produce no composer page and read as orphans to anyone tidying the
+  // composer table. Unpublishing one must break the build, not the byline.
+  if (!arranger?.fields.lastName) {
+    throw new Error(
+      `${work?.sys.id} links arranger ${arrangerId}, which is not a published composer with a lastName.\n\n` +
+        `ADR-0005 sets work.arranger and work.arrangementType together and the byline renders both or ` +
+        `neither. An arranger record that has been unpublished, archived or deleted leaves the link intact ` +
+        `and the credit empty, so this fails the build instead.`
+    )
+  }
+  return arranger.fields.lastName
+}
+
+/**
  * The six paths that are not derived from content. They exist whatever the
  * archive holds, and both contact pages are prerendered like everything else —
  * which is the whole reason Netlify's form scanner can see the form at deploy
@@ -292,6 +356,7 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
     ])
 
   const byId = <F>(entries: Entry<F>[]) => new Map(entries.map((e) => [e.sys.id, e]))
+
   const itemById = byId(items)
   const workById = byId(works)
   const composerById = byId(composers)
@@ -312,6 +377,8 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       id: w.sys.id,
       slug: w.fields.slug ?? '',
       composerId: linkId(w.fields.composer),
+      arrangerId: linkId(w.fields.arranger),
+      arrangementType: w.fields.arrangementType ?? null,
     })),
     projects: projects.map((p) => ({
       id: p.sys.id,
@@ -490,6 +557,8 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
         workSlug: work?.fields.slug ?? null,
         composerSlug: composer?.fields.slug ?? null,
         composerName: composer?.fields.sortName ?? null,
+        arrangerName: arrangerNameOf(work, composerById),
+        arrangementType: work?.fields.arrangementType ?? null,
       })
     }
 
@@ -539,6 +608,8 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
         composerId: composer.sys.id,
         composerSlug: composer.fields.slug,
         composerName: composer.fields.sortName ?? '',
+        arrangerName: arrangerNameOf(work, composerById),
+        arrangementType: work.fields.arrangementType ?? null,
         period: work.fields.period ?? null,
         forms: work.fields.forms ?? [],
         performances: (performances.get(workId) ?? []).sort((a, b) => a.date.localeCompare(b.date)),
@@ -636,7 +707,11 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
     ...publishedWorks.map((w) => ({
       kind: 'work' as const,
       title: w.title,
-      detail: w.composerName,
+      // The full byline, not the bare composer. Two works share the title `The
+      // Nutcracker Suite` under one composer, so a composer-only detail puts two
+      // identical rows in the results with different destinations — the same gap
+      // AWK-23 opened on the programme table when it cleaned the composer names.
+      detail: byline({ composer: w.composerName, arranger: w.arrangerName, arrangementType: w.arrangementType }),
       path: `/concerts/composers/${w.composerSlug}/works/${w.slug}/`,
     })),
     ...publishedConcerts.map((c) => ({

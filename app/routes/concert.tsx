@@ -54,7 +54,13 @@ export default function Concert({ loaderData }: Route.ComponentProps) {
                   {item.order}
                 </td>
                 <td className="border-b border-border-subtle px-2 py-1.5 align-baseline">
-                  {item.composerName ? byline({ composer: item.composerName }) : '—'}
+                  {item.composerName
+                    ? byline({
+                        composer: item.composerName,
+                        arranger: item.arrangerName,
+                        arrangementType: item.arrangementType,
+                      })
+                    : '—'}
                 </td>
                 <td className="border-b border-border-subtle px-2 py-1.5 align-baseline">
                   {/* Works are addressed canonically under their composer

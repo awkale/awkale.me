@@ -42,13 +42,13 @@ See `docs/agents/domain.md`.
 | `.env.example` | The three build variables, with the token blank. Committed on purpose — `.gitignore` carries a `!.env.example` exception — because the NAMES are what has to be right, and a wrong one renders an empty site rather than erroring. |
 | `app/lib/contentful.ts` | The CDA client. No SDK: `fetch`, pagination, retry. Asserts the three env vars before fetching anything. |
 | `app/lib/archive.ts` | **The one build-time sweep.** Three consumers — `prerenderPaths`, `buildEnd`'s search index, and every route loader — all read `loadArchive()`, which fetches once and memoizes. A second enumeration is the thing this exists to prevent. |
-| `app/lib/invariants.ts` | The seven checks Contentful cannot express as validations. See ADR-0008's amendment on the hashed-slug shape. |
+| `app/lib/invariants.ts` | The **eight** checks Contentful cannot express as validations. See ADR-0008's amendment on the hashed-slug shape. The eighth is AWK-23's `arranger-needs-a-type`, which ADR-0005 called for before the data existed. |
 | `app/lib/search.ts` | AWK-41's ranking, grouping and per-kind cap. Pure and DOM-free **on purpose** — React Aria's own collection filter is switched off so these rules are the only ones running, and can be tested without a popover. Folds diacritics, so `dvorak` reaches `Dvořák`. |
 | `app/lib/images.ts` | **The only place a `/.netlify/images` URL is built** (ADR-0013, AWK-40), and the only place the eager/lazy tier is decided. `/.netlify/images` is Netlify-only, so this module is where the site's imagery couples to ADR-0002's host. It throws on a source outside the allowlist, because the alternative is a 400 nothing reports. |
 | `app/components/asset-image.tsx` | The site's ONE `<img>`, plus `imageGroup`'s three layouts. `sideBySide` lays out **N** images even though the sixth invariant fails a build where it links anything but two. |
 | `app/lib/search-index.ts` | Loads `/search-index.js` by dynamic import, memoized on the promise, on first interaction with the header field. An import rather than a `fetch` is a **CSP decision** — see `public/_headers`. |
 | `app/components/site-search.tsx` | The header ComboBox. Results are `<a href>`, which is why `onSelectionChange` is unused: React Aria fires it with **null** for link rows. |
-| `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), `seed_participation.py` (AWK-36's participation pass — **dry run is its default**, unlike its siblings), `backfill_slugs.py` (AWK-39's slug pass — dry run also its default; it does the two **honorific** merges and leaves the 25 **arranger** ones to AWK-23), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
+| `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), `seed_participation.py` (AWK-36's participation pass — **dry run is its default**, unlike its siblings), `backfill_slugs.py` (AWK-39's slug pass — dry run also its default; it does the two **honorific** merges), `merge_composers.py` + `merge-composers.json` (AWK-23's arranger merge — **ran 2026-08-19**; dry run is its default and `--apply` also publishes, because a relink left as a draft while the delete lands leaves the CDA serving works whose composer no longer exists), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
 | `docs/archive/recording-curation.md` | Per-video verdicts for the BSO channel (AWK-32). Three of fifteen uploads are seedable. ADR-0012 forbids scripting this; the file is a worksheet, not an input. |
 | `docs/archive/program-19930726-liyo-dallas-brooks-hall.jpg` | Photographed printed program, Long Island Youth Orchestra at Dallas Brooks Hall, Melbourne, 1993-07-26. **A primary source for a concert no other source here holds** — not in the xlsx, not in `bso-graph.json`, and none of its orchestra, hall or conductors exist in the archive. Untranscribed. |
 | `public/_redirects` | The thirteen redirects. Never add a catch-all — see the file's own header. |
@@ -172,6 +172,16 @@ assertion, the sweep's participation rules, and the RichText renderer).
 > time AWK-41 opened, not the 191 above. It is **224 across fifteen files** as of
 > 2026-08-19 — AWK-41 added the search ranker's 14, the header field's 10 and the
 > index loader's 4. Which is to say: count it, do not read it.
+>
+> Counted again the same day, after AWK-23: **321 across twenty files**, of which
+> that ticket contributed 31 — 13 in `format.test.ts`, 14 in
+> `merge-composers.test.ts` and 4 in `invariants.test.ts`. The gap between 224 and
+> the 290 that preceded those is work this paragraph never recorded, which is the
+> point it keeps making about itself.
+>
+> It was written as "304 across nineteen" and was wrong within the same ticket,
+> because it was typed before the last two test files existed. Caught in review.
+> **Run the command.**
 
 **Archive search ships, and its index is a JS module.** AWK-41 landed the client
 half on 2026-08-18. `buildEnd` now writes `build/client/search-index.js` — an ES

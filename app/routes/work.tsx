@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 
 import { loadArchive } from '../lib/archive'
-import { byline, formatDate, times } from '../lib/format'
+import { arrangerCredit, formatDate, times } from '../lib/format'
 import type { Route } from './+types/work'
 
 /**
@@ -30,14 +30,18 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export default function Work({ loaderData }: Route.ComponentProps) {
   const { work } = loaderData
+  const credit = arrangerCredit({ arranger: work.arrangerName, arrangementType: work.arrangementType })
 
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
         <p className="kicker">
           <Link to={`/concerts/composers/${work.composerSlug}/`} className="no-underline hover:underline">
-            {byline({ composer: work.composerName })}
+            {work.composerName}
           </Link>
+          {/* Outside the Link on purpose — the arranger is a different person,
+              and ADR-0001 gives them no page of their own to point at. */}
+          {credit ? `, ${credit}` : null}
         </p>
         <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">{work.title}</h1>
 
