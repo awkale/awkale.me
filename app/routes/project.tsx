@@ -35,12 +35,21 @@
  *
  *   2. Take `{ loaderData }: Route.ComponentProps` below and render `project`
  *      rather than the empty state.
- *   3. Render the body with `<RichText node={project.body} />` — app/lib/richtext.tsx
- *      is written and tested against ADR-0003's enabled marks and nodes, and the
- *      sweep already carries `body` through for exactly this.
+ *   3. Render the body with
+ *      `<RichText node={project.body} media={{ assets: images, groups: imageGroups }} />`
+ *      — app/lib/richtext.tsx is written and tested against ADR-0003's enabled marks
+ *      and nodes, and the sweep already carries `body` through for exactly this.
  *
- * Embedded `imageGroup` blocks and Assets still need AWK-40's asset delivery; the
- * renderer skips them deliberately rather than emitting a broken image.
+ * EMBEDDED BLOCKS RENDER AS OF AWK-40, and only if the loader hands over `media`.
+ * `loadArchive()` returns `images` and `imageGroups` — the resolved asset and group
+ * lookups — and without them every embedded figure silently renders as nothing,
+ * which is the pre-AWK-40 behaviour and looks exactly like a body with no images in
+ * it. Return them from the loader alongside `project`.
+ *
+ * The other half of ADR-0013's markup rule is the loader's business too: if this page
+ * renders `project.coverImage` above the body, the cover is the page's first image, so
+ * the body must be given `firstImageEager={false}` or two images will both claim
+ * `fetchpriority="high"`.
  */
 export default function Project() {
   return (

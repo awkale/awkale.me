@@ -1,8 +1,9 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import type { RichTextNode } from './archive'
-import { RichText } from './richtext'
+import type { ImageGroupBlock, RichTextNode } from './archive'
+import type { ImageAsset } from './images'
+import { type RichTextMedia, RichText } from './richtext'
 
 /**
  * The renderer is finished ahead of its consumer: `project` holds no entries, so
@@ -96,9 +97,10 @@ describe('RichText', () => {
     expect(container.querySelectorAll('ul > li')).toHaveLength(1)
   })
 
-  it('skips an embedded block rather than emitting a broken image', () => {
-    // ADR-0013 and AWK-40 own asset delivery. Rendering nothing is the deliberate
-    // degradation until that lands — and the paragraph after it must survive.
+  it('skips an embedded block when the caller passes no media', () => {
+    // Unchanged from before AWK-40, and deliberately so: a body can be rendered by
+    // something that has no images to hand, and a broken image is worse than a
+    // missing one. The paragraph after it must survive either way.
     const { container } = render(
       <RichText
         node={doc(
@@ -126,5 +128,137 @@ describe('RichText', () => {
 
     expect(container.querySelector('a')).toBeNull()
     expect(container.querySelector('p')?.textContent).toBe('Agent A')
+  })
+})
+
+/**
+ * The embedded blocks, which are AWK-40's half of this renderer.
+ *
+ * ADR-0013's eager rule is POSITIONAL — the first image in the document is the eager
+ * one — so most of these are about ordering rather than about markup. The markup
+ * itself is asserted in app/components/asset-image.test.tsx; what can only be checked
+ * here is which image gets the one eager slot, and that a group of two consumes it
+ * once rather than twice.
+ */
+const asset = (id: string, over: Partial<ImageAsset> = {}): ImageAsset => ({
+  id,
+  url: `//images.ctfassets.net/3iiyvj5u5c9h/${id}/abc123/${id}.png`,
+  title: `Alt for ${id}`,
+  description: '',
+  width: 2560,
+  height: 1600,
+  ...over,
+})
+
+const group = (id: string, over: Partial<ImageGroupBlock> = {}): ImageGroupBlock => ({
+  id,
+  label: 'Sidebar, before and after',
+  layout: 'sideBySide',
+  caption: null,
+  images: [asset('cision-sidebar-existing'), asset('cision-sidebar-updated')],
+  ...over,
+})
+
+const media: RichTextMedia = {
+  assets: { 'wds-docs-home': asset('wds-docs-home'), 'agent-a-home': asset('agent-a-home') },
+  groups: { 'grp-sidebars': group('grp-sidebars') },
+}
+
+const embeddedAsset = (id: string): RichTextNode => ({
+  nodeType: 'embedded-asset-block',
+  data: { target: { sys: { id } } },
+})
+const embeddedGroup = (id: string): RichTextNode => ({
+  nodeType: 'embedded-entry-block',
+  data: { target: { sys: { id } } },
+})
+
+describe('embedded blocks (ADR-0013)', () => {
+  afterEach(cleanup)
+
+  it('renders an embedded asset as a captioned figure', () => {
+    const { container } = render(
+      <RichText
+        node={doc(embeddedAsset('wds-docs-home'))}
+        media={{
+          ...media,
+          assets: { 'wds-docs-home': asset('wds-docs-home', { description: 'The docs site.' }) },
+        }}
+      />
+    )
+
+    expect(container.querySelector('figure img')?.getAttribute('alt')).toBe('Alt for wds-docs-home')
+    expect(container.querySelector('figcaption')?.textContent).toBe('The docs site.')
+  })
+
+  it('renders an embedded imageGroup with every image it resolved', () => {
+    const { container } = render(<RichText node={doc(embeddedGroup('grp-sidebars'))} media={media} />)
+
+    expect(container.querySelectorAll('img')).toHaveLength(2)
+  })
+
+  it('renders nothing for an id that resolves to neither, and keeps going', () => {
+    // An asset the Delivery API is not serving, or an embedded entry of some type
+    // ADR-0003 does not permit as a block.
+    const { container } = render(
+      <RichText
+        node={doc(embeddedAsset('deleted-asset'), { nodeType: 'paragraph', content: [text('after the figure')] })}
+        media={media}
+      />
+    )
+
+    expect(container.querySelector('img')).toBeNull()
+    expect(container.querySelector('p')?.textContent).toBe('after the figure')
+  })
+
+  it('makes the first image in the document eager and every later one lazy', () => {
+    const { container } = render(
+      <RichText
+        node={doc(
+          { nodeType: 'paragraph', content: [text('A paragraph above cannot demote the figure below it.')] },
+          embeddedAsset('wds-docs-home'),
+          embeddedAsset('agent-a-home')
+        )}
+        media={media}
+      />
+    )
+    const [first, second] = [...container.querySelectorAll('img')]
+
+    expect(first.getAttribute('loading')).toBe('eager')
+    expect(first.getAttribute('fetchpriority')).toBe('high')
+    expect(second.getAttribute('loading')).toBe('lazy')
+  })
+
+  it('spends the eager slot once on a group, not once per image in it', () => {
+    const { container } = render(
+      <RichText node={doc(embeddedGroup('grp-sidebars'), embeddedAsset('wds-docs-home'))} media={media} />
+    )
+    const eager = [...container.querySelectorAll('img')].filter((img) => img.getAttribute('loading') === 'eager')
+
+    expect(eager).toHaveLength(1)
+    expect(container.querySelectorAll('img')).toHaveLength(3)
+  })
+
+  it('makes every body image lazy when the page already spent its eager slot', () => {
+    // A case study with a coverImage above the body. The cover is the page's first
+    // image, so nothing in the body may claim `fetchpriority="high"` as well.
+    const { container } = render(
+      <RichText node={doc(embeddedAsset('wds-docs-home'))} media={media} firstImageEager={false} />
+    )
+    const img = container.querySelector('img')!
+
+    expect(img.getAttribute('loading')).toBe('lazy')
+    expect(img.getAttribute('fetchpriority')).toBeNull()
+    expect(img.getAttribute('sizes')?.startsWith('auto,')).toBe(true)
+  })
+
+  it('counts a nothing-rendered block as no image at all', () => {
+    // An unresolved id must not consume the eager slot, or an unpublished asset
+    // would silently make the page's real first image lazy.
+    const { container } = render(
+      <RichText node={doc(embeddedAsset('deleted-asset'), embeddedAsset('wds-docs-home'))} media={media} />
+    )
+
+    expect(container.querySelector('img')?.getAttribute('loading')).toBe('eager')
   })
 })

@@ -43,7 +43,18 @@
  * three states matter — `true` publishes, `false` is a reviewed miss, unset is one
  * of the 119 pre-tenure rows that were never Alex's history.
  */
-import { type ContentfulConfig, type Entry, type Link, fetchAll, linkId, linkIds, readConfig } from './contentful'
+import {
+  type Asset,
+  type ContentfulConfig,
+  type Entry,
+  type Link,
+  fetchAll,
+  fetchAllAssets,
+  linkId,
+  linkIds,
+  readConfig,
+} from './contentful'
+import type { ImageAsset } from './images'
 import { type ArchiveShape, assertInvariants } from './invariants'
 
 type ConcertFields = {
@@ -72,11 +83,12 @@ type ProjectFields = {
   startDate: string
   endDate: string
   featuredRank: number
+  coverImage: Link
   liveUrl: string
   repoUrl: string
   body: { nodeType?: string; content?: RichTextNode[] }
 }
-type ImageGroupFields = { label: string; images: Link[]; layout: string }
+type ImageGroupFields = { label: string; images: Link[]; layout: string; caption: string }
 
 export type Recording = { id: string; url: string; label: string; kind: string; programItemId: string | null }
 
@@ -138,6 +150,12 @@ export type Project = {
   liveUrl: string | null
   repoUrl: string | null
   featuredRank: number | null
+  /**
+   * The index and home card's image, or null — ADR-0003 makes it optional because
+   * the index carries older and smaller items that may have no imagery at all, so
+   * the card treatment must not look broken without one.
+   */
+  coverImage: ImageAsset | null
   /** Empty body means index-only: no page, and the card must not look clickable. */
   hasBody: boolean
   /**
@@ -160,6 +178,27 @@ export type RichTextNode = {
   data?: { uri?: string; target?: { sys?: { id?: string } } }
 }
 
+/**
+ * An `imageGroup` block, with its asset links already resolved.
+ *
+ * Resolved HERE rather than in the renderer because the sweep is the only thing
+ * holding the asset map — the body carries link ids, and ADR-0013's markup rule needs
+ * each asset's `title`, `description` and intrinsic dimensions.
+ *
+ * `layout` is a bare string on purpose. Contentful validates it against ADR-0003's
+ * three values, so a fourth means the schema moved; the renderer treats an unknown
+ * layout as a stack rather than rendering nothing. `images` may hold FEWER entries
+ * than the group links, when a link points at an unpublished asset.
+ */
+export type ImageGroupBlock = {
+  id: string
+  label: string
+  /** `sideBySide` | `grid` | `fullWidth`, per ADR-0003. */
+  layout: string
+  caption: string | null
+  images: ImageAsset[]
+}
+
 /** One row of AWK-41's index. `kind` is what groups the ComboBox. */
 export type SearchEntry = {
   kind: 'project' | 'composer' | 'work' | 'concert'
@@ -173,9 +212,52 @@ export type Archive = {
   works: Work[]
   composers: Composer[]
   projects: Project[]
+  /**
+   * Every image asset in the space, and every `imageGroup`, keyed by id — the two
+   * lookups a `body` needs, since RichText embeds blocks by link id.
+   *
+   * Whole rather than per project: the space holds five assets and a handful of
+   * groups, so partitioning them per case study would cost a second walk of every
+   * body to work out which ids each one references — a duplicate of the renderer's
+   * own knowledge, for a few hundred bytes. Revisit if the portfolio ever carries
+   * hundreds of images, which is also one of ADR-0013's reopening triggers.
+   */
+  images: Record<string, ImageAsset>
+  imageGroups: Record<string, ImageGroupBlock>
   paths: string[]
   search: SearchEntry[]
   stats: { concerts: number; works: number; composers: number; pairs: number; projects: number; paths: number }
+}
+
+/**
+ * An Asset as the markup rule needs it, or null when it is not a usable image.
+ *
+ * An asset with no `details.image` is dropped rather than carried with zero
+ * dimensions, because ADR-0013 emits `width`/`height` from those numbers and a zero
+ * would render a collapsed box instead of an image. That covers a PDF, and it also
+ * covers an SVG, which Contentful does not always measure — so an SVG uploaded as a
+ * diagram disappears here rather than rendering. The sweep warns when a `coverImage`
+ * is what vanished; ADR-0013 scopes this site's imagery to screenshots.
+ */
+function toImageAsset(asset: Asset): ImageAsset | null {
+  const { file } = asset.fields
+
+  if (!file?.url || !file.details.image) return null
+
+  const { image } = file.details
+
+  return {
+    id: asset.sys.id,
+    // Protocol-relative, as Contentful returns it. app/lib/images.ts adds the
+    // scheme the allowlist requires; nothing else may.
+    url: file.url,
+    // ADR-0003: alt text, not metadata. An empty one ships an unlabelled image,
+    // which is why the sweep says so below.
+    title: asset.fields.title ?? '',
+    description: asset.fields.description ?? '',
+    width: image.width,
+    height: image.height,
+  }
 }
 
 function name(entry: Entry<{ firstName: string; lastName: string }> | undefined): string | null {
@@ -192,7 +274,7 @@ function name(entry: Entry<{ firstName: string; lastName: string }> | undefined)
 const STATIC_PATHS = ['/', '/projects', '/concerts', '/concerts/composers', '/contact', '/contact/sent']
 
 export async function sweep(config: ContentfulConfig): Promise<Archive> {
-  const [concerts, items, works, composers, halls, conductors, orchestras, recordings, projects, imageGroups] =
+  const [concerts, items, works, composers, halls, conductors, orchestras, recordings, projects, imageGroups, assets] =
     await Promise.all([
       fetchAll<ConcertFields>(config, 'concert'),
       fetchAll<ProgramItemFields>(config, 'programItem'),
@@ -204,6 +286,9 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       fetchAll<RecordingFields>(config, 'recording'),
       fetchAll<ProjectFields>(config, 'project'),
       fetchAll<ImageGroupFields>(config, 'imageGroup'),
+      // The eleventh request, and the first that is not a content type: Assets live
+      // on their own endpoint (ADR-0013, AWK-40).
+      fetchAllAssets(config),
     ])
 
   const byId = <F>(entries: Entry<F>[]) => new Map(entries.map((e) => [e.sys.id, e]))
@@ -248,6 +333,87 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
     })),
   }
   assertInvariants(shape)
+
+  // --- ADR-0013's half: the assets, resolved once and keyed by id.
+  //
+  // The invariants above count LINKS, deliberately — `sideBySide holds two images`
+  // is about authoring intent and must fail on a group that links three whether or
+  // not all three are published. What follows counts what actually RESOLVED, which
+  // is a different question with a different answer.
+  const images: Record<string, ImageAsset> = {}
+  for (const asset of assets) {
+    const image = toImageAsset(asset)
+    if (image !== null) images[image.id] = image
+  }
+
+  const resolvedGroups: Record<string, ImageGroupBlock> = {}
+  const partialGroups: string[] = []
+
+  for (const group of imageGroups) {
+    const linked = linkIds(group.fields.images)
+    const resolved = linked.map((id) => images[id]).filter((image): image is ImageAsset => image !== undefined)
+
+    if (resolved.length !== linked.length) {
+      partialGroups.push(`${group.sys.id} (${group.fields.label ?? 'unlabelled'}): ${resolved.length}/${linked.length}`)
+    }
+
+    resolvedGroups[group.sys.id] = {
+      id: group.sys.id,
+      label: group.fields.label ?? '',
+      layout: group.fields.layout ?? 'fullWidth',
+      caption: group.fields.caption ?? null,
+      // Order is the authored order. ADR-0003 made `images` an ordered array
+      // precisely so captions could NOT drift out of step with it.
+      images: resolved,
+    }
+  }
+
+  // WARNED, NOT THROWN, and that is ADR-0013's instruction rather than an oversight:
+  // the record states it adds no new invariant, so none of these fails a build. They
+  // are all silent-wrong-output shapes though — an unpublished asset drops out of a
+  // group leaving a narrower row, a dropped coverImage renders the deliberate
+  // no-image card as if the project simply had no imagery, and an asset with no title
+  // renders `alt=\"\"`, which a screen reader treats as decorative. ADR-0010 left
+  // nothing else that would report any of them, so the sweep says so where the build
+  // log will carry it.
+  //
+  // REFERENCED assets only, for the title check. Warning about every untitled file in
+  // the space would flag ones no page renders, and a warning that is usually noise is
+  // one nobody reads. Bodies are NOT walked for `embedded-asset-block` ids — that
+  // would duplicate app/lib/richtext.tsx's knowledge of the document shape here, for
+  // an id that renders as nothing rather than as something wrong.
+  const coverless: string[] = []
+  for (const project of projects) {
+    const coverId = linkId(project.fields.coverImage)
+    if (coverId !== null && images[coverId] === undefined) {
+      coverless.push(`${project.fields.slug ?? project.sys.id} → ${coverId}`)
+    }
+  }
+
+  const referenced = new Set([
+    ...projects.map((project) => linkId(project.fields.coverImage)).filter((id): id is string => id !== null),
+    ...imageGroups.flatMap((group) => linkIds(group.fields.images)),
+  ])
+  const unlabelled = Object.values(images).filter((image) => referenced.has(image.id) && image.title.trim() === '')
+
+  if (partialGroups.length > 0) {
+    console.warn(
+      `\n  ⚠ ${partialGroups.length} imageGroup(s) link an asset the Delivery API is not serving — ` +
+        `unpublished or deleted:\n    ${partialGroups.join('\n    ')}\n`
+    )
+  }
+  if (coverless.length > 0) {
+    console.warn(
+      `\n  ⚠ ${coverless.length} project(s) link a coverImage that resolved to nothing — unpublished, deleted, ` +
+        `or not an image (an SVG or a PDF carries no file.details.image):\n    ${coverless.join('\n    ')}\n`
+    )
+  }
+  if (unlabelled.length > 0) {
+    console.warn(
+      `\n  ⚠ ${unlabelled.length} referenced image asset(s) carry no title, so ADR-0003's alt text is empty and ` +
+        `each renders as decorative: ${unlabelled.map((image) => image.id).join(', ')}\n`
+    )
+  }
 
   const recordingsByConcert = new Map<string, Recording[]>()
   for (const recording of recordings) {
@@ -416,6 +582,7 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       liveUrl: project.fields.liveUrl ?? null,
       repoUrl: project.fields.repoUrl ?? null,
       featuredRank: project.fields.featuredRank ?? null,
+      coverImage: images[linkId(project.fields.coverImage) ?? ''] ?? null,
       hasBody: (project.fields.body?.content?.length ?? 0) > 0,
       body: (project.fields.body as RichTextNode | undefined) ?? null,
     }))
@@ -485,6 +652,8 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
     works: publishedWorks,
     composers: publishedComposers,
     projects: publishedProjects,
+    images,
+    imageGroups: resolvedGroups,
     paths,
     search,
     stats: {

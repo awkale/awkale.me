@@ -39,6 +39,28 @@ export type Entry<F> = {
 }
 
 /**
+ * An Asset, which is a different endpoint rather than a content type.
+ *
+ * `title` and `description` are load-bearing content, not metadata: ADR-0003 reads
+ * alt text from the title and the caption from the description, so an asset with an
+ * empty title ships an unlabelled image. `details.image` is absent on a non-image
+ * asset (a PDF), which is why it is optional here rather than assumed.
+ */
+export type Asset = {
+  sys: { id: string }
+  fields: Partial<{
+    title: string
+    description: string
+    file: {
+      url: string
+      fileName: string
+      contentType: string
+      details: { size?: number; image?: { width: number; height: number } }
+    }
+  }>
+}
+
+/**
  * Reads and asserts the three build variables.
  *
  * `CONTENTFUL_PREVIEW_TOKEN` is deliberately NOT required: it is a local
@@ -142,6 +164,33 @@ async function getJson(url: string, token: string): Promise<Page> {
 }
 
 /**
+ * Every page of one collection endpoint, followed to the end.
+ *
+ * Shared by entries and assets because the retry, the 1000-item cap and the
+ * skip/total loop are properties of the Delivery API rather than of either
+ * endpoint. A second copy of this loop is how the two would come to disagree about
+ * what a 429 means.
+ */
+async function paginate<T>(config: ContentfulConfig, collection: 'entries' | 'assets', query: string[]): Promise<T[]> {
+  const base = `${config.host}/spaces/${config.spaceId}/environments/${config.environment}/${collection}`
+  const items: T[] = []
+  let skip = 0
+
+  for (;;) {
+    const url = `${base}?${[...query, `limit=${PAGE_SIZE}`, `skip=${skip}`, 'order=sys.id'].join('&')}`
+    // Sequential because the NEXT skip is not knowable until this page answers
+    // with its total. Every type in this space fits in one page anyway.
+    // eslint-disable-next-line no-await-in-loop
+    const page = await getJson(url, config.token)
+
+    items.push(...(page.items as T[]))
+    skip += page.items.length
+
+    if (skip >= page.total || page.items.length === 0) return items
+  }
+}
+
+/**
  * Every published entry of one content type.
  *
  * `include=0` is deliberate. Resolving links through `includes.Entry` looks
@@ -155,23 +204,22 @@ async function getJson(url: string, token: string): Promise<Page> {
  * filter is needed here — unlike the CMA scripts, where AWK-20's 16 archived
  * programItems make a bare count read 823 against a live 807.
  */
-export async function fetchAll<F>(config: ContentfulConfig, contentType: string): Promise<Entry<F>[]> {
-  const base = `${config.host}/spaces/${config.spaceId}/environments/${config.environment}/entries`
-  const entries: Entry<F>[] = []
-  let skip = 0
+export function fetchAll<F>(config: ContentfulConfig, contentType: string): Promise<Entry<F>[]> {
+  return paginate<Entry<F>>(config, 'entries', [`content_type=${contentType}`, 'include=0'])
+}
 
-  for (;;) {
-    const url = `${base}?content_type=${contentType}&limit=${PAGE_SIZE}&skip=${skip}&include=0&order=sys.id`
-    // Sequential because the NEXT skip is not knowable until this page answers
-    // with its total. Every type in this space fits in one page anyway.
-    // eslint-disable-next-line no-await-in-loop
-    const page = await getJson(url, config.token)
-
-    entries.push(...(page.items as Entry<F>[]))
-    skip += page.items.length
-
-    if (skip >= page.total || page.items.length === 0) return entries
-  }
+/**
+ * Every published Asset in the space — all of them, not the ones some entry links.
+ *
+ * Fetched whole for the same reason entries are (see `fetchAll`): asking Contentful
+ * to resolve the links instead means an include set that truncates silently, and an
+ * image that renders on some pages and not others. The space holds five assets, so
+ * "all of them" is one request, and the sweep resolves `coverImage` and
+ * `imageGroup.images` against a map it built itself.
+ */
+export function fetchAllAssets(config: ContentfulConfig): Promise<Asset[]> {
+  // No `include` here: an asset links nothing, so there is nothing to resolve.
+  return paginate<Asset>(config, 'assets', [])
 }
 
 /** A link's target id, or null — the shape every optional link field arrives in. */

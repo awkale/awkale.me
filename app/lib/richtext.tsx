@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 
-import type { RichTextNode } from './archive'
+import { AssetFigure, ImageGroup } from '../components/asset-image'
+import type { ImageGroupBlock, RichTextNode } from './archive'
+import type { ImageAsset } from './images'
 
 /**
  * Contentful RichText, rendered to the marks and nodes ADR-0003's schema enables
@@ -11,20 +13,61 @@ import type { RichTextNode } from './archive'
  * be held hostage to that. It is finished and tested; the route wires it up when
  * AWK-43 authors the first case study.
  *
- * EMBEDDED BLOCKS ARE NOT RENDERED. ADR-0003 restricts them to `imageGroup` and
- * Assets, and both need Contentful's Image API — sizes, formats, and the `alt`
- * read from each Asset's `title` rather than passed as a prop. That is ADR-0013
- * and AWK-40, a separate ticket with its own decisions to honour. An embedded
- * block renders as nothing rather than as a broken image.
+ * EMBEDDED BLOCKS NOW RENDER, which is AWK-40's half. ADR-0003 restricts them to
+ * `imageGroup` entries and Assets, and both arrive here as bare link ids — so the
+ * caller supplies `media`, the two lookups the sweep resolved. WITHOUT `media`
+ * every embedded block still renders as nothing, exactly as it did before, which
+ * is why a body can be rendered by anything that has no images to hand.
+ *
+ * ADR-0013'S EAGER RULE LIVES HERE, and it is positional rather than authored:
+ * the first image in the document is `loading="eager"` + `fetchpriority="high"`,
+ * everything after it is lazy. Counting during the walk is what makes that
+ * mechanical — nobody marks an image as the important one, so adding a paragraph
+ * above a figure cannot silently demote it. `firstImageEager={false}` says the
+ * page already spent its one eager image above the body, on a `coverImage`.
  */
-export function RichText({ node }: { node: RichTextNode | null }): ReactNode {
-  if (!node) return null
-
-  return <>{(node.content ?? []).map((child, i) => renderNode(child, i))}</>
+export type RichTextMedia = {
+  /** Every image asset in the space, keyed by id. */
+  assets: Record<string, ImageAsset>
+  /** Every `imageGroup`, links already resolved, keyed by id. */
+  groups: Record<string, ImageGroupBlock>
 }
 
-function renderNode(node: RichTextNode, key: number): ReactNode {
-  const children = (node.content ?? []).map((child, i) => renderNode(child, i))
+/** Mutable only for the duration of one render pass, and created inside it. */
+type Walk = { media: RichTextMedia | undefined; firstImageEager: boolean; images: number }
+
+export function RichText({
+  node,
+  media,
+  firstImageEager = true,
+}: {
+  node: RichTextNode | null
+  media?: RichTextMedia
+  firstImageEager?: boolean
+}): ReactNode {
+  if (!node) return null
+
+  // Per render, NOT per module: a module-level counter would leak across the ~600
+  // pages of one prerender and count again on hydration.
+  const walk: Walk = { media, firstImageEager, images: 0 }
+
+  return <>{(node.content ?? []).map((child, i) => renderNode(child, i, walk))}</>
+}
+
+/** True for the page's first image, and it consumes the slot on the way past. */
+function claimPriority(walk: Walk, images: number): boolean {
+  const first = walk.images === 0
+
+  // Mutating the walk IS the mechanism — the count has to survive across sibling
+  // nodes, and `walk` is created inside one render of `RichText` for exactly that.
+  // eslint-disable-next-line no-param-reassign
+  walk.images += images
+
+  return first && walk.firstImageEager
+}
+
+function renderNode(node: RichTextNode, key: number, walk: Walk): ReactNode {
+  const children = (node.content ?? []).map((child, i) => renderNode(child, i, walk))
 
   switch (node.nodeType) {
     case 'text':
@@ -65,8 +108,29 @@ function renderNode(node: RichTextNode, key: number): ReactNode {
       // needs the same address rules the sweep owns; until a body exists to carry
       // one, the text renders without the link rather than with a wrong one.
       return <span key={key}>{children}</span>
+    case 'embedded-asset-block': {
+      const asset = walk.media?.assets[node.data?.target?.sys?.id ?? '']
+
+      // An unresolved id means an asset the Delivery API is not serving, or a
+      // caller that passed no `media`. Rendering nothing is deliberate: a broken
+      // image in a case study is worse than a missing one, and ADR-0010 left
+      // nothing that would report either.
+      if (!asset) return null
+
+      return <AssetFigure key={key} asset={asset} context="fullWidth" priority={claimPriority(walk, 1)} />
+    }
+    case 'embedded-entry-block': {
+      // ADR-0003 restricts embedded BLOCKS to `imageGroup`, so an id that is not a
+      // group is an entry type this renderer has no business guessing at.
+      const group = walk.media?.groups[node.data?.target?.sys?.id ?? '']
+
+      if (!group) return null
+
+      return <ImageGroup key={key} group={group} priority={claimPriority(walk, group.images.length)} />
+    }
     default:
-      // Embedded blocks land here. See the note above.
+      // An inline embed (`embedded-asset-inline` and friends) lands here. ADR-0003
+      // enables none of them.
       return null
   }
 }

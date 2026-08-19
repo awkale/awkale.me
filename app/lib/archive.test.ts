@@ -18,6 +18,29 @@ function entry(type: string, id: string, fields: Fields) {
 
 const link = (id: string) => ({ sys: { type: 'Link', linkType: 'Entry', id } })
 
+/**
+ * One Asset as the CDA returns it, protocol-relative URL and all. `image` is absent
+ * on a non-image asset, which the sweep has to drop rather than size at zero.
+ */
+function asset(
+  id: string,
+  over: { title?: string; description?: string; image?: { width: number; height: number } | null } = {}
+) {
+  return {
+    sys: { id },
+    fields: {
+      title: over.title ?? `Asset ${id}`,
+      description: over.description ?? '',
+      file: {
+        url: `//images.ctfassets.net/3iiyvj5u5c9h/${id}/abc123/${id}.png`,
+        fileName: `${id}.png`,
+        contentType: 'image/png',
+        details: { size: 1024, ...(over.image === null ? {} : { image: over.image ?? { width: 2560, height: 1600 } }) },
+      },
+    },
+  }
+}
+
 const CONFIG = {
   spaceId: 'space',
   environment: 'master',
@@ -27,12 +50,17 @@ const CONFIG = {
 }
 
 let space: Record<string, ReturnType<typeof entry>[]>
+let assets: ReturnType<typeof asset>[]
 
 async function sweepFixture() {
   vi.resetModules()
   vi.doMock('./contentful', async () => ({
     ...(await vi.importActual<typeof import('./contentful')>('./contentful')),
     fetchAll: (_config: unknown, type: string) => Promise.resolve(space[type] ?? []),
+    // Mocked for the same reason `fetchAll` is: the assets endpoint is a real
+    // request, so leaving it through means every case here 404s against a fake
+    // token — which is exactly how this file failed when AWK-40 added the call.
+    fetchAllAssets: () => Promise.resolve(assets),
   }))
   const { sweep } = await import('./archive')
   return sweep(CONFIG)
@@ -65,6 +93,7 @@ function seed() {
     project: [],
     imageGroup: [],
   }
+  assets = []
 }
 
 const concert = (id: string, date: string, fields: Fields = {}) =>
@@ -387,5 +416,178 @@ describe('concert detail', () => {
     const archive = await sweepFixture()
 
     expect(archive.concerts[0].recordings).toHaveLength(1)
+  })
+})
+
+describe('the asset half (ADR-0013)', () => {
+  it('keys every image asset by id, whether or not anything links it', () => {
+    // Whole-space rather than per project, so the renderer can resolve a body's
+    // embedded link ids without a second walk. See the Archive type's comment.
+    assets = [asset('wds-docs-home'), asset('agent-a-home')]
+
+    return sweepFixture().then((archive) => {
+      expect(Object.keys(archive.images)).toEqual(['wds-docs-home', 'agent-a-home'])
+      expect(archive.images['wds-docs-home']).toMatchObject({ width: 2560, height: 1600 })
+    })
+  })
+
+  it('carries the URL through protocol-relative, exactly as Contentful gave it', async () => {
+    // The scheme is app/lib/images.ts's job and only its job — a second place that
+    // rewrites it is a second place to forget to.
+    assets = [asset('wds-docs-home')]
+
+    const archive = await sweepFixture()
+
+    expect(archive.images['wds-docs-home'].url.startsWith('//images.ctfassets.net/')).toBe(true)
+  })
+
+  it('drops an asset with no image dimensions rather than sizing it at zero', async () => {
+    // A PDF, say. ADR-0013 emits width/height from `file.details.image.*`, so a
+    // zero would render a collapsed box that nothing reports.
+    assets = [asset('a-pdf', { image: null }), asset('wds-docs-home')]
+
+    const archive = await sweepFixture()
+
+    expect(Object.keys(archive.images)).toEqual(['wds-docs-home'])
+  })
+
+  it('resolves a project’s coverImage, which ADR-0003 leaves optional', async () => {
+    assets = [asset('cision-sidebar-updated', { title: 'Cision navigation sidebar, after the redesign' })]
+    space.project = [
+      entry('project', 'prj-cision', {
+        title: 'Cision navigation',
+        slug: 'cision-navigation',
+        summary: 'A sidebar redesign.',
+        coverImage: { sys: { type: 'Link', linkType: 'Asset', id: 'cision-sidebar-updated' } },
+      }),
+      entry('project', 'prj-bare', { title: 'No imagery', slug: 'no-imagery', summary: 'An older item.' }),
+    ]
+
+    const archive = await sweepFixture()
+
+    expect(archive.projects.find((p) => p.slug === 'cision-navigation')?.coverImage).toMatchObject({
+      id: 'cision-sidebar-updated',
+      title: 'Cision navigation sidebar, after the redesign',
+    })
+    // The no-image card state ADR-0003 requires the index to render.
+    expect(archive.projects.find((p) => p.slug === 'no-imagery')?.coverImage).toBeNull()
+  })
+
+  it('leaves coverImage null when the link points at an unpublished asset', async () => {
+    assets = []
+    space.project = [
+      entry('project', 'prj-cision', {
+        title: 'Cision navigation',
+        slug: 'cision-navigation',
+        summary: 'A sidebar redesign.',
+        coverImage: { sys: { type: 'Link', linkType: 'Asset', id: 'cision-sidebar-updated' } },
+      }),
+    ]
+
+    const archive = await sweepFixture()
+
+    expect(archive.projects[0].coverImage).toBeNull()
+  })
+
+  it('resolves an imageGroup’s links in the authored order', async () => {
+    // ADR-0003 made this an ordered array specifically so captions could not drift
+    // out of step with it — the parallel-arrays shape it rejected.
+    assets = [asset('cision-sidebar-existing'), asset('cision-sidebar-updated')]
+    space.imageGroup = [
+      entry('imageGroup', 'grp-sidebars', {
+        label: 'Sidebar, before and after',
+        layout: 'sideBySide',
+        caption: 'Before, and after.',
+        images: [
+          { sys: { type: 'Link', linkType: 'Asset', id: 'cision-sidebar-existing' } },
+          { sys: { type: 'Link', linkType: 'Asset', id: 'cision-sidebar-updated' } },
+        ],
+      }),
+    ]
+
+    const archive = await sweepFixture()
+
+    expect(archive.imageGroups['grp-sidebars']).toMatchObject({
+      layout: 'sideBySide',
+      caption: 'Before, and after.',
+    })
+    expect(archive.imageGroups['grp-sidebars'].images.map((image) => image.id)).toEqual([
+      'cision-sidebar-existing',
+      'cision-sidebar-updated',
+    ])
+  })
+
+  it('keeps a group whose links only partly resolve, and says so', async () => {
+    // Warned rather than thrown: ADR-0013 states it adds no new invariant. The
+    // narrower row is still the honest render of what is published.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    assets = [asset('cision-sidebar-existing')]
+    space.imageGroup = [
+      entry('imageGroup', 'grp-sidebars', {
+        label: 'Sidebar, before and after',
+        layout: 'sideBySide',
+        images: [
+          { sys: { type: 'Link', linkType: 'Asset', id: 'cision-sidebar-existing' } },
+          { sys: { type: 'Link', linkType: 'Asset', id: 'cision-sidebar-updated' } },
+        ],
+      }),
+    ]
+
+    const archive = await sweepFixture()
+
+    expect(archive.imageGroups['grp-sidebars'].images).toHaveLength(1)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('grp-sidebars'))
+    warn.mockRestore()
+  })
+
+  it('names a REFERENCED asset with no title, because its alt text is then empty', async () => {
+    // ADR-0003 reads alt text from the title, so an untitled asset renders as
+    // decorative to a screen reader — invisible in every other way.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    assets = [asset('untitled-shot', { title: '' })]
+    space.imageGroup = [
+      entry('imageGroup', 'grp-one', {
+        label: 'One shot',
+        layout: 'fullWidth',
+        images: [{ sys: { type: 'Link', linkType: 'Asset', id: 'untitled-shot' } }],
+      }),
+    ]
+
+    await sweepFixture()
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('untitled-shot'))
+    warn.mockRestore()
+  })
+
+  it('says nothing about an untitled asset no page renders', async () => {
+    // The space carries a 2019 portrait nothing links. A warning that is usually
+    // noise is a warning nobody reads.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    assets = [asset('untitled-and-unused', { title: '' })]
+
+    await sweepFixture()
+
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('names a project whose coverImage resolved to nothing', async () => {
+    // Symmetry with the group warning: a dropped cover renders the deliberate
+    // no-image card, which looks exactly like a project that never had imagery.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    assets = []
+    space.project = [
+      entry('project', 'prj-cision', {
+        title: 'Cision navigation',
+        slug: 'cision-navigation',
+        summary: 'A sidebar redesign.',
+        coverImage: { sys: { type: 'Link', linkType: 'Asset', id: 'cision-sidebar-updated' } },
+      }),
+    ]
+
+    await sweepFixture()
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('cision-navigation'))
+    warn.mockRestore()
   })
 })

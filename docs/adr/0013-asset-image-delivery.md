@@ -159,6 +159,22 @@ This composes with the decision above rather than merely coexisting: Netlify
 generates **any** width on demand, so a `srcset` ladder costs nothing to emit and no
 build-time variants exist to keep in step.
 
+> **Amended under [AWK-40](https://linear.app/awkale/issue/AWK-40) (2026-08-19): the
+> ladder is capped per image, and the example's dimensions are not real.** The three
+> rungs above are emitted only where the source can serve them —
+> `app/lib/images.ts` keeps every rung below `file.details.image.width` and then adds
+> the source width itself as the top rung. Measured against the assets that actually
+> ship: `updated_sidebar.jpg` is **732 × 1060**, so `960w` and `1400w` both upscale,
+> and `existing_sidebar.jpg` is **1333 × 1474**, so `1400w` does. Netlify serves an
+> upscaled rung happily — blurrier than the source, for more bytes than the source.
+> Only the two 2560 × 1600 screenshots have headroom for the full ladder.
+>
+> The `width="2560" height="1578"` in the snippet belongs to `01 - Step 1@2x.png`,
+> one of the six screenshots [AWK-21](https://linear.app/awkale/issue/AWK-21) dropped
+> when the Cision projects went index-only. Nothing shipping has those dimensions.
+> This does not change the decision — it makes reading `file.details.image.*` do more
+> work than it looked like, since the ladder derives from the same numbers.
+
 **`sizes="auto"` requires `loading="lazy"`.** That is the specification, not a quirk
 — without it the value cannot resolve and the browser falls back through the rest of
 the list. It is the reason the two-tier rule below exists.

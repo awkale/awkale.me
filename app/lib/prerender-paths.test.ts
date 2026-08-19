@@ -18,6 +18,8 @@ function archive(paths: string[]): Archive {
     works: [],
     composers: [],
     projects: [],
+    images: {},
+    imageGroups: {},
     paths,
     search: [],
     stats: { concerts: 0, works: 0, composers: 0, pairs: 0, projects: 0, paths: paths.length },

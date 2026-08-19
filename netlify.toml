@@ -62,3 +62,54 @@ NODE_VERSION = "22"
 # watch — a context whose token is empty builds a green, contentless site.
 #
 # See .env.example, which carries the same three names for local builds.
+
+# --- Netlify Image CDN: the browser's only image origin is this one -----------
+#
+# ADR-0013. Netlify fetches each Contentful file server-side, transforms it, and
+# caches the result at its edge, so the browser never connects to
+# images.ctfassets.net. That is what makes `img-src 'self'` in public/_headers
+# true rather than aspirational, and it is why no image transform code exists in
+# this repo: it is a platform feature, like ADR-0011's forms.
+#
+# THE QUOTES ARE LOAD-BEARING. This is a TOML *literal* string — single quotes —
+# where a backslash is a backslash. Netlify's own documented example uses double
+# quotes, in which `\.` must be written `\\.` or the escape is consumed before
+# the regex ever sees it; their example sidesteps the trap by leaving the dots
+# unescaped, which quietly makes `.` match any character. Do not "tidy" these to
+# double quotes.
+#
+# SPACE-SCOPED, not domain-wide. `images\.ctfassets\.net/.*` would survive a
+# space change untouched and was rejected: it would let this site fetch,
+# transform and serve ANY Contentful customer's public asset. The space id is
+# already committed above and in ADR-0002, so nothing is leaked by naming it.
+#
+# There is nothing to switch on in the UI — verified live on two other personal
+# projects: `/.netlify/images` answers on every site by default, and an
+# un-allowlisted source fails loudly with
+# `400 {"code":400,"msg":"url (…) is not an allowed pattern"}`. The opposite of
+# Forms, which is UI-only and fails silently when forgotten.
+#
+# Transformed bytes count against Netlify's 100 GB bandwidth, not Contentful's
+# metered 50 GB. Both are hard stops; ADR-0013 chose the meter this project
+# already watches. Image transformations are not themselves metered on the
+# legacy Free plan.
+#
+# ANCHORED WITH ^ AND $, and not as ceremony. Netlify documents these entries as
+# matching the whole URL, but that is their word rather than something this repo can
+# see: under substring semantics the unanchored form is also satisfied by
+# `https://attacker.example/r?u=https://images.ctfassets.net/3iiyvj5u5c9h/x`, which
+# would make this site an open image proxy — the exact outcome the space scoping
+# above exists to prevent. Anchoring costs nothing and makes the claim true either
+# way.
+#
+# Probed locally through @netlify/vite-plugin, and the anchors are insurance rather
+# than a hole being closed: that proxy-shaped URL was already refused BEFORE they were
+# added, so the matcher does appear to be whole-URL. With them, an allowlisted asset
+# still answers 200 (`w=1400` → a real 1400 × 875 PNG), another space 403s, and the
+# proxy shape 403s. The anchors mean the property no longer rests on that observation.
+#
+# app/lib/images.ts is the only thing that builds URLs against this, and
+# scripts/netlify-images.test.ts asserts the pattern below still means what it
+# looks like — including that its space id matches that file's SOURCE_SPACE.
+[images]
+remote_images = ['^https://images\.ctfassets\.net/3iiyvj5u5c9h/.*$']
