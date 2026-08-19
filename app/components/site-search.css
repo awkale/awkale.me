@@ -1,0 +1,162 @@
+/* ===========================================================================
+   site-search — ADR-0011's archive search, in the header of every page.
+   ---------------------------------------------------------------------------
+   Same convention as mode-toggle and facet-chip: a semantic class consumes
+   local variables, and React Aria's own data attributes remap them. No
+   JS-driven classes.
+
+   Attributes React Aria sets, and what they mean here:
+     [data-focused]         the field has focus (on .site-search-input)
+     [data-open]            the popover is showing (on .site-search)
+     [data-focused]         the row under the keyboard cursor (on a result)
+     [data-hovered]         pointer over a result
+     [data-focus-visible]   keyboard focus specifically
+
+   Results are ANCHORS, not divs — see the component's note 2 — so the link
+   colours from app.css's base layer have to be overridden here or every row
+   turns link-blue and shows a visited state.
+   =========================================================================== */
+
+.site-search {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.site-search-input {
+  --field-bg: var(--card);
+  --field-border: var(--border);
+
+  width: clamp(8rem, 22vw, 16rem);
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+  background: var(--field-bg);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.site-search-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.site-search-input[data-hovered] {
+  --field-border: var(--muted-hover);
+}
+
+.site-search-input[data-focused] {
+  --field-border: var(--ring);
+
+  outline: 2px solid var(--ring);
+  outline-offset: -1px;
+}
+
+.site-search-popover {
+  width: min(26rem, calc(100vw - 2 * var(--gutter)));
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 45%);
+}
+
+.site-search-results {
+  padding: 0.25rem;
+  outline: none;
+}
+
+.site-search-empty {
+  padding: 0.75rem 0.6rem;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.site-search-group + .site-search-group {
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.25rem;
+}
+
+.site-search-group-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem 0.2rem;
+  font-size: var(--eyebrow-size);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.site-search-group-count {
+  font-size: 0.72em;
+}
+
+.site-search-result {
+  --row-bg: transparent;
+  --row-text: var(--foreground);
+  --row-detail: var(--muted-foreground);
+
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: calc(var(--radius) * 0.7);
+  background: var(--row-bg);
+  font-size: 0.82rem;
+  cursor: pointer;
+  outline: none;
+  /* Each row is an <a>, so the base layer's link colours would win otherwise. */
+  color: var(--row-text);
+  text-decoration: none;
+}
+
+/* Restated for all three link states — `a:visited` in the base layer is the one
+   that would otherwise recolour every result the reader has already opened,
+   which on a reference archive is most of them. */
+.site-search-result:link,
+.site-search-result:visited,
+.site-search-result:hover {
+  color: var(--row-text);
+}
+
+/* [data-focused] is the keyboard cursor and [data-hovered] the pointer. Both
+   read as "this is the row you would open", so both get the same fill. */
+.site-search-result[data-hovered],
+.site-search-result[data-focused] {
+  --row-bg: var(--muted);
+}
+
+.site-search-result[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.site-search-result-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-search-result-detail {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  color: var(--row-detail);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-search-result {
+    transition: background-color 0.12s ease;
+  }
+}

@@ -160,6 +160,32 @@ out of the initial bundle on all ~600 pages, and a dynamic import is covered by
 `script-src 'self'` — no `connect-src` is needed, which a `fetch` would have
 required.
 
+> **Amended by AWK-41 on 2026-08-18, in three places where building it found this
+> record's plan slightly wrong.**
+>
+> **The index ships as `/search-index.js`, an ES module, not `search-index.json`.**
+> The paragraph above is right about *why* — a dynamic import is script, a `fetch`
+> is connect — but `import()` of a `.json` URL requires import attributes
+> (`with { type: 'json' }`), which is too new to rely on across browsers. An ES
+> module exporting the same array keeps the CSP property with nothing to
+> negotiate. `public/_headers` carries the same warning next to the policy itself.
+>
+> **Results are anchors, and navigation comes from React Aria's `RouterProvider`,**
+> wired once in `app/root.tsx`. This was not obvious: giving `ListBoxItem` an
+> `href` makes React Aria treat the row as a link, so `onSelectionChange` fires
+> with **null** and never with the key — routing through selection silently does
+> nothing. The payoff for getting it right is ordinary web behaviour on results:
+> cmd-click, middle-click, "open in new tab", "copy link address".
+>
+> **`@react-aria/optimize-locales-plugin` is now a build dependency,** locked to
+> `en-US`. `ComboBox` is the first localized React Aria component this site uses,
+> and `react-aria` imports all 34 languages' strings statically into one object,
+> so tree-shaking cannot drop them: 47.6 KB raw / ~5.9 KB gzipped against 1.2 KB /
+> ~0.5 KB for English alone. Note React Aria's own React Router guide describes
+> the **SSR** setup for this — `entry.server.tsx`, strings chosen per request from
+> `accept-language` — which cannot apply to a site with no requests. The
+> client-only Vite variant is the one that fits. See `vite.config.ts`.
+
 ### What was rejected
 
 **Hosted search (Algolia and similar)** — ruled out on

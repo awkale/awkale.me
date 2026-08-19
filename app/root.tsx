@@ -1,4 +1,5 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
+import { RouterProvider as AriaRouterProvider } from 'react-aria-components'
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useNavigate } from 'react-router'
 
 import { SiteFooter } from './components/site-footer'
 import { SiteHeader } from './components/site-header'
@@ -7,6 +8,8 @@ import { themeScript } from './lib/mode'
 import './app.css'
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate()
+
   return (
     <html lang="en">
       <head>
@@ -83,10 +86,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
       <body>
-        <SiteHeader />
-        {children}
-        {/* ADR-0011. See site-footer.tsx for what it carries and why. */}
-        <SiteFooter />
+        {/*
+          React Aria's RouterProvider, NOT React Router's — the two packages
+          export the same name, hence the alias on the import.
+
+          It hands React Aria a `navigate` function, which is what makes any
+          React Aria component carrying an `href` navigate client-side instead
+          of reloading the document. Today that is exactly one surface: the
+          header search's results (AWK-41), which are anchors precisely so
+          cmd-click, middle-click and "copy link address" behave like the rest
+          of the web.
+
+          REMOVING THIS DOES NOT BREAK ANYTHING VISIBLY. Every result keeps its
+          href and still goes to the right page — as a full page load, on a site
+          whose whole point is that navigation is instant. That is the failure
+          mode to know about, because nothing throws and no test here can see it.
+
+          `useHref` is deliberately not passed: it is only needed under a
+          basename, and this site is served from the root.
+        */}
+        <AriaRouterProvider navigate={navigate}>
+          <SiteHeader />
+          {children}
+          {/* ADR-0011. See site-footer.tsx for what it carries and why. */}
+          <SiteFooter />
+        </AriaRouterProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

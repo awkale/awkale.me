@@ -37,8 +37,23 @@ import { prerenderPaths } from './app/lib/prerender-paths'
  */
 const BUILD_DIR = 'build'
 
-/** Published, and dynamically imported by the header search on first interaction (AWK-41). */
-const SEARCH_INDEX = join(BUILD_DIR, 'client', 'search-index.json')
+/**
+ * Published, and dynamically imported by the header search on first interaction
+ * (AWK-41).
+ *
+ * A `.js` MODULE RATHER THAN THE `.json` THIS ORIGINALLY EMITTED, and the
+ * extension is the whole point. ADR-0011 chose a dynamic import over `fetch`
+ * specifically so the index is covered by `script-src 'self'` and needs no
+ * `connect-src` — but `import()` of a `.json` URL requires import attributes
+ * (`with { type: 'json' }`), which is too new to rely on across browsers. An ES
+ * module carrying the same array needs nothing, is script by definition, and
+ * keeps the property the record was written for. See public/_headers.
+ *
+ * NOT content-hashed, deliberately: the URL is a string literal in the client
+ * bundle (app/lib/search-index.ts), so a hash would have to be threaded back
+ * into the source. It changes every deploy anyway.
+ */
+const SEARCH_INDEX = join(BUILD_DIR, 'client', 'search-index.js')
 
 /**
  * NOT published — it sits beside `client/`, not inside it.
@@ -55,6 +70,16 @@ const PAGE_MANIFEST = join(BUILD_DIR, '.page-manifest.json')
 function write(path: string, data: unknown): void {
   mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`)
+}
+
+/**
+ * The same value as `write`, wrapped as an ES module so it can be `import()`ed
+ * at runtime. Minified rather than pretty-printed — nothing reads this by eye,
+ * and it ships to every visitor who opens the search.
+ */
+function writeModule(path: string, data: unknown): void {
+  mkdirSync(dirname(path), { recursive: true })
+  writeFileSync(path, `export default ${JSON.stringify(data)}\n`)
 }
 
 /**
@@ -117,7 +142,7 @@ export default {
   async buildEnd() {
     const archive = await loadArchive()
 
-    write(SEARCH_INDEX, archive.search)
+    writeModule(SEARCH_INDEX, archive.search)
     write(PAGE_MANIFEST, archive.paths)
 
     const bridged = bridgeTrailingSlashData(archive.paths)

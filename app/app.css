@@ -30,6 +30,7 @@
 @import './components/mode-toggle.css';
 @import './components/facet-chip.css';
 @import './components/contact-form.css';
+@import './components/site-search.css';
 
 @custom-variant dark (&:is(.dark *));
 

@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import { describe, expect, it } from 'vitest'
 
@@ -31,7 +32,7 @@ import { MODE_KEY } from '../app/lib/mode'
  */
 const CLIENT = join(import.meta.dirname, '..', 'build', 'client')
 const MANIFEST = join(import.meta.dirname, '..', 'build', '.page-manifest.json')
-const SEARCH_INDEX = join(CLIENT, 'search-index.json')
+const SEARCH_INDEX = join(CLIENT, 'search-index.js')
 // BOTH, because a build/client left over from before AWK-39 has pages but no
 // manifest, and comparing against a file that is not there fails in a way that
 // reads like a broken build rather than a stale one. `bun run test:ci` builds
@@ -94,28 +95,36 @@ describe.skipIf(!built)('built output', () => {
   // are invisible without this comparison, since each artifact is internally
   // consistent on its own.
   describe('the search index', () => {
-    const entries = () =>
-      JSON.parse(readFileSync(SEARCH_INDEX, 'utf8')) as { kind: string; title: string; path: string }[]
+    // IMPORTED, not read and parsed, because that is exactly how the browser
+    // consumes it (app/lib/search-index.ts). An artifact that is valid JSON but
+    // not a valid module would sail through `JSON.parse` and fail in the one
+    // place nothing here is watching.
+    const entries = async () => {
+      const module = (await import(pathToFileURL(SEARCH_INDEX).href)) as {
+        default: { kind: string; title: string; path: string }[]
+      }
+      return module.default
+    }
 
-    it('is published where the header search can import it', () => {
+    it('is published where the header search can import it', async () => {
       expect(existsSync(SEARCH_INDEX)).toBe(true)
-      expect(entries().length).toBeGreaterThan(0)
+      expect((await entries()).length).toBeGreaterThan(0)
     })
 
-    it('points every entry at a page that was actually built', () => {
+    it('points every entry at a page that was actually built', async () => {
       // Index paths carry the TRAILING SLASH, because they become `<Link to>`
       // targets and each slash-free one costs a needless 301 across ~600 pages.
       // The emitted set is slash-free, so the comparison has to strip.
       const pages = new Set(emittedPages(CLIENT))
-      const dangling = entries().filter((e) => !pages.has(e.path === '/' ? '/' : e.path.replace(/\/$/, '')))
+      const dangling = (await entries()).filter((e) => !pages.has(e.path === '/' ? '/' : e.path.replace(/\/$/, '')))
 
       expect(dangling).toEqual([])
     })
 
-    it('indexes site-wide, not just the archive', () => {
+    it('indexes site-wide, not just the archive', async () => {
       // A header search field that cannot find a case study is a site-wide
       // search that quietly isn't one (AWK-41).
-      expect(new Set(entries().map((e) => e.kind))).toContain('concert')
+      expect(new Set((await entries()).map((e) => e.kind))).toContain('concert')
     })
   })
 

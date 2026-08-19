@@ -49,6 +49,12 @@
 # `connect-src` is intentionally absent; it falls back to default-src 'self'. A
 # dynamic import counts as script, not connect, so the search index in AWK-41 needs
 # nothing added.
+#
+# THAT IS WHY THE INDEX IS `/search-index.js` AND NOT `.json`. AWK-41 found the
+# original plan unbuildable as recorded: `import()` of a `.json` URL requires import
+# attributes (`with { type: 'json' }`), which is too new to rely on, and `fetch` is
+# what ADR-0011 rejected to get this property in the first place. An ES module
+# exporting the same array is script by definition. Do not "tidy" it back to JSON.
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
 

@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { ModeToggle } from './mode-toggle'
+import { SiteSearch } from './site-search'
 
 /**
  * Internal links carry a TRAILING SLASH deliberately. AWK-17: the build emits
@@ -29,6 +30,11 @@ export function SiteHeader() {
           Composers
         </Link>
       </nav>
+
+      {/* ADR-0011: site-wide, in the header of every page — including Projects,
+          because a search that cannot find a case study is a site-wide search
+          that quietly isn't one. It loads its index on first interaction. */}
+      <SiteSearch />
 
       <ModeToggle />
     </header>

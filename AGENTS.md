@@ -43,6 +43,9 @@ See `docs/agents/domain.md`.
 | `app/lib/contentful.ts` | The CDA client. No SDK: `fetch`, pagination, retry. Asserts the three env vars before fetching anything. |
 | `app/lib/archive.ts` | **The one build-time sweep.** Three consumers — `prerenderPaths`, `buildEnd`'s search index, and every route loader — all read `loadArchive()`, which fetches once and memoizes. A second enumeration is the thing this exists to prevent. |
 | `app/lib/invariants.ts` | The seven checks Contentful cannot express as validations. See ADR-0008's amendment on the hashed-slug shape. |
+| `app/lib/search.ts` | AWK-41's ranking, grouping and per-kind cap. Pure and DOM-free **on purpose** — React Aria's own collection filter is switched off so these rules are the only ones running, and can be tested without a popover. Folds diacritics, so `dvorak` reaches `Dvořák`. |
+| `app/lib/search-index.ts` | Loads `/search-index.js` by dynamic import, memoized on the promise, on first interaction with the header field. An import rather than a `fetch` is a **CSP decision** — see `public/_headers`. |
+| `app/components/site-search.tsx` | The header ComboBox. Results are `<a href>`, which is why `onSelectionChange` is unused: React Aria fires it with **null** for link rows. |
 | `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), `seed_participation.py` (AWK-36's participation pass — **dry run is its default**, unlike its siblings), `backfill_slugs.py` (AWK-39's slug pass — dry run also its default; it does the two **honorific** merges and leaves the 25 **arranger** ones to AWK-23), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
 | `docs/archive/recording-curation.md` | Per-video verdicts for the BSO channel (AWK-32). Three of fifteen uploads are seedable. ADR-0012 forbids scripting this; the file is a worksheet, not an input. |
 | `docs/archive/program-19930726-liyo-dallas-brooks-hall.jpg` | Photographed printed program, Long Island Youth Orchestra at Dallas Brooks Hall, Melbourne, 1993-07-26. **A primary source for a concert no other source here holds** — not in the xlsx, not in `bso-graph.json`, and none of its orchestra, hall or conductors exist in the archive. Untranscribed. |
@@ -56,6 +59,14 @@ See `docs/agents/domain.md`.
 ## Commands
 
 `bun`, never `npm` or `yarn`. ADR-0014 covers the toolchain.
+
+**`@react-aria/optimize-locales-plugin` is pinned to `en-US` in `vite.config.ts`,
+and it is not optional tidying.** React Aria imports all 34 languages' strings
+statically, so tree-shaking cannot drop them; without the plugin every page carries
+~5.4 KB gzipped of languages this site never serves. Adding a language to the site
+means adding it to that list too, or its screen-reader announcements stay English.
+Note React Aria's React Router guide describes the **SSR** setup for this, which
+does not apply to a site with no requests — the client-only Vite variant is ours.
 
 | | |
 | --- | --- |
@@ -153,6 +164,32 @@ assertion, the sweep's participation rules, and the RichText renderer).
 > 2026-08-15 under AWK-39, which contributed 73. **Count with `bun run test`
 > rather than trusting this number either** — that instruction is the durable part
 > of this paragraph.
+>
+> It went stale again immediately, as predicted: the suite answered **196** by the
+> time AWK-41 opened, not the 191 above. It is **224 across fifteen files** as of
+> 2026-08-19 — AWK-41 added the search ranker's 14, the header field's 10 and the
+> index loader's 4. Which is to say: count it, do not read it.
+
+**Archive search ships, and its index is a JS module.** AWK-41 landed the client
+half on 2026-08-18. `buildEnd` now writes `build/client/search-index.js` — an ES
+module, `export default [...]`, **not** the `.json` the earlier comments here
+promised, because `import()` of a `.json` URL needs import attributes and ADR-0011
+chose an import over a `fetch` precisely to stay inside `script-src`. The last
+build emitted **603 entries** (87.5 KB raw / 14.4 KB gzipped), fetched only when
+someone touches the field.
+
+> **`bun run dev` serves that index from a dev-only Vite plugin**, not from disk —
+> the built file lives in `build/client`, which the dev server does not serve, so
+> before that plugin existed the header search 404'd its index and silently found
+> nothing in dev while working in production. Same `loadArchive()` behind both, so
+> they cannot disagree. `apply: 'serve'` keeps it out of the build.
+>
+> Two traps for whoever edits this next. **Results are anchors**, so React Aria
+> fires `onSelectionChange` with `null` and routing must come from the
+> `RouterProvider` in `app/root.tsx` — delete that and every result still works, as
+> a full page load, which nothing tests and nobody notices. And **React Aria's own
+> collection filter is off** (`defaultFilter={() => true}`); turning it back on
+> re-drops the diacritic matches `app/lib/search.ts` exists to keep.
 
 Two gaps that older tickets still assume: there is **no CI** in this repo at all (no `.github/`), so
 "joins the CI page assertion" means `scripts/assert-pages.test.ts` and nothing
