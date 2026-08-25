@@ -321,7 +321,13 @@ SOURCE_CORRECTIONS = {
                "opening work while row 913 carries the full program, so this row "
                "contributes the occasion and not the repertoire. Piece and composer "
                "are cleared to stop it emitting a phantom one-work concert.",
-        "expect": {"venue": "Grand Street Campus High Schools, Brooklyn"},
+        # Piece and composer are pinned as well as the venue, because this entry
+        # CLEARS them: if the sheet is ever amended so this row carries repertoire
+        # unique to the Grand Street night, deleting it silently would leave the
+        # Saturday sharing the Sunday's program and lose the difference.
+        "expect": {"venue": "Grand Street Campus High Schools, Brooklyn",
+                   "piece": "Capriccio Italien",
+                   "composer": "Tchaikovsky, Pyotr Ilyich"},
         "set": {"piece": None, "composer": None},
         "role": "run-first-night",
     },
@@ -472,8 +478,12 @@ for i, row in enumerate(sheet):
             how = ("declared two-venue run" if declared_run
                    else "bare date" if bare_date
                    else "date on the next piece's row")
+            # `cur["raw_date"]` rather than `a`: a corrected date arrives here as a
+            # datetime.date, whose repr would print as `datetime.date(2008, 12, 14)`
+            # against every other line's `'Sun, Apr 26, 2015'`. This report is the
+            # human-readable drift signal, so it stays uniform.
             report["shared_program"].append(
-                f"row {rn}: {a!r} shares the program of "
+                f"row {rn}: {cur['raw_date']!r} shares the program of "
                 f"{prev['date'] or prev['raw_date']!r} ({how})")
         else:
             cur_item = None

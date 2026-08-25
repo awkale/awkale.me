@@ -570,6 +570,10 @@ Verified against the source; these are what make the 1,489 rows parseable:
   `report["shared_program"]` labels which form matched, so a future edit to the
   sheet that trips the heuristic is visible rather than silent.
 
+* Each soloist cell holds exactly one credit, `Name` or `Name, Role[, Role...]`.
+  Multiple roles mean one player on several instruments. Roles that aren't
+  instruments or voices are treated as opera characters.
+
 ### Source corrections
 
 Three transcription errors in the spreadsheet are fixed in `parse_archive.py`'s
@@ -591,9 +595,6 @@ silently to data that has since changed is worse than no correction.
 `duplicate_header()` consequently **matches nothing now** and is kept anyway: rows
 912–913 were its only instance, but the artifact it guards against is a property of
 how the sheet was maintained, not of that one pair.
-* Each soloist cell holds exactly one credit, `Name` or `Name, Role[, Role...]`.
-  Multiple roles mean one player on several instruments. Roles that aren't
-  instruments or voices are treated as opera characters.
 
 ## Known gaps
 
@@ -609,8 +610,11 @@ how the sheet was maintained, not of that one pair.
   `var. dates, 1983`); the raw text is preserved in `concert.dateNote`.
 * ~~**Rows 912–913 (Dec 13 2008) are ambiguous in the source.**~~ **Resolved by
   AWK-38**, and close to the way this entry guessed: they are one program
-  performed at two venues, so row 912 now carries a declared `shares`-style link
-  to row 913's program. The part the guess got wrong is that it is not *one day* —
+  performed at two venues, so row **913** now carries a declared `shares`-style
+  link to row **912's** program — the reverse of the direction this entry
+  guessed, and the direction that matters: item ids are named from the FIRST
+  night, so they stay `pi-20081213-*`. The other thing the guess got wrong is
+  that it is not *one day* —
   Alex confirmed **Saturday at Grand Street, Sunday at St Ann**, and Dec 13 2008
   was a Saturday, so row 913's `Sun` label is right and its day-of-month is the
   typo. `duplicate_header()` was kept rather than deleted; see *Source

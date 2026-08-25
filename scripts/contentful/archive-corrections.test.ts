@@ -167,10 +167,10 @@ describe('the corrections change nothing else', () => {
   })
 
   /**
-   * Nine runs in the graph, not the seven the checklist header quotes: the
-   * checklist counts only IN-SCOPE runs (2001-05-24 →), and the 1978-02-14 pair is
-   * pre-tenure. Eight of these nine are in scope once 2008-12 joins them, which is
-   * the number the checklist header has to move to.
+   * Nine runs in the graph against the eight the checklist header quotes, and the
+   * difference is not drift: the checklist counts only IN-SCOPE runs (2001-05-24 →)
+   * and the 1978-02-14 pair is pre-tenure. Eight of these nine are in scope now
+   * that 2008-12 has joined them.
    */
   it('records nine shared-program runs', () => {
     expect(graph.report['shared_program']?.length).toBe(9)
