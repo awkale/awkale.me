@@ -1,8 +1,8 @@
 # Performance-participation checklist — in-scope concerts (2001-05-24 →)
 
-127 concerts, 120 distinct programs, 348 distinct works.
-384 distinct `programItem` entries, but **404 concert x item pairs** — the 7 two-performance
-runs share one program across two dates, so the boxes below total 404.
+128 concerts, 120 distinct programs, 348 distinct works.
+384 distinct `programItem` entries, but **407 concert x item pairs** — the 8 two-performance
+runs share one program across two dates, so the boxes below total 407.
 
 **Default is "I played it." Only mark exceptions.**
 
@@ -233,7 +233,7 @@ runs share one program across two dates, so the boxes below total 404.
 - [ ] missed whole concert
   - [ ] 1. Mozart — Symphony No. 41 in C Major ("Jupiter")
 
-### 2007-12-16 · Sun · Church of St. Ann & the Holy Trinity · — (—)
+### 2007-12-16 · Sun · Church of St. Ann & the Holy Trinity · Nicholas Armstrong (BSO)
 - [ ] missed whole concert
   - [ ] 1. Bossert — Music for Film
   - [ ] 2. Mendelssohn — Symphony No. 3 in A Minor ("Scottish")
@@ -267,7 +267,13 @@ runs share one program across two dates, so the boxes below total 404.
   - [ ] 2. Bartok — The Miraculous Manadrin Suite
   - [ ] 3. Rachmaninoff — Piano Concerto No. 4 in G Minor
 
-### 2008-12-13 · Sat · Church of St. Ann & the Holy Trinity · Nicholas Armstrong (BSO)
+### 2008-12-13 · Sat · Grand Street Campus High Schools · Nicholas Armstrong (BSO) `[run]`
+- [x] missed whole concert
+  - [ ] 1. Tchaikovsky — Capriccio Italien
+  - [ ] 2. Liebermann — Concerto for Piccolo
+  - [ ] 3. Delibes — Coppelia Ballet Suite
+
+### 2008-12-14 · Sun · Church of St. Ann & the Holy Trinity · Nicholas Armstrong (BSO) `[run]`
 - [ ] missed whole concert
   - [ ] 1. Tchaikovsky — Capriccio Italien
   - [ ] 2. Liebermann — Concerto for Piccolo

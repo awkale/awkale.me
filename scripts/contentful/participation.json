@@ -272,6 +272,12 @@
     {
       "date": "2008-12-13",
       "graphId": "cnc-20081213",
+      "attended": false,
+      "satOut": []
+    },
+    {
+      "date": "2008-12-14",
+      "graphId": "cnc-20081214",
       "attended": true,
       "satOut": []
     },

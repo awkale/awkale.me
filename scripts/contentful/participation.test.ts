@@ -115,13 +115,29 @@ for (const [id, concert] of Object.entries(graph.types.concert)) {
 }
 
 describe('the checklist parses to the set the ticket describes', () => {
-  it('holds 127 in-scope concerts', () => {
-    expect(checklist).toHaveLength(127)
+  /** 128 rather than 127 since AWK-38 split the 2008-12 two-venue run in two. */
+  it('holds 128 in-scope concerts', () => {
+    expect(checklist).toHaveLength(128)
   })
 
-  it('ticks 6 missed concerts, all at the Brooklyn Museum', () => {
+  /**
+   * This used to read "6 missed concerts, all at the Brooklyn Museum", and that
+   * coincidence is what AWK-38 broke: every missed date was a recent one until the
+   * 2008-12 run was split and the Saturday at Grand Street turned out to be the
+   * night Alex was not there. The venue clause was never an invariant, only a
+   * property of a small set, so it is gone rather than re-stated.
+   */
+  it('ticks 7 missed concerts', () => {
     const missed = checklist.filter((c) => c.missed).map((c) => c.date)
-    expect(missed).toEqual(['2024-04-21', '2024-06-09', '2024-12-15', '2025-06-15', '2026-02-15', '2026-06-14'])
+    expect(missed).toEqual([
+      '2008-12-13',
+      '2024-04-21',
+      '2024-06-09',
+      '2024-12-15',
+      '2025-06-15',
+      '2026-02-15',
+      '2026-06-14',
+    ])
   })
 
   it('ticks 4 sat-out items, on the 4 dates the ticket names', () => {
@@ -137,12 +153,17 @@ describe('the checklist parses to the set the ticket describes', () => {
   })
 
   /**
-   * 404 rather than 384: the 7 two-performance runs share one program across two
+   * 407 rather than 384: the 8 two-performance runs share one program across two
    * dates, so a concert x item pair count exceeds the distinct programItem count
-   * by the 20 shared items. ADR-0006 turns on this being per pair.
+   * by the 23 shared items. ADR-0006 turns on this being per pair.
+   *
+   * Was 404 across 7 runs. AWK-38 added the eighth — 2008-12-13/14, the archive's
+   * only run at two different venues — and its 3 items are the 3 new pairs. The
+   * distinct programItem count is unchanged at 384 precisely because the nights
+   * share rather than duplicate, which is the property worth watching here.
    */
-  it('totals 404 concert x item pairs', () => {
-    expect(checklist.reduce((n, c) => n + c.items.length, 0)).toBe(404)
+  it('totals 407 concert x item pairs', () => {
+    expect(checklist.reduce((n, c) => n + c.items.length, 0)).toBe(407)
   })
 })
 
@@ -218,8 +239,8 @@ describe('participation.json follows from the checklist', () => {
   const planByDate = new Map(plan.concerts.map((c) => [c.date, c]))
 
   it('plans one write per in-scope concert and no more', () => {
-    expect(plan.concerts).toHaveLength(127)
-    expect(planByDate.size).toBe(127)
+    expect(plan.concerts).toHaveLength(128)
+    expect(planByDate.size).toBe(128)
   })
 
   /**
@@ -244,9 +265,15 @@ describe('participation.json follows from the checklist', () => {
     expect(wrong).toEqual([])
   })
 
-  it('splits 121 attended against 6 missed', () => {
+  /**
+   * The attended count is unchanged at 121 even though a concert was added, and
+   * that is the arithmetic worth stating: splitting the 2008-12 run added the
+   * Sunday as attended and flipped the Saturday to missed, so the page set keeps
+   * its size while swapping /concerts/2008-12-13/ out for /concerts/2008-12-14/.
+   */
+  it('splits 121 attended against 7 missed', () => {
     expect(plan.concerts.filter((c) => c.attended)).toHaveLength(121)
-    expect(plan.concerts.filter((c) => !c.attended)).toHaveLength(6)
+    expect(plan.concerts.filter((c) => !c.attended)).toHaveLength(7)
   })
 
   it('carries a graphId that resolves back to its own date', () => {

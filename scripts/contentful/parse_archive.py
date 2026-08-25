@@ -290,14 +290,97 @@ season_num, season_notes = None, None
 cur = None             # current concert
 cur_item = None        # current program item
 
-sheet = list(ws.iter_rows(min_row=6, values_only=True))
+sheet = [list(r) for r in ws.iter_rows(min_row=6, values_only=True)]
+
+# ------------------------------------------------- source corrections (AWK-38)
+#
+# Three transcription errors in the spreadsheet, fixed HERE and keyed by sheet row
+# rather than fixed in the file. `Wikipedia BSO Archive.xlsx` is a received primary
+# source and this repo keeps such things intact -- see docs/archive/ for the others.
+# A correction in code is greppable, shows up in a diff, and is covered by
+# archive-corrections.test.ts; an edited binary is none of those.
+#
+# Every entry pins the value it EXPECTS to find, and the run ABORTS on a mismatch.
+# A correction applied silently to data that has since changed is worse than no
+# correction at all -- the same posture migrate_schema.py takes toward drift.
+COL = {"date": 0, "piece": 1, "soloist": 2, "composer": 3,
+       "conductor": 4, "orchestra": 5, "venue": 6}
+
+SOURCE_CORRECTIONS = {
+    888: {
+        "why": "2007-12-16 left conductor and orchestra blank. Every neighbouring "
+               "concert in the season reads Armstrong/BSO and the venue matches. "
+               "ADR-0006 ships conductor as one of only two browse filters, so a "
+               "blank made this the one played concert no filter could reach.",
+        "expect": {"conductor": None, "orchestra": None},
+        "set": {"conductor": "Nicholas Armstrong", "orchestra": "BSO"},
+    },
+    912: {
+        "why": "Sat 2008-12-13 at Grand Street -- the FIRST night of a two-venue "
+               "run, and the archive's only one. Its piece cell restates just the "
+               "opening work while row 913 carries the full program, so this row "
+               "contributes the occasion and not the repertoire. Piece and composer "
+               "are cleared to stop it emitting a phantom one-work concert.",
+        "expect": {"venue": "Grand Street Campus High Schools, Brooklyn"},
+        "set": {"piece": None, "composer": None},
+        "role": "run-first-night",
+    },
+    913: {
+        "why": "Labelled 'Sun, Dec 13, 2008', but Dec 13 2008 was a SATURDAY. The "
+               "weekday is the half that is right and the day-of-month is the typo. "
+               "This is the Sunday at St Ann, sharing the Saturday's program. It "
+               "keeps its OWN hall: get_hall(ven) already takes precedence over the "
+               "inherited one, which is why a two-venue run needs no change to the "
+               "hall logic -- only to the run DETECTION below.",
+        "expect": {"date": "2008-12-13"},
+        "set": {"date": datetime.date(2008, 12, 14)},
+        "role": "run-continuation",
+    },
+}
+
+RUN_FIRST_NIGHT = {rn for rn, c in SOURCE_CORRECTIONS.items()
+                   if c.get("role") == "run-first-night"}
+RUN_CONTINUATION = {rn for rn, c in SOURCE_CORRECTIONS.items()
+                    if c.get("role") == "run-continuation"}
+
+
+def apply_source_corrections():
+    """Mutate `sheet` in place, refusing to touch a row that no longer matches."""
+    for rn, c in sorted(SOURCE_CORRECTIONS.items()):
+        i = rn - 6
+        if not 0 <= i < len(sheet):
+            sys.exit(f"correction row {rn} is outside the sheet "
+                     f"({len(sheet)} rows read from row 6)")
+        row = sheet[i]
+        for field, want in c.get("expect", {}).items():
+            got = row[COL[field]]
+            got = parse_date(got)[0] if field == "date" else got
+            ok = is_blank(got) if want is None else (got == want)
+            if not ok:
+                sys.exit(f"correction row {rn}: expected {field}={want!r}, found "
+                         f"{got!r}. The source has changed, so this correction no "
+                         f"longer describes it -- re-verify against the sheet "
+                         f"before editing SOURCE_CORRECTIONS.")
+        for field, value in c.get("set", {}).items():
+            row[COL[field]] = value
+        report["source_correction"].append(f"row {rn}: {c['why'].split('.')[0]}.")
+
+
+apply_source_corrections()
 
 def duplicate_header(i):
     """True if row i starts a concert that the very next row restates.
 
-    The source has at least one such artifact (rows 912-913: the same date and
-    the same opening piece, once as a date cell and once as text). Honoring both
-    would emit a phantom concert holding only that first piece.
+    MATCHES NOTHING as of AWK-38, and is kept on purpose. Rows 912-913 were the
+    only instance -- the same date and the same opening piece, once as a date cell
+    and once as text -- and they turned out not to be a duplicate at all, but a
+    two-venue run whose Sunday had its day-of-month mistyped. SOURCE_CORRECTIONS
+    fixes that date, the two dates now differ, and this no longer fires.
+
+    Retained because the artifact it guards against is a property of how the sheet
+    was maintained rather than of that one pair: honoring a genuine restatement
+    emits a phantom concert holding only the first piece, silently. If an edit to
+    the source reintroduces one, this catches and reports it.
     """
     a, piece = (list(sheet[i]) + [None] * 7)[:2]
     if a in (None, "") or i + 1 >= len(sheet):
@@ -360,8 +443,20 @@ for i, row in enumerate(sheet):
         continues_run = (is_blank(cond) and is_blank(orch) and is_blank(ven))
         bare_date = (is_blank(comp)
                      and not (piece is not None and str(piece).strip()))
-        shares = (prev is not None and bool(prev["items"])
-                  and (bare_date or continues_run))
+        # A THIRD form, declared rather than sniffed: a run whose two nights are at
+        # DIFFERENT venues. Neither test above can express it -- both require a
+        # blank venue, and a blank venue is precisely what makes the second night
+        # inherit the first's hall. The two conditions are the same condition, so
+        # the pair is named in SOURCE_CORRECTIONS instead of being guessed at.
+        #
+        # The first night is excluded explicitly: its piece cell was cleared, which
+        # would otherwise read as a `bare_date` and share the PREVIOUS concert's
+        # program -- silently, and two months from the row it belongs to.
+        declared_run = rn in RUN_CONTINUATION
+        shares = (prev is not None
+                  and rn not in RUN_FIRST_NIGHT
+                  and (declared_run
+                       or (bool(prev["items"]) and (bare_date or continues_run))))
         cur = {"date": iso, "dateNote": note, "season": season_num,
                "hall": get_hall(ven) or (prev["hall"] if shares else None),
                "orchestra": get_orchestra(orch) or (prev["orchestra"] if shares else None),
@@ -371,8 +466,12 @@ for i, row in enumerate(sheet):
                "raw_date": str(a).strip(), "raw_venue": ven, "row": rn}
         if shares:
             cur["dateNote"] = note or f"Additional performance of the {prev['date'] or prev['raw_date']} program"
-            cur_item = prev["items"][-1]      # cast below continues on this item
-            how = "bare date" if bare_date else "date on the next piece's row"
+            # Empty on a declared run: the first night contributes the occasion and
+            # this row carries the repertoire, so there is no item to continue onto.
+            cur_item = prev["items"][-1] if prev["items"] else None
+            how = ("declared two-venue run" if declared_run
+                   else "bare date" if bare_date
+                   else "date on the next piece's row")
             report["shared_program"].append(
                 f"row {rn}: {a!r} shares the program of "
                 f"{prev['date'] or prev['raw_date']!r} ({how})")

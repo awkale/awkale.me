@@ -553,16 +553,44 @@ Verified against the source; these are what make the 1,489 rows parseable:
   piece above** — 232 rows do this.
 * A dated row can be an **additional performance of the preceding program** (a
   two-night run) rather than a new program. Both concerts link the same program
-  items. The sheet writes this two ways, 8 rows in total:
+  items. The sheet writes this three ways, 9 rows in total:
   * **Bare date** — no piece and no composer (4 rows).
   * **Date on the run's next piece**, leaving conductor, orchestra and venue
     empty (4 rows: 879, 966, 1006, 1091). All three cells must be blank to
     qualify. Row 266 (`var. dates, 1983`) has a blank conductor and venue but
     names BHO, and is a genuine concert — testing only two of the three would
     silently swallow it.
+  * **Declared in `SOURCE_CORRECTIONS`** (1 row: 913). The only form that is not
+    sniffed, because the other two **cannot express a run at two different
+    venues**: both require a blank venue, and a blank venue is exactly what makes
+    the second night inherit the first's hall. Those are the same condition, so a
+    two-venue run is undetectable by any widening of the heuristic and is named
+    instead. See *Source corrections* below.
 
   `report["shared_program"]` labels which form matched, so a future edit to the
   sheet that trips the heuristic is visible rather than silent.
+
+### Source corrections
+
+Three transcription errors in the spreadsheet are fixed in `parse_archive.py`'s
+`SOURCE_CORRECTIONS`, keyed by sheet row — **not** in the `.xlsx`, which is a
+received primary source this repo keeps intact. A correction in code is greppable,
+shows up in a diff, and is covered by `archive-corrections.test.ts`; an edited
+binary is none of those.
+
+| Row | Correction | Why |
+| --- | --- | --- |
+| 888 | Fill conductor / orchestra | 2007-12-16 left both blank. ADR-0006 ships conductor as one of two browse filters, so a blank made it the one played concert no filter could reach. |
+| 912 | Clear piece / composer | Sat 2008-12-13 at Grand Street, the run's first night. Its piece cell restates only the opening work; row 913 carries the program. |
+| 913 | Date → 2008-12-14 | Labelled `Sun, Dec 13, 2008`, but Dec 13 2008 was a **Saturday**. The weekday is right; the day-of-month is the typo. |
+
+**Every entry pins the value it expects to find and the run aborts on a mismatch** —
+the same posture `migrate_schema.py` takes toward drift. A correction applied
+silently to data that has since changed is worse than no correction.
+
+`duplicate_header()` consequently **matches nothing now** and is kept anyway: rows
+912–913 were its only instance, but the artifact it guards against is a property of
+how the sheet was maintained, not of that one pair.
 * Each soloist cell holds exactly one credit, `Name` or `Name, Role[, Role...]`.
   Multiple roles mean one player on several instruments. Roles that aren't
   instruments or voices are treated as opera characters.
@@ -579,18 +607,15 @@ Verified against the source; these are what make the 1,489 rows parseable:
   but not queryable. A `credit` join type would fix it.
 * Three concerts have no usable date (`unknown`, `May, 1981 (date n/a)`,
   `var. dates, 1983`); the raw text is preserved in `concert.dateNote`.
-* **Rows 912–913 (Dec 13 2008) are ambiguous in the source and the parser makes
-  a judgment call.** Both rows give the same date, piece, composer, conductor
-  and orchestra, but *different venues* — `Grand Street Campus High Schools`
-  vs `Church of St. Ann & the Holy Trinity`. Only row 913 has the remaining two
-  pieces beneath it.
-  `duplicate_header()` treats row 912 as a superseded edit and skips it, which
-  matches how the entry was resolved in Contentful. The cost: `Grand Street
-  Campus High Schools` appears nowhere else in the archive, so that venue is no
-  longer referenced by any concert (the `hall` entry still exists, orphaned).
-  If the two rows are in fact one program performed at two venues on one day,
-  delete `duplicate_header` and instead give row 912 a `shares`-style link to
-  row 913's program. Check the season programs before assuming either way.
+* ~~**Rows 912–913 (Dec 13 2008) are ambiguous in the source.**~~ **Resolved by
+  AWK-38**, and close to the way this entry guessed: they are one program
+  performed at two venues, so row 912 now carries a declared `shares`-style link
+  to row 913's program. The part the guess got wrong is that it is not *one day* —
+  Alex confirmed **Saturday at Grand Street, Sunday at St Ann**, and Dec 13 2008
+  was a Saturday, so row 913's `Sun` label is right and its day-of-month is the
+  typo. `duplicate_header()` was kept rather than deleted; see *Source
+  corrections*. `Grand Street Campus High Schools` is no longer orphaned, which is
+  what closed the graph's 12 halls against Contentful's 13.
 
 ## Content model
 
