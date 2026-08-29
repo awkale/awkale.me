@@ -211,6 +211,40 @@ describe('archive-schema.json', () => {
     })
   })
 
+  describe('the gated steps', () => {
+    const { gated } = schema as unknown as {
+      gated: { id: string; contentType: string; field: string; blockedBy: string; why: string[] }[]
+    }
+
+    it('holds both unique-drops, and nothing else', () => {
+      // Every entry here removes a space-wide `unique` standing in for an
+      // invariant Contentful cannot express. A gate appearing without that
+      // shape means someone widened the mechanism past what it was built for.
+      expect(gated.map((g) => g.id).sort()).toEqual(['drop-season-number-unique', 'drop-work-slug-unique'])
+    })
+
+    it('names the assertion that has to exist first, for each', () => {
+      // ADR-0008's ordering: the replacement assertion is written BEFORE the
+      // constraint is dropped, 'otherwise there is a window in which nothing
+      // protects the invariant at all'.
+      for (const gate of gated) {
+        expect(gate.blockedBy.trim(), `${gate.id} needs a blockedBy`).not.toBe('')
+        // The reasoning is the load-bearing part: this is the one mechanism in
+        // the repo that removes a constraint from a production space.
+        expect(gate.why.join(' ').length, `${gate.id} needs a real why`).toBeGreaterThan(200)
+      }
+    })
+
+    it('does not drop unique from season.label', () => {
+      // The label is the stronger of the two guards — it is what stops two
+      // seasons reading identically in an entry picker, which is the problem
+      // AWK-59 opened with. Only `number` is composite-scoped.
+      const seasonGates = gated.filter((g) => g.contentType === 'season')
+
+      expect(seasonGates.map((g) => g.field)).toEqual(['number'])
+    })
+  })
+
   describe('orchestras — AWK-59', () => {
     const orchestras = field('season', 'orchestras')
 

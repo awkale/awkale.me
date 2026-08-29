@@ -304,6 +304,41 @@
 
   "gated": [
     {
+      "id": "drop-season-number-unique",
+      "flag": "--drop-season-number-unique",
+      "contentType": "season",
+      "field": "number",
+      "removeValidation": "unique",
+      "blockedBy": "AWK-59's (institution, number) assertion in season-orchestras.test.ts",
+      "why": [
+        "AWK-59. `season.number` carries `unique: true`, and the invariant the data",
+        "actually needs is (institution, number) -- which is composite, which",
+        "Contentful cannot express. The same wall ADR-0008 hit with (composer, slug).",
+        "",
+        "The Long Island Youth Orchestra's 29th season and the Brooklyn lineage's",
+        "29th season are both genuinely season 29. Neither number is wrong, so",
+        "renumbering one to satisfy a space-wide constraint would record something",
+        "false. The constraint is what has to give.",
+        "",
+        "SYMPTOM: a draft saves fine and PUBLISHING fails with `There's already an",
+        "entry with the same field value.` Unique is enforced at publish time",
+        "against published entries only, so the collision is invisible until the",
+        "moment you try to publish -- and never resolves on its own, because the",
+        "entry it collides with stays published.",
+        "",
+        "ORDERING, per ADR-0008: the assertion comes first. It already exists --",
+        "season-orchestras.test.ts asserts that (institution, number) is unique AND",
+        "that `number` alone is not, so the constraint being dropped here is",
+        "replaced rather than abandoned. That test does NOT run in the build:",
+        "ADR-0006 keeps `season` out of loadArchive(), and AWK-59 chose script-side",
+        "enforcement deliberately.",
+        "",
+        "`season.label` KEEPS its `unique: true`. It is the stronger guard of the",
+        "two -- it is what stops two seasons reading identically in an entry picker,",
+        "which is the problem AWK-59 opened with."
+      ]
+    },
+    {
       "id": "drop-work-slug-unique",
       "flag": "--drop-work-slug-unique",
       "contentType": "work",

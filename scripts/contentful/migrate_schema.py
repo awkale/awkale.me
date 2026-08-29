@@ -35,7 +35,7 @@ ENV = os.environ.get("CONTENTFUL_ENVIRONMENT_ID", "master")
 BASE = f"https://api.contentful.com/spaces/{SPACE}/environments/{ENV}"
 SCHEMA = Path(__file__).parent / "archive-schema.json"
 
-FLAGS = {"--dry-run", "--drop-work-slug-unique", "--yes"}
+FLAGS = {"--dry-run", "--drop-work-slug-unique", "--drop-season-number-unique", "--yes"}
 TAKES_VALUE = {"--token-file"}
 
 
@@ -57,7 +57,9 @@ def _parse_argv(argv):
         if arg not in FLAGS:
             sys.exit(
                 f"unknown argument {arg!r}\n"
-                f"usage: migrate_schema.py [--dry-run] [--drop-work-slug-unique [--yes]]\n"
+                f"usage: migrate_schema.py [--dry-run]\n"
+                f"                         [--drop-work-slug-unique [--yes]]\n"
+                f"                         [--drop-season-number-unique [--yes]]\n"
                 f"                         [--token-file PATH]"
             )
         seen.add(arg)
@@ -67,7 +69,8 @@ def _parse_argv(argv):
 
 ARGS = _parse_argv(sys.argv[1:])
 DRY = "--dry-run" in ARGS
-DROP_UNIQUE = "--drop-work-slug-unique" in ARGS
+DROP_WORK_SLUG = "--drop-work-slug-unique" in ARGS
+DROP_SEASON_NUMBER = "--drop-season-number-unique" in ARGS
 ASSUME_YES = "--yes" in ARGS
 
 
@@ -305,10 +308,17 @@ def add_fields():
     return total_added + total_stranded, total_drift
 
 
-def drop_work_slug_unique():
-    """The gated step. Separate on purpose — see `gated` in archive-schema.json."""
+def drop_unique(gate_id):
+    """A gated step. Separate on purpose — see `gated` in archive-schema.json.
+
+    Takes the gate by id rather than hardcoding one, because there are now two
+    and they are the same operation on different fields: remove a space-wide
+    `unique` that stands in for an invariant Contentful cannot express, once the
+    composite assertion replacing it exists elsewhere. Duplicating this function
+    per gate would duplicate the confirmation prompt, which is the part that
+    must not drift."""
     schema = json.loads(SCHEMA.read_text())
-    gate = next(g for g in schema["gated"] if g["id"] == "drop-work-slug-unique")
+    gate = next(g for g in schema["gated"] if g["id"] == gate_id)
 
     print(f"\n{gate['contentType']}.{gate['field']} — removing `unique`")
     # NOT a gate this script can enforce. It cannot see whether AWK-39's
@@ -355,10 +365,15 @@ def main():
     else:
         print(f"WRITING to {SPACE}/{ENV}")
 
-    if DROP_UNIQUE:
+    if DROP_WORK_SLUG and DROP_SEASON_NUMBER:
+        sys.exit("run one gated step at a time; they are separate decisions")
+
+    if DROP_WORK_SLUG:
         # Gated step runs alone. Bundling it with the additions would make a
         # single command satisfy and violate ADR-0008's ordering at once.
-        changed, drift = drop_work_slug_unique(), 0
+        changed, drift = drop_unique("drop-work-slug-unique"), 0
+    elif DROP_SEASON_NUMBER:
+        changed, drift = drop_unique("drop-season-number-unique"), 0
     else:
         changed, drift = add_fields()
 
