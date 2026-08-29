@@ -164,6 +164,20 @@ HEADING = re.compile(r"^### (\d{4}-\d{2}-\d{2}) · ")
 MISSED = re.compile(r"^- \[([ x])\] missed whole concert")
 ITEM = re.compile(r"^  - \[([ x])\] (\d+)\. (.+)$")
 
+# THIS PARSER READS THE BROOKLYN LINEAGE ONLY, and that assumption used to live
+# nowhere but in the shape of the data. The checklist now carries more than one
+# institution, and `build_plan` resolves every date it is given against
+# bso-graph.json -- which holds the Brooklyn lineage and nothing else. A Long
+# Island Youth Orchestra date reaching that lookup resolves to zero concerts and
+# stops the run.
+#
+# AWK-59 found this the hard way: adding a LIYO section broke this script AND
+# six tests in participation.test.ts, which re-implements the same loop. If you
+# add a third institution, both parsers need the same section boundary and both
+# say so.
+SECTION = re.compile(r"^# (.+)$")
+BROOKLYN_SECTION = "Brooklyn lineage"
+
 
 def parse_checklist(text):
     """Three line forms and nothing else: an `###` heading opens a concert, a
@@ -171,9 +185,18 @@ def parse_checklist(text):
 
     The heading anchors on a date, and items are only collected once a concert is
     open, because the instructions near the top of the file also say "missed whole
-    concert" in prose."""
-    concerts, current = [], None
+    concert" in prose.
+
+    A `#` heading opens a section. Only the Brooklyn one is read -- see above."""
+    concerts, current, in_scope = [], None, True
     for line in text.splitlines():
+        section = SECTION.match(line)
+        if section:
+            in_scope = section.group(1).startswith(BROOKLYN_SECTION)
+            current = None
+            continue
+        if not in_scope:
+            continue
         heading = HEADING.match(line)
         if heading:
             current = {"date": heading.group(1), "missed": False, "items": []}

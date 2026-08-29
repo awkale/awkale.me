@@ -1,10 +1,24 @@
-# Performance-participation checklist — in-scope concerts (2001-05-24 →)
+# Performance-participation checklist
+
+**Default is "I played it." Only mark exceptions.**
+
+This file covers **two institutions**, under two `#` headings, and the split is
+load-bearing rather than cosmetic. `seed_participation.py` and
+`participation.test.ts` both read only the Brooklyn section: every concert there
+is resolved against `bso-graph.json`, which holds the Brooklyn lineage alone, so
+a date from any other institution stops the run. Both parsers carry a comment
+saying so. **Adding a third institution means giving both the same boundary.**
+
+The two sections are not the same kind of record. Brooklyn is Seed data — loaded
+in bulk, most of it predating Alex, which is why every box needs review. The Long
+Island Youth Orchestra section is entered by hand, one source at a time, and Alex
+played all of it.
+
+# Brooklyn lineage — in-scope concerts (2001-05-24 →)
 
 128 concerts, 120 distinct programs, 348 distinct works.
 384 distinct `programItem` entries, but **407 concert x item pairs** — the 8 two-performance
 runs share one program across two dates, so the boxes below total 407.
-
-**Default is "I played it." Only mark exceptions.**
 
 - Tick `missed whole concert` if you weren't on that date at all.
 - Tick an individual item only if you played the concert but sat that work out.
@@ -853,3 +867,36 @@ runs share one program across two dates, so the boxes below total 407.
   - [ ] 2. Debussy — Danse Sacree et Danse Profane
   - [ ] 3. Rachmaninoff — Cinq Etudes-Tableaux
   - [ ] 4. Ravel — Bolero
+
+# Long Island Youth Orchestra — Seasons 29 to 32 (1991-1992 → 1994-1995)
+
+**Not read by `seed_participation.py`.** See the note at the top of this file.
+Participation for these Concerts is set by hand in Contentful.
+
+**Alex played every Concert of these four Seasons.** No box below is ticked and
+none is expected to be — there are no exceptions to record. Stated by Alex on
+2026-08-29; no source in this repository corroborates it, and none contradicts it.
+
+**This section is incomplete by construction.** Two Concerts are known. The rest
+of Seasons 29 to 32 is undocumented here — absent from `Wikipedia BSO Archive.xlsx`,
+absent from `bso-graph.json`, and represented by no program in `docs/archive/`.
+Do not read the two entries below as the whole of what Alex played at this
+orchestra. Add Concerts as sources appear.
+
+A Program is listed only where a source has been transcribed. Neither has been.
+
+## Season 29 — 1991–1992
+
+### 1992-06-14 · Sun · hall not recorded · conductor not recorded (LIYO)
+- [ ] missed whole concert
+  - *Program not transcribed. No source in this repository — the date is Alex's
+    own record.*
+
+## Season 30 — 1992–1993
+
+### 1993-07-26 · Mon · Dallas Brooks Hall, Melbourne · conductor not recorded (LIYO)
+- [ ] missed whole concert
+  - *Program not transcribed. Source is
+    `docs/archive/program-19930726-liyo-dallas-brooks-hall.jpg`, a photographed
+    printed Program. A summer tour date closes the Season before it, so this is
+    Season 30 and not Season 31.*

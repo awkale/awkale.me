@@ -212,8 +212,12 @@ def get_genre(name):
     return R.get("genre", norm(name), f"gen-{slugify(name)}", lambda: {"name": name})
 
 def get_season(num, notes):
+    # `label` is filled in a later pass, once the concerts exist. It cannot be
+    # built here: the label carries the season's YEARS, and the year is not a
+    # function of the number -- season 48 is 2021-2022, not 2020-2021, because
+    # the cancelled COVID season consumed no number. See label_seasons().
     return R.get("season", num, f"sea-{num}",
-                 lambda: {"number": num, "label": f"Season {num}",
+                 lambda: {"number": num, "label": None,
                           "notes": notes or None})
 
 def get_work(title, composer_id, composer_raw):
@@ -574,6 +578,55 @@ for c in concerts:
         R.tables["programItem"][it["id"]] = {
             k: it[k] for k in ("label","work","composer","soloists","credits",
                                "character","order","note")}
+
+# ---------------------------------------------------------------- label seasons
+
+def label_seasons():
+    """`BSO Season <N>, <YYYY-YYYY>` for every season, years READ from concerts.
+
+    AWK-59. Runs here rather than in get_season() because it needs the concert
+    dates, which do not exist until parsing finishes.
+
+    A season runs September to the following summer, so a concert in January
+    belongs to the season that opened the previous autumn. Two seasons have no
+    dated concert at all and take their year from season-orchestras.json, which
+    is where hand-assigned values live with the reasoning that produced them."""
+    decisions = json.loads((Path(__file__).parent / "season-orchestras.json").read_text())
+    pattern = decisions["labelFormat"]["pattern"]
+    hand = {k: v for k, v in decisions["handAssigned"].items() if k != "note"}
+
+    first_date = {}
+    for c in concerts:
+        if not c["season"] or not c["date"]:
+            continue
+        sid = f"sea-{c['season']}"
+        if sid not in first_date or c["date"] < first_date[sid]:
+            first_date[sid] = c["date"]
+
+    for sid, season in R.tables["season"].items():
+        if sid in first_date:
+            d = first_date[sid]
+            start = int(d[:4]) if int(d[5:7]) >= 9 else int(d[:4]) - 1
+            years = f"{start}-{start + 1}"
+        elif sid in hand:
+            years = hand[sid]["years"]
+        else:
+            # Fatal, not a report line. `label` is the season type's
+            # displayField: leaving it None makes import_to_contentful.py skip
+            # the field (build_fields drops None), which creates a season that
+            # reads as untitled in every entry picker. The report is printed six
+            # lines per key, so a soft warning here is one that gets missed.
+            # backfill_seasons.derive() treats the same condition as fatal.
+            sys.exit(
+                f"{sid} has no dated concert and no entry in season-orchestras.json's "
+                f"handAssigned. Add it there, with the reasoning that produced the year."
+            )
+        season["label"] = (pattern.replace("{institution}", "BSO")
+                           .replace("{number}", str(season["number"]))
+                           .replace("{years}", years))
+
+
+label_seasons()
 
 R.tables["concert"] = {c["id"]: {"title": c["title"], "date": c["date"],
                                  "dateNote": c["dateNote"],

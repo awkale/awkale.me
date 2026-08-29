@@ -147,6 +147,36 @@ def fetch_all(ctype):
         if skip >= r["total"]:
             return out
 
+SEASON_INSTITUTION = re.compile(r"^([A-Z]{2,})\b")
+
+
+def season_institution(label):
+    """Which institution a season entry belongs to, from its label.
+
+    AWK-59. `number` alone stopped identifying a season the moment the space
+    held a second institution: there are now two entries numbered 29, one
+    Brooklyn and one Long Island Youth Orchestra. Keying on the number alone
+    lets the LIYO draft claim `sea-29`, which would then point every Brooklyn
+    season-29 concert at the wrong entry -- non-deterministically, since the
+    winner depends on the order the CMA happens to list them in.
+
+    An INITIALISM prefix names the institution, and the test is deliberately
+    the shape rather than a list of known names, because it has to hold for
+    labels written before AWK-59 as well as after:
+
+        `Season 29`                   -> BSO   (pre-AWK-59 Brooklyn)
+        `BSO Season 29, 2001-2002`    -> BSO   (post-AWK-59 Brooklyn)
+        `LIYO 1991-1992`              -> LIYO  (Alex's hand-made draft)
+        `LIYO Season 29, 1991-1992`   -> LIYO  (post-AWK-59 LIYO)
+
+    `Season` fails `[A-Z]{2,}` on its second letter, so an unprefixed label
+    falls through to Brooklyn, which is what every one of them is. An
+    institution whose short name is not an initialism would need this widened
+    -- and would need the same thought given to the two checklist parsers."""
+    match = SEASON_INSTITUTION.match(label or "")
+    return match.group(1) if match else "BSO"
+
+
 def match_key(ctype, fields, composer_key_of=None):
     f = fields
     if ctype in ("composer", "conductor", "soloist"):
@@ -154,7 +184,7 @@ def match_key(ctype, fields, composer_key_of=None):
     if ctype in ("orchestra", "hall", "genre", "ensemble"):
         return norm(val(f, "name") or "")
     if ctype == "season":
-        return val(f, "number")
+        return (season_institution(val(f, "label")), val(f, "number"))
     if ctype == "work":
         link = val(f, "composer")
         cid = link["sys"]["id"] if isinstance(link, dict) and "sys" in link else None
@@ -204,7 +234,7 @@ def graph_match_key(ct, gid, rec):
     if ct in ("orchestra", "hall", "genre", "ensemble"):
         return norm(rec.get("name") or "")
     if ct == "season":
-        return rec.get("number")
+        return (season_institution(rec.get("label")), rec.get("number"))
     if ct == "work":
         cid = rec.get("composer")
         ck = "anon"

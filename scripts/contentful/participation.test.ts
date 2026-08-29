@@ -63,20 +63,32 @@ type ChecklistConcert = { date: string; missed: boolean; items: ChecklistItem[] 
 function parseChecklist(source: string): ChecklistConcert[] {
   const concerts: ChecklistConcert[] = []
   let current: ChecklistConcert | undefined
+  let inScope = true
 
   for (const line of source.split('\n')) {
-    const heading = /^### (\d{4}-\d{2}-\d{2}) · /.exec(line)
-    if (heading) {
-      current = { date: heading[1]!, missed: false, items: [] }
-      concerts.push(current)
-    } else if (current) {
-      const missed = /^- \[([ x])\] missed whole concert/.exec(line)
-      if (missed) {
-        current.missed = missed[1] === 'x'
-      } else {
-        const item = /^ {2}- \[([ x])\] (\d+)\. (.+)$/.exec(line)
-        if (item) {
-          current.items.push({ index: Number(item[2]), satOut: item[1] === 'x', label: item[3]! })
+    // A `#` heading opens a section, and only the Brooklyn one is read. The
+    // checklist carries more than one institution now; every concert below is
+    // resolved against bso-graph.json, which holds the Brooklyn lineage alone.
+    // seed_participation.py needs the identical boundary — see the comment
+    // there, and change both together.
+    const section = /^# (.+)$/.exec(line)
+    if (section) {
+      inScope = section[1]!.startsWith('Brooklyn lineage')
+      current = undefined
+    } else if (inScope) {
+      const heading = /^### (\d{4}-\d{2}-\d{2}) · /.exec(line)
+      if (heading) {
+        current = { date: heading[1]!, missed: false, items: [] }
+        concerts.push(current)
+      } else if (current) {
+        const missed = /^- \[([ x])\] missed whole concert/.exec(line)
+        if (missed) {
+          current.missed = missed[1] === 'x'
+        } else {
+          const item = /^ {2}- \[([ x])\] (\d+)\. (.+)$/.exec(line)
+          if (item) {
+            current.items.push({ index: Number(item[2]), satOut: item[1] === 'x', label: item[3]! })
+          }
         }
       }
     }

@@ -1,0 +1,201 @@
+{
+  "note": [
+    "The decisions AWK-59's migration executes, separated from the script that",
+    "applies them. Read by backfill_seasons.py, asserted by season-orchestras.test.ts.",
+    "",
+    "Everything here is a DECISION, not a derivation. Which orchestras held a",
+    "Season, and which years it spans, are computed live from bso-graph.json --",
+    "deliberately, because those facts already exist there and a second copy is a",
+    "second thing to drift. What lives here is what the graph cannot answer: the",
+    "two Seasons it holds no dated concert for, the cancelled year, the label",
+    "format, and the Long Island Youth Orchestra numbering, which has no source in",
+    "this repository at all.",
+    "",
+    "THE INVARIANT THIS EXISTS TO PROTECT is (institution, number). Contentful",
+    "cannot express it -- space-wide uniqueness only, the same wall ADR-0008 hit",
+    "with (composer, slug) -- so it is asserted in the test instead. It is NOT",
+    "asserted in the build: ADR-0006 keeps `season` out of loadArchive(), and",
+    "adding a fetch for data no route renders would trade a real cost for a",
+    "theoretical one."
+  ],
+
+  "sources": {
+    "model": "docs/adr/0006-performance-history-content-model.md",
+    "language": "CONTEXT.md",
+    "ticket": "AWK-59"
+  },
+
+  "labelFormat": {
+    "note": [
+      "`label` is the season type's displayField, so it is what every entry picker",
+      "shows. It must therefore say which institution a Season belongs to: two",
+      "entries already carry number 29, one Brooklyn and one LIYO, and a picker",
+      "showing `Season 29` twice is unusable.",
+      "",
+      "The year span is read from the Concert dates, never computed from the",
+      "number. See `cancelled` for why that distinction is load-bearing.",
+      "",
+      "A HYPHEN, not an en dash. participation-checklist.md writes its own season",
+      "headings as `Season 29 - 2001-2002` with an en dash; this does not, because",
+      "this string is matched by pattern in both the applier and the test, and a",
+      "mistyped en dash is invisible in review."
+    ],
+    "pattern": "{institution} Season {number}, {years}",
+    "example": "BSO Season 30, 2002-2003"
+  },
+
+  "institutions": {
+    "note": [
+      "`BSO` names the Brooklyn lineage, not only its current orchestra. Seasons",
+      "1-52 are one continuous numbering carried across two renamings, so Season 1",
+      "is a Brooklyn Heights Music Society year and is still labelled `BSO Season",
+      "1`. That is the orchestra's own convention: it counts 2025-2026 as its 52nd",
+      "season, which is only true if it claims 1973-1974 as its first.",
+      "",
+      "The `orchestras` field on each entry records which orchestra actually held",
+      "the year, so the label's prefix never has to carry that.",
+      "",
+      "The eras, as the graph has them: BHMS holds Seasons 1-5 (15 concerts,",
+      "1974-11-20 to 1977-10-25), BHO holds Seasons 5-28 (108 concerts, 1977-12-17",
+      "to 2001-05-24), BSO holds Seasons 29-52 (127 concerts, 2001-11-08 to",
+      "2026-06-14). Only Season 5 is held by two, and see `knownLiveErrors` for",
+      "why Season 28 is not."
+    ],
+    "BSO": {
+      "name": "Brooklyn lineage",
+      "orchestras": ["BHMS", "BHO", "BSO"]
+    },
+    "LIYO": {
+      "name": "Long Island Youth Orchestra",
+      "orchestras": ["LIYO"]
+    }
+  },
+
+  "handAssigned": {
+    "note": [
+      "The only two Seasons whose year no source in this repository supports.",
+      "Both carry a `why` because a hand-assigned value with no reasoning is",
+      "indistinguishable from a typo six months later.",
+      "",
+      "sea-1 omits `orchestras` on purpose: it HAS a concert, undated, and that",
+      "concert names BHMS. The orchestra is derivable; only the year is not.",
+      "Writing the orchestra here too would replace a fact with an opinion."
+    ],
+    "sea-1": {
+      "years": "1973-1974",
+      "why": [
+        "No dated concert. Season 2 opens 1974-11-20, and every adjacent season",
+        "steps by exactly one year, so Season 1 is 1973-1974. This also agrees with",
+        "the orchestra's own count of 2025-2026 as its 52nd season.",
+        "Its single concert is undated but names BHMS, so the orchestra is derived."
+      ]
+    },
+    "sea-11": {
+      "years": "1983-1984",
+      "orchestras": ["BHO"],
+      "why": [
+        "No concerts at all -- the entry's own `notes` field reads `LOST`. Season 10",
+        "closes 1982-12-14 and Season 12 opens 1984-10-23, both at BHO, so Season 11",
+        "is 1983-1984 and was held by BHO.",
+        "This is the one row where BOTH the year and the orchestra are assigned",
+        "rather than derived, because the graph holds nothing to derive from."
+      ]
+    }
+  },
+
+  "knownLiveErrors": [
+    {
+      "entry": "cnc-20010524",
+      "field": "orchestra",
+      "live": "BSO",
+      "correct": "BHO",
+      "why": [
+        "The live space links the 2001-05-24 concert to Brooklyn Symphony",
+        "Orchestra. Three sources disagree with it: bso-graph.json (from the",
+        "spreadsheet), the entry's OWN title -- which still reads `2001-05-24 —",
+        "BHO` -- and participation-checklist.md. Alex settled it on 2026-08-29:",
+        "the link is wrong.",
+        "",
+        "It matters here because deriving `orchestras` from the live space rather",
+        "than from the graph would make Season 28 look like it straddles the BHO",
+        "to BSO renaming. It does not. Only Season 5 straddles, and the BSO name",
+        "begins at Season 29 on 2001-11-08.",
+        "",
+        "The derivation therefore reads bso-graph.json, never the live space. This",
+        "row exists so the discrepancy is not rediscovered as a surprise, and so",
+        "the bad link gets fixed rather than quietly ratified by a migration.",
+        "",
+        "NOT FIXED BY THIS SCRIPT. backfill_seasons.py writes season entries only."
+      ]
+    }
+  ],
+
+  "cancelled": [
+    {
+      "institution": "BSO",
+      "years": "2020-2021",
+      "why": [
+        "The season was cancelled and consumed no season number. Season 47 is",
+        "2019-2020 and Season 48 is 2021-2022. Season 47's own `notes` field records",
+        "it: `SUSPENDED; 2020-2021 SEASON CANCELED, DUE TO COVID-19 PANDEMIC`.",
+        "",
+        "This is why the year is read from Concert dates and never computed. An",
+        "offset from the number is correct for 47 consecutive seasons and wrong for",
+        "the last five -- a shape that survives every spot-check anyone would think",
+        "to run, and then misdates a fifth of the archive."
+      ]
+    }
+  ],
+
+  "liyo": {
+    "note": [
+      "Stated by Alex on 2026-08-29 from direct knowledge. NOTHING in this",
+      "repository corroborates it: the Long Island Youth Orchestra has no concerts",
+      "in bso-graph.json, none in the source spreadsheet, and one photographed",
+      "program in docs/archive/. It is primary testimony, recorded as such.",
+      "",
+      "Alex played every Concert of Seasons 29 to 32. The years below run one per",
+      "season with no gap, which is what he described.",
+      "",
+      "DO NOT turn this into a formula. The offset that fits these four also fits",
+      "the Brooklyn seasons right up until it doesn't -- and unlike Brooklyn, there",
+      "is no LIYO concert data here that would ever catch a gap year. Four stated",
+      "values are worth more than a rule that looks right.",
+      "",
+      "Seasons 30, 31 and 32 have no entry in the space yet. The applier reports",
+      "them as missing rather than creating them: creating an entry is a different",
+      "act from correcting one, and belongs to the data-entry pass."
+    ],
+    "seasons": {
+      "29": "1991-1992",
+      "30": "1992-1993",
+      "31": "1993-1994",
+      "32": "1994-1995"
+    },
+    "existingEntry": {
+      "id": "43MONTGXn3mEaTh52HB01q",
+      "number": 29,
+      "label": "LIYO 1991-1992",
+      "state": "draft",
+      "why": [
+        "Created by hand by Alex during manual data entry, and never published.",
+        "The Delivery API serves published entries only, so this one was invisible",
+        "to the first survey of this migration -- which reported 52 seasons and no",
+        "LIYO, and was wrong on both counts.",
+        "",
+        "The applier leaves its draft state alone. Publishing is a separate",
+        "decision and a season entry renders nothing either way."
+      ]
+    }
+  },
+
+  "scope": {
+    "note": [
+      "The guard. If any of these stops matching, the migration's assumptions have",
+      "moved and the script should be re-read rather than re-run."
+    ],
+    "graphSeasons": 52,
+    "straddleSeasons": ["sea-5"],
+    "seasonsWithoutDatedConcerts": ["sea-1", "sea-11"]
+  }
+}

@@ -160,6 +160,13 @@ later. `concert.season` stays on the type and stays populated for BSO entries; i
 is simply never rendered. **The chronological spine is the date, grouped by
 year** — the one temporal key every source can supply.
 
+> **Amended 2026-08-29.** "A property of the orchestra's calendar" is the right
+> instinct pointed at the wrong entity, and "populated for BSO entries" describes
+> only half of what the space already holds. See
+> [the amendment](#amendment--season-is-scoped-to-an-institution-2026-08-29) at
+> the foot of this record. The decision it qualifies — that Season is never a
+> published surface — is unchanged.
+
 Genre is deliberately left open, as
 [AWK-13](https://linear.app/awkale/issue/AWK-13/decide-the-genre-coverage-policy-for-my-348-works).
 Under the published set the gap is **104 of 322 works, 32%**, with 14 of the 17
@@ -307,3 +314,72 @@ find far more than the site publishes, and the difference is not an error.
 37 conductors or 27 ensembles, which confirms from the other direction that
 section players were never recorded. Participation is entirely net-new data, so
 there is nothing to reconcile against and no existing field to migrate.
+
+## Amendment — Season is scoped to an institution (2026-08-29)
+
+Filed from [AWK-59](https://linear.app/awkale/issue/AWK-59), which began as manual
+entry from a printed Long Island Youth Orchestra program and immediately asked what
+`Season 12` means once a second orchestra exists.
+
+**This record cut Season as a surface for the right reason and described the data
+wrongly on the way.** Two claims above do not survive contact with the space.
+
+### "A property of the orchestra's calendar"
+
+It is a property of the *institution's* calendar, and the two are not the same
+thing here. The 52 Seasons are **one continuous numbering carried across two
+renamings**:
+
+| Orchestra | Concerts | Dates | Seasons |
+| --- | --- | --- | --- |
+| Brooklyn Heights Music Society | 15 | 1974-11-20 → 1977-10-25 | 1–5 |
+| Brooklyn Heights Orchestra | 108 | 1977-12-17 → 2001-05-24 | 5–28 |
+| Brooklyn Symphony Orchestra | 127 | 2001-11-08 → 2026-06-14 | 29–52 |
+
+Season 5 **straddles a renaming mid-season** — it opens at BHMS on 1977-10-25 and
+continues at BHO from 1977-12-17. So a single `season.orchestra` link would be
+false for it, and AWK-59 adds `season.orchestras` as an array instead. The
+numbering belongs to the institution; the array records which orchestra held the
+year.
+
+> **One case, not two.** The first survey of AWK-59 reported Season 28 as a
+> second straddle, because the live space links its 2001-05-24 concert to BSO.
+> Three sources disagree with that link — the spreadsheet, the concert's own
+> title, and `docs/archive/participation-checklist.md` — and Alex settled it on
+> 2026-08-29: **the link is wrong.** Season 28 is wholly BHO and the BSO name
+> begins at Season 29. The array is still the right shape; it just rests on one
+> case rather than two. The bad link is recorded under `knownLiveErrors` in
+> `scripts/contentful/season-orchestras.json` and is not fixed by that migration.
+
+### "Stays populated for BSO entries"
+
+The archive was never BSO-only. Of 251 concerts, **127 are BSO, 108 BHO, 15 BHMS**,
+and one is an All County Orchestra date that carries no season at all and keeps
+none — a one-off guest appearance has no numbered calendar to belong to. The
+sentence should have read *for the Brooklyn lineage*.
+
+### What this does not change
+
+**Season is still never rendered, and still not a facet.** It stays out of
+`loadArchive()` and out of `app/lib/invariants.ts`; AWK-59's `(number, orchestra)`
+uniqueness is enforced script-side, against a committed plan file, precisely so the
+build does not start fetching data no route reads. The chronological spine remains
+the date grouped by year.
+
+What changes is that the field now has to be *correct* for a second institution
+rather than merely unrendered, because manual entry writes it by hand.
+
+### The trap worth recording
+
+**A Season's number does not imply its year.** `1972 + number` holds exactly
+through Season 47 (2019-2020) and then breaks — Season 48 is **2021-2022**, not
+2020-2021, because the cancelled COVID season consumed no number. Season 47's own
+`notes` field says so: `SUSPENDED; 2020-2021 SEASON CANCELED, DUE TO COVID-19
+PANDEMIC`.
+
+Any code that interpolates a year from a season number is silently wrong for the
+last five seasons, and right for the first 47 — which is the worst available
+failure shape. The year is derived from concert dates or it is not derived at all.
+Two Seasons have no dated concerts and carry a hand-assigned year on that basis:
+Season 1 (1973-1974, extrapolated back from Season 2) and Season 11 (1983-1984,
+bracketed by Seasons 10 and 12, and `LOST` per its own note).

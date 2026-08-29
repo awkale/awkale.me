@@ -27,7 +27,8 @@
     "work.forms": "docs/adr/0007-period-and-form-taxonomy.md",
     "work.arranger": "docs/adr/0005-composer-identity-and-arrangements.md",
     "work.arrangementType": "docs/adr/0005-composer-identity-and-arrangements.md",
-    "work.arrangementOf": "docs/adr/0005-composer-identity-and-arrangements.md"
+    "work.arrangementOf": "docs/adr/0005-composer-identity-and-arrangements.md",
+    "season.orchestras": "docs/adr/0006-performance-history-content-model.md"
   },
 
   "vocabularyNotes": {
@@ -53,6 +54,31 @@
       "",
       "Extending this vocabulary later means editing this `in` list and re-running",
       "the applier. There is no `genre` entry to create any more."
+    ],
+    "orchestras": [
+      "AWK-59. An ARRAY, not a single Link, and the array is the whole point.",
+      "",
+      "Seasons 1-52 are one continuous numbering carried by one institution across",
+      "two renamings -- Brooklyn Heights Music Society, then Brooklyn Heights",
+      "Orchestra, then Brooklyn Symphony Orchestra. One Season straddles a renaming",
+      "mid-season and is held by two orchestras:",
+      "",
+      "  * Season 5 opens at BHMS on 1977-10-25, continues at BHO from 1977-12-17",
+      "",
+      "A single Link would put a false value on it. Splitting it into two entries",
+      "would invent a Season that never happened and break the 1-52 run.",
+      "",
+      "Season 28 LOOKS like a second case against the live space, and is not. Its",
+      "2001-05-24 concert is linked there to BSO, against the spreadsheet, against",
+      "the entry's own title, and against participation-checklist.md. Alex settled",
+      "it on 2026-08-29: the link is wrong, Season 28 is wholly BHO, and the BSO",
+      "name begins at Season 29. See `knownLiveErrors` in season-orchestras.json.",
+      "",
+      "This field does NOT make a Season identifiable on its own. The invariant the",
+      "data needs is (institution, number), which Contentful cannot express -- it",
+      "offers space-wide uniqueness only, the same wall ADR-0008 hit with",
+      "(composer, slug). It is enforced in season-orchestras.test.ts, off the build",
+      "path, because ADR-0006 keeps `season` out of loadArchive() entirely."
     ],
     "arrangementType": [
       "ADR-0005's four verbs, matching what the source actually writes:",
@@ -144,6 +170,27 @@
           "validations": [{ "unique": true }],
           "disabled": false,
           "omitted": false
+        }
+      ]
+    },
+
+    {
+      "id": "season",
+      "addFields": [
+        {
+          "id": "orchestras",
+          "name": "Orchestras",
+          "type": "Array",
+          "localized": false,
+          "required": false,
+          "validations": [],
+          "disabled": false,
+          "omitted": false,
+          "items": {
+            "type": "Link",
+            "linkType": "Entry",
+            "validations": [{ "linkContentType": ["orchestra"] }]
+          }
         }
       ]
     },

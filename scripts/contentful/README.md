@@ -452,6 +452,45 @@ validation `archive-schema.json` puts on the field, pins the two arrangement pai
 and the scope thresholds, and records the three counts this migration corrected in
 ADR-0005. It asserts the FILE, not the space.
 
+## Seasons carry their institution — AWK-59
+
+`season.number` never identified a Season on its own, and once a second
+institution exists it plainly does not: the space holds two entries numbered 29,
+one Brooklyn and one Long Island Youth Orchestra. `backfill_seasons.py` gives
+every Season an `orchestras` list and a label of the form
+`BSO Season 30, 2002-2003`.
+
+Three things about it are worth knowing before running it.
+
+**The year is read from concert dates, never computed from the number.**
+`1972 + number` is right through Season 47 (2019-2020) and wrong after it —
+Season 48 is **2021-2022**, because the cancelled COVID season consumed no
+number. An offset that holds for 47 consecutive seasons and breaks on the last
+five survives every spot-check anyone would think to run.
+
+**`orchestras` is an array because one Season straddles a renaming.** Season 5
+opens at the Music Society and closes at the Heights Orchestra. Season 28 looks
+like a second case against the live space and is not — its 2001-05-24 concert is
+mislinked there to BSO, against the spreadsheet, against the entry's own title,
+and against `participation-checklist.md`. That is recorded under
+`knownLiveErrors` in `season-orchestras.json`, and deriving from the graph rather
+than from the space is what keeps the migration from ratifying it.
+
+**Dry run is the default.** It rewrites `label`, which is the season type's
+displayField, on 52 published entries. It also preserves publication state rather
+than picking one: published entries are republished, and the LIYO draft Alex made
+by hand stays a draft.
+
+```bash
+python3 scripts/contentful/migrate_schema.py      # adds season.orchestras first
+python3 scripts/contentful/backfill_seasons.py    # report, writes nothing
+python3 scripts/contentful/backfill_seasons.py --apply
+```
+
+`season-orchestras.test.ts` asserts the FILE and re-derives from the graph in
+TypeScript what the applier derives in Python — deliberate double-entry, so a
+bug in either shows up as a disagreement rather than a confident migration.
+
 ## Usage
 
 ```bash

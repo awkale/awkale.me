@@ -77,6 +77,7 @@ describe('archive-schema.json', () => {
         'concert.attended',
         'concert.satOut',
         'conductor.slug',
+        'season.orchestras',
         'work.arrangementOf',
         'work.arrangementType',
         'work.arranger',
@@ -207,6 +208,37 @@ describe('archive-schema.json', () => {
           'Film music',
         ])
       )
+    })
+  })
+
+  describe('orchestras — AWK-59', () => {
+    const orchestras = field('season', 'orchestras')
+
+    it('is a list of links, because a Season straddles a renaming', () => {
+      // Season 5 opens at the Music Society on 1977-10-25 and closes at the
+      // Heights Orchestra from 1977-12-17. A single Link would force a false
+      // answer for it, and there is no third option: the numbering belongs to
+      // the institution, which outlived two of its own names.
+      //
+      // One case, not two. Season 28 looks like a second against the live
+      // space, where its 2001-05-24 concert is mislinked to BSO — see
+      // `knownLiveErrors` in season-orchestras.json.
+      expect(orchestras.type).toBe('Array')
+      expect(orchestras.items?.type).toBe('Link')
+      expect(orchestras.items?.linkType).toBe('Entry')
+    })
+
+    it('accepts orchestra entries and nothing else', () => {
+      expect(orchestras.items?.validations).toEqual([{ linkContentType: ['orchestra'] }])
+    })
+
+    it('is not unique, because Contentful cannot express the constraint that matters', () => {
+      // The real invariant is (institution, number), which is composite. Contentful
+      // offers space-wide uniqueness only — the same wall ADR-0008 hit with
+      // (composer, slug). It is enforced in season-orchestras.test.ts instead, and
+      // deliberately NOT in the build: `season` is not in loadArchive() and ADR-0006
+      // keeps it that way.
+      expect(orchestras.validations).toEqual([])
     })
   })
 

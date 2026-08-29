@@ -107,11 +107,26 @@ _Avoid_: Performer, musician, player
 The person who conducted a Concert.
 
 **Season**:
-The orchestra's numbered concert year. Seasons run 1 to 52. Recorded on every
-BSO-era Concert and shown nowhere on the site — a Season describes the
-orchestra's calendar, not Alex's repertoire.
+An institution's numbered concert year, running September to the following
+summer. A summer tour date closes the season before it, rather than opening the
+next one — the Long Island Youth Orchestra concert of 1993-07-26 is Season 30,
+1992-1993. The Brooklyn lineage's seasons run 1 to 52 — one continuous
+numbering carried across two renamings, so Season 1 is a Brooklyn Heights Music
+Society year and Season 52 a Brooklyn Symphony one. Shown nowhere on the site:
+a Season describes the institution's calendar, not Alex's repertoire.
+
+A Season belongs to an institution, not to an Orchestra, which is why `number`
+alone does not identify one — a Long Island Youth Orchestra Season 12 and a
+Brooklyn Season 12 are different years of different calendars. `orchestras` on
+the Season records which Orchestra held it; Season 5 straddles a renaming and
+carries both.
+
+**A Season's number does not imply its year.** `1972 + number` holds through
+Season 47 (2019-2020) and then breaks: Season 48 is 2021-2022, because the
+cancelled 2020-2021 season consumed no number. Derive the year from the Concert
+dates; never compute it.
 _Avoid_: grouping or filtering anything published by Season; the Concert date
-does that
+does that. Also: computing a Season's year from its number
 
 **Archive**:
 The complete institutional record of the Brooklyn Symphony Orchestra and its
