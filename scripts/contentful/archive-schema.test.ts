@@ -96,6 +96,21 @@ describe('archive-schema.json', () => {
     expect(required).toEqual([])
   })
 
+  it('puts no explanation in a field name', () => {
+    // The name is the label alone. It is what every entry picker, reference row
+    // and validation message shows, so a parenthetical reads badly in all three
+    // and duplicates guidance that has a proper home.
+    //
+    // That home is help text, which this file CANNOT set -- Contentful keeps it
+    // on the editor interface, not the content type. So this asserts the half
+    // that is checkable and the top-level `note` records the half that is not.
+    const named = schema.types.flatMap((t) => t.addFields.map((f) => `${t.id}.${f.id}: ${f.name}`))
+
+    // Non-vacuity: an empty list would pass this loop silently.
+    expect(named.length).toBeGreaterThan(0)
+    for (const entry of named) expect(entry, 'explanation belongs in help text').not.toMatch(/[()]/)
+  })
+
   it('leaves work.genre alone', () => {
     // ADR-0007 retires `genre`, but only AFTER the genre -> forms data migration
     // in AWK-37. A `genre` entry appearing in this file would mean someone had

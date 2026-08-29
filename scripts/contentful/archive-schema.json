@@ -15,7 +15,22 @@
     "  * `work.slug`'s `unique: true` is NOT removed by a default run. See `gated`.",
     "",
     "`work.slug` itself already exists and is repurposed in place, not added, so",
-    "it appears only under `gated`."
+    "it appears only under `gated`.",
+    "",
+    "HELP TEXT CANNOT BE SET FROM HERE, and a field added by this pipeline ships",
+    "without any unless someone adds it afterwards. Contentful stores a field's",
+    "help text on the EDITOR INTERFACE, not on the content type:",
+    "",
+    "    /content_types/{id}                  <- this file, via migrate_schema.py",
+    "    /content_types/{id}/editor_interface <- controls[].settings.helpText",
+    "",
+    "So the convention -- a field NAME is the label alone, and any explanation",
+    "goes in help text rather than in parentheses appended to the name -- is only",
+    "half enforceable here. The naming half is asserted in archive-schema.test.ts.",
+    "The help-text half is a manual step in the web app after the field lands.",
+    "",
+    "`season.orchestras` (AWK-59) is the field that found this: it was added with",
+    "a name and no help text, because nothing in this pipeline could give it one."
   ],
 
   "sources": {
