@@ -327,7 +327,20 @@ written and the migration running. **244 → 243 was correct when written and is
 
 The in-scope slice came out at **127 concerts, 384 program items, 348 works** and
 **25 of 37** contaminated records, with the 12 pre-tenure ones untouched —
-including all four bare `(arr.)` records. All three auto-id canonical targets
+including all four bare `(arr.)` records.
+
+> **Amended 2026-08-29 (AWK-38).** Those figures are left as measured, because
+> they record what the migration actually saw. **The in-scope concert count is now
+> 128**: the 2008-12 pair turned out to be a run at two Halls rather than one
+> Concert, so a Concert was added. Program items and works are unchanged at 384
+> and 348 — the two nights *share* one Program rather than duplicating it.
+>
+> Two consequences. `merge-composers.json`'s `scopeGuard` still pins
+> `inScopeConcerts: 127`, so re-running `merge_composers.py` now aborts — which is
+> the guard working as designed, not a bug to patch out. And separately, this
+> record's cleanup lives only in Contentful: `parse_archive.py` still emits the
+> contaminated forms from the spreadsheet, so **a re-import would undo this
+> migration**. See AWK-58. All three auto-id canonical targets
 resolved correctly through cleaned `sortName`: Mahler `2xlZPpzsieUWQMguPlmRip`,
 Rossini `6jOSl95P8vp0ng2xvHFeTz`, R. Strauss `5b96GjJ5laY9p8n8cLz6Pi`. Exactly 25
 works linked the 25 targets, one each, with **no pre-tenure work and no

@@ -184,7 +184,7 @@ so the pass below covers the channel's recent tail, not its history.
 > [`docs/archive/recording-curation.md`](../archive/recording-curation.md).**
 > Three videos are seedable, against **two** Program Items on one Concert
 > (`cnc-20221218`): the Tchaikovsky at both granularities on `pi-20221218-3`, and
-> a *Nimrod* on `pi-20221218-2` — a work with exactly one occurrence in 249
+> a *Nimrod* on `pi-20221218-2` — a work with exactly one occurrence in 250
 > concerts, whose video names its conductor and matches. Three are the Mexico
 > batch, blocked on a tour date that no source available here records. Five are
 > absent from the archive entirely, and one of those is the near-miss this record

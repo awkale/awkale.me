@@ -108,7 +108,7 @@ about scripting, restated in the affirmative:
 
 - **Nimrod (#5).** `"Enigma" Variation No. 9, Nimrod` is a *distinct work record*
   in the archive from `Variations on an Original Theme, "Enigma"`, and it has
-  exactly **one** occurrence in 249 concerts. The video names its conductor —
+  exactly **one** occurrence in 250 concerts. The video names its conductor —
   "Nick Armstrong" — and `cnc-20221218`'s conductor is Nicholas Armstrong. One
   candidate, corroborated.
 - **Tchaikovsky (#6, #7).** `pi-20221218-3` is Kinga Augustyn's **only** Program
@@ -147,7 +147,15 @@ works on `cnc-20200223`'s program:
 say so: the Mexico tour repeated the February 2020 program, so linking these
 videos to `cnc-20200223` asserts they are the Brooklyn Museum performance, which
 they are not. The tour date has to exist as its own Concert sharing
-`pi-20200223-*`, exactly as the archive's seven two-night runs already do.
+`pi-20200223-*`, exactly as the archive's eight two-night runs already do.
+
+**AWK-38 made one of those eight a closer precedent than it was.** 2008-12-13/14
+is a run at two *different* Halls — Grand Street on the Saturday, St Ann on the
+Sunday — which is the same shape this needs, since the tour Concert is plainly
+not at the Brooklyn Museum. Note the mechanism does not transfer wholesale: that
+pair is declared in `parse_archive.py`'s `SOURCE_CORRECTIONS` because the sheet
+holds both rows, whereas the sheet holds **no row at all** for the tour date. See
+AWK-57.
 
 **What is actually missing is the date.** The spreadsheet recorded the concert
 series and never the tour dates, and neither the video titles nor the feed give
