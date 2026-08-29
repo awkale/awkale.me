@@ -105,10 +105,12 @@
 
   "knownLiveErrors": [
     {
-      "entry": "cnc-20010524",
+      "entry": "the concert dated 2001-05-24",
+      "entryId": "1LPJsOTpuDin0YfbRM2RPW",
       "field": "orchestra",
-      "live": "BSO",
+      "was": "BSO",
       "correct": "BHO",
+      "fixed": "2026-08-29",
       "why": [
         "The live space links the 2001-05-24 concert to Brooklyn Symphony",
         "Orchestra. Three sources disagree with it: bso-graph.json (from the",
@@ -123,9 +125,21 @@
         "",
         "The derivation therefore reads bso-graph.json, never the live space. This",
         "row exists so the discrepancy is not rediscovered as a surprise, and so",
-        "the bad link gets fixed rather than quietly ratified by a migration.",
+        "the bad link got fixed rather than quietly ratified by a migration.",
         "",
-        "NOT FIXED BY THIS SCRIPT. backfill_seasons.py writes season entries only."
+        "FIXED 2026-08-29. The live space now derives the same single straddling",
+        "season the graph does. Kept here rather than deleted: the reasoning is",
+        "what stops someone re-importing the error and concluding Season 28",
+        "straddles after all.",
+        "",
+        "NOTE THE IDENTIFIER. This entry is NOT `cnc-20010524`. The importer remaps",
+        "graph ids onto live ones whenever a match key hits an existing entry, and",
+        "this concert lives under a Contentful auto-id -- participation.test.ts",
+        "records 33 concerts in that state. A concert IS its date here, which is",
+        "what import_to_contentful.py match_key and participation.json both key on.",
+        "The first attempt at this fix fetched the graph id and got a 404.",
+        "",
+        "Never fixed by backfill_seasons.py, which writes season entries only."
       ]
     }
   ],
