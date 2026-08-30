@@ -549,9 +549,22 @@ data, and only then can `genre` go. Deleting it in the pass that migrates it
 destroys the only thing a re-run could read.
 
 Dry run is the default, `--apply` publishes, and **a disagreeing value is never
-overwritten** — a row the space and the plan disagree about is reported as a
-CONFLICT and skipped, which is what makes a hand correction durable across
-re-runs.
+overwritten** — the contested FIELD is reported as a CONFLICT and skipped while
+the rest of the row still writes, which is what makes a hand correction durable
+across re-runs. Skipping the whole row instead would quietly drop an unrelated
+change beside the contested one, and it would first do so on the first re-run
+after a correction — exactly when the conflict check is supposed to help.
+
+**A refused publish does not stop the run.** One entry can fail to publish for a
+reason that has nothing to do with this pass, and killing a 234-entry migration
+over it leaves the space half-seeded and tells nobody which half. The entry is
+reported as written-but-unpublished — the Delivery API keeps serving its previous
+value, so the site stays consistent — and the pass **republishes it on the next
+run without rewriting it**. That last property is not free: a row already holding
+the planned values computes an empty change set, so without an explicit
+pending-publish check it would be skipped forever and stay stale silently. This
+is not hypothetical; it is how the 11 works blocked by the `work.slug` collision
+were recovered on 2026-08-30.
 
 `period-and-forms.test.ts` asserts the FILE against `archive-schema.json`'s
 vocabularies and against the harvest, the same double-entry as above. It cannot

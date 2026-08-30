@@ -279,10 +279,9 @@ AWK-37; wiring the CDA is AWK-39.
 > Chopin, Delibes, Dvořák, Fauré, Glière, Grofé, Janáček, Rodrigo, Saint-Saëns,
 > Smetana and Turina. Slugs fold to ASCII and did not move.
 >
-> **11 of those 234 Works are written but NOT published**, blocked by the
-> `work.slug` collision described further down. The Delivery API still serves
-> their previous values, so the site is consistent; they publish on a re-run once
-> the constraint comes off.
+> All of it is **published**. 11 Works were briefly written-but-unpublished,
+> blocked by the `work.slug` collision described further down; the constraint came
+> off the same day and a re-run published them without rewriting anything.
 >
 > **`work.genre` is untouched and the field still exists.** ADR-0007 sequences the
 > delete as a separate step, after this migration is verified — deleting it in the
@@ -313,20 +312,19 @@ gate the script can enforce: it cannot see whether AWK-39 landed.
 > space-wide colliding work slugs — the constraint will not catch them any more,
 > and it is a one-way door. `work.genre` is unchanged and still AWK-37's.
 
-> **That paragraph is FALSE, and AWK-37 found out the expensive way on
-> 2026-08-30.** `unique: true` is still on `work.slug` in `master`. The assertion
-> half of AWK-39 did land — `(composer, slug)` is in `app/lib/invariants.ts` — but
-> `--drop-work-slug-unique` was never run, so the paragraph above describes an
-> intention as a completed fact.
+> **That paragraph was written two weeks early, and AWK-37 found out the
+> expensive way on 2026-08-30.** The assertion half of AWK-39 did land —
+> `(composer, slug)` is in `app/lib/invariants.ts` — but `--drop-work-slug-unique`
+> was NOT run, so `unique: true` sat on `work.slug` for a fortnight while this
+> file said it was gone.
 >
-> The cost is not theoretical. Contentful validates `unique` **at publish time**,
-> so the collisions sit in the space published and quiet, and any pass that
-> REPUBLISHES a colliding work fails on it. AWK-37's seed hit this at its eighth
-> entry and stopped; 11 works are written and unpublished as a result. Anything
-> that touches `work` in bulk will hit the same wall.
+> The cost was not theoretical. Contentful validates `unique` **at publish time**,
+> so the collisions sat in the space published and quiet, and any pass that
+> REPUBLISHED a colliding work failed on it. AWK-37's seed hit it at its eighth
+> entry and stopped, leaving 11 works written and unpublished.
 >
-> **The real numbers are 8 colliding slugs across 19 work entries, 13 of them in
-> scope** — not 26. Count them, do not read them:
+> **The real numbers were 8 colliding slugs across 19 work entries, 13 in scope**
+> — not 26. Count them, do not read them:
 >
 > ```
 > piano-concerto-in-a-minor · sleigh-ride · symphony-in-c-major · symphony-no-2
@@ -334,9 +332,16 @@ gate the script can enforce: it cannot see whether AWK-39 landed.
 > violin-concerto-in-d-minor
 > ```
 >
-> ADR-0008's precondition is genuinely satisfied, so the flag is safe to run —
-> it just has not been. Verify with `migrate_schema.py --dry-run` rather than
-> trusting either paragraph.
+> **The flag ran on 2026-08-30 and the constraint is now genuinely off** —
+> `work.slug` carries zero validations, and the 11 works published. So the
+> paragraph above is finally true, roughly a ticket later than it claimed.
+>
+> `app/lib/invariants.ts` is now the ONLY thing protecting the invariant, and the
+> guard moved from publish time to BUILD time. An editor can now save two works
+> with the same `(composer, slug)` in the web app and Contentful will accept it;
+> the next build fails. ADR-0008 took that trade knowingly. Measured live before
+> the flag ran: **647 works with a composer, 647 distinct `(composer, slug)`
+> pairs, zero collisions.** The two works with no composer at all are AWK-38's.
 
 > This section previously read *"There is no build… no dependencies installed, so
 > the `.tsx` files do not typecheck yet"*, which had been false since the AWK-22
