@@ -873,9 +873,17 @@ runs share one program across two dates, so the boxes below total 407.
 **Not read by `seed_participation.py`.** See the note at the top of this file.
 Participation for these Concerts is set by hand in Contentful.
 
-**Alex played every Concert of these four Seasons.** No box below is ticked and
-none is expected to be — there are no exceptions to record. Stated by Alex on
-2026-08-29; no source in this repository corroborates it, and none contradicts it.
+**Alex played every Concert of these four Seasons.** No `missed whole concert`
+box is ticked and none is expected to be. Stated by Alex on 2026-08-29; no source
+in this repository corroborates it, and none contradicts it.
+
+**Item boxes here mean something narrower than in the Brooklyn section.** A
+shared concert's printed program includes blocks played by the *visiting
+ensembles* rather than by the orchestra, and the Concert entry holds the whole
+program as printed. Those items are ticked — they are `satOut` in Contentful and
+so are omitted from the rendered page — but the tick records "another ensemble
+performed this", not a work Alex declined. Ten of the seventeen items on
+1993-07-26 are that.
 
 **This section is incomplete by construction.** Two Concerts are known. The rest
 of Seasons 29 to 32 is undocumented here — absent from `Wikipedia BSO Archive.xlsx`,
@@ -883,7 +891,8 @@ absent from `bso-graph.json`, and represented by no program in `docs/archive/`.
 Do not read the two entries below as the whole of what Alex played at this
 orchestra. Add Concerts as sources appear.
 
-A Program is listed only where a source has been transcribed. Neither has been.
+A Program is listed only where a source has been transcribed. 1993-07-26 has
+been, under AWK-59; 1992-06-14 has not.
 
 ## Season 29 — 1991–1992
 
@@ -894,9 +903,29 @@ A Program is listed only where a source has been transcribed. Neither has been.
 
 ## Season 30 — 1992–1993
 
-### 1993-07-26 · Mon · Dallas Brooks Hall, Melbourne · conductor not recorded (LIYO)
+### 1993-07-26 · Mon · Dallas Brooks Hall, Melbourne · Martin Dreiwitz (LIYO)
 - [ ] missed whole concert
-  - *Program not transcribed. Source is
-    `docs/archive/program-19930726-liyo-dallas-brooks-hall.jpg`, a photographed
-    printed Program. A summer tour date closes the Season before it, so this is
-    Season 30 and not Season 31.*
+  - [x] 1. Möller — The Happy Wanderer *(Recital Choir)*
+  - [x] 2. Möller — Cuckoo Cries *(Recital Choir)*
+  - [x] 3. Victoria — Ne Timeas Maria *(Victoria State Youth Choir)*
+  - [x] 4. Troup — Route 66 *(Victoria State Youth Choir)*
+  - [x] 5. McCartney — The Long and Winding Road *(Victoria State Youth Choir)*
+  - [x] 6. Traditional — Heidenroslein *(Chamber Choir)*
+  - [x] 7. Brahms — Lullaby *(Chamber Choir)*
+  - [x] 8. Lloyd Webber — Pie Jesu *(Chamber Choir)*
+  - [x] 9. Raposo — Tu Me Gustas *(Combined Training & Performing Choirs)*
+  - [x] 10. Burns — Let's Open Up Our Hearts *(Combined Training & Performing Choirs)*
+  - [ ] 11. Elgar — Imperial March
+  - [ ] 12. Saint-Saens — Introduction and Rondo Capriccioso
+  - [ ] 13. Tchaikovsky — "Theme and Variations", from Suite No. 3 in G Major
+  - [ ] 14. Gershwin — Porgy and Bess: A Symphonic Picture
+  - [ ] 15. Humperdinck — "Evening Prayer", from Hansel und Gretel *(combined)*
+  - [ ] 16. Cowan — Waltzing Matilda *(combined)*
+  - [ ] 17. Steffe — Battle Hymn of the Republic *(combined)*
+  - *Transcribed from `docs/archive/program-19930726-liyo-dallas-brooks-hall.jpg`,
+    a photographed printed Program. A summer tour date closes the Season before
+    it, so this is Season 30 and not Season 31. Items 1-10 are the visiting
+    choirs' own blocks — see the ticking note above. Items 15-17 are the combined
+    choirs and orchestra; Bruce Worland conducted 15 and 16, Martin Dreiwitz the
+    rest of the orchestra's program. Keith Glover compered; the content model has
+    nowhere to record that.*
