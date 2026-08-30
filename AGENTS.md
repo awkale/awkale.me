@@ -48,7 +48,7 @@ See `docs/agents/domain.md`.
 | `app/components/asset-image.tsx` | The site's ONE `<img>`, plus `imageGroup`'s three layouts. `sideBySide` lays out **N** images even though the sixth invariant fails a build where it links anything but two. |
 | `app/lib/search-index.ts` | Loads `/search-index.js` by dynamic import, memoized on the promise, on first interaction with the header field. An import rather than a `fetch` is a **CSP decision** — see `public/_headers`. |
 | `app/components/site-search.tsx` | The header ComboBox. Results are `<a href>`, which is why `onSelectionChange` is unused: React Aria fires it with **null** for link rows. |
-| `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), `seed_participation.py` (AWK-36's participation pass — **dry run is its default**, unlike its siblings), `backfill_slugs.py` (AWK-39's slug pass — dry run also its default; it does the two **honorific** merges), `merge_composers.py` + `merge-composers.json` (AWK-23's arranger merge — **ran 2026-08-19**; dry run is its default and `--apply` also publishes, because a relink left as a draft while the delete lands leaves the CDA serving works whose composer no longer exists), `backfill_seasons.py` + `season-orchestras.json` (AWK-59's season pass — dry run is its default; it rewrites the season **displayField**, and preserves each entry's publication state rather than choosing one), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types — five since AWK-59 added `season.orchestras`), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
+| `scripts/contentful/` | Archive pipeline: parser, importer, `archive_orphans.py` (AWK-20's orphan sweep), `seed_participation.py` (AWK-36's participation pass — **dry run is its default**, unlike its siblings), `backfill_slugs.py` (AWK-39's slug pass — dry run also its default; it does the two **honorific** merges), `merge_composers.py` + `merge-composers.json` (AWK-23's arranger merge — **ran 2026-08-19**; dry run is its default and `--apply` also publishes, because a relink left as a draft while the delete lands leaves the CDA serving works whose composer no longer exists), `backfill_seasons.py` + `season-orchestras.json` (AWK-59's season pass — dry run is its default; it rewrites the season **displayField**, and preserves each entry's publication state rather than choosing one), `imslp_harvest.py` + `imslp-harvest.json` and `seed_period_and_forms.py` + `period-and-forms.json` (AWK-37's period/form/diacritics pass — dry run is its default and `--apply` publishes; the harvest is **derived and regenerable**, the declaration is **decided and never regenerated**, and the applier layers the second over the first so a hand correction survives a re-harvest, which is ADR-0007's third reason for keeping IMSLP out of the build), and `bso-graph.json`. Also **three** schema declarations across **two** appliers: `archive-schema.json` + `migrate_schema.py` (AWK-30, appends fields to four archive types — five since AWK-59 added `season.orchestras`), and `portfolio-schema.json` (AWK-31, creates `project` and `imageGroup`) plus `recording-schema.json` (AWK-32, creates `recording`), both applied by `migrate_portfolio.py` — the second via `--schema PATH`. |
 | `docs/archive/recording-curation.md` | Per-video verdicts for the BSO channel (AWK-32). Three of fifteen uploads are seedable. ADR-0012 forbids scripting this; the file is a worksheet, not an input. |
 | `docs/archive/program-19930726-liyo-dallas-brooks-hall.jpg` | Photographed printed program, Long Island Youth Orchestra at Dallas Brooks Hall, Melbourne, 1993-07-26. **A primary source for a concert no other source here holds** — not in the xlsx, not in `bso-graph.json`. **Transcribed 2026-08-30** under AWK-59 — the concert is `cnc-19930726`, and the source stays as the record of what the page came from. 57 entries: Dallas Brooks Hall, five choir `ensemble`s, the five choir/guest conductors, 12 composers, Willis Huang, 15 works, 17 program items and the Concert. Ten items are the visiting choirs' blocks and carry `satOut`, so the page renders the seven LIYO played. **This is the first published LIYO concert**, and it needed AWK-60's `programItem.conductor` — six conductors across six blocks do not fit one `concert.conductor`. |
 | `public/_redirects` | The thirteen redirects. Never add a catch-all — see the file's own header. |
@@ -272,6 +272,27 @@ AWK-37; wiring the CDA is AWK-39.
 > the space, not the build. **AWK-37 is still outstanding** — `work.forms` and
 > `period`, `composer.period` and the `genre` migration are all still empty.
 
+> **AWK-37 ran on 2026-08-30.** `composer.period` is set and published on all
+> **153** in-scope Composers — 108 read off IMSLP's era category, 45 assigned by
+> hand. `work.forms` is set on **234** of the 338 in-scope Works, and
+> `work.period` on 5. **13 Composers got their diacritics back**: Bartók, Chávez,
+> Chopin, Delibes, Dvořák, Fauré, Glière, Grofé, Janáček, Rodrigo, Saint-Saëns,
+> Smetana and Turina. Slugs fold to ASCII and did not move.
+>
+> **11 of those 234 Works are written but NOT published**, blocked by the
+> `work.slug` collision described further down. The Delivery API still serves
+> their previous values, so the site is consistent; they publish on a re-run once
+> the constraint comes off.
+>
+> **`work.genre` is untouched and the field still exists.** ADR-0007 sequences the
+> delete as a separate step, after this migration is verified — deleting it in the
+> pass that reads it destroys the only source a re-run has.
+>
+> The remaining **104** Works carry no Form and that is a permitted state, not a
+> gap: ADR-0007 lets Form stay incomplete while Period carries the browsing. They
+> are listed in `docs/archive/form-curation.md`, which is a worksheet nothing
+> reads.
+
 The one exception is `recording`, which holds **three published entries** —
 AWK-32's curated BSO videos, all on `cnc-20221218`. They are the only real
 content in the space outside the imported archive, so they are the first thing
@@ -291,6 +312,31 @@ gate the script can enforce: it cannot see whether AWK-39 landed.
 > `app/lib/invariants.ts` is now the ONLY thing standing between the space and 26
 > space-wide colliding work slugs — the constraint will not catch them any more,
 > and it is a one-way door. `work.genre` is unchanged and still AWK-37's.
+
+> **That paragraph is FALSE, and AWK-37 found out the expensive way on
+> 2026-08-30.** `unique: true` is still on `work.slug` in `master`. The assertion
+> half of AWK-39 did land — `(composer, slug)` is in `app/lib/invariants.ts` — but
+> `--drop-work-slug-unique` was never run, so the paragraph above describes an
+> intention as a completed fact.
+>
+> The cost is not theoretical. Contentful validates `unique` **at publish time**,
+> so the collisions sit in the space published and quiet, and any pass that
+> REPUBLISHES a colliding work fails on it. AWK-37's seed hit this at its eighth
+> entry and stopped; 11 works are written and unpublished as a result. Anything
+> that touches `work` in bulk will hit the same wall.
+>
+> **The real numbers are 8 colliding slugs across 19 work entries, 13 of them in
+> scope** — not 26. Count them, do not read them:
+>
+> ```
+> piano-concerto-in-a-minor · sleigh-ride · symphony-in-c-major · symphony-no-2
+> symphony-no-2-in-d-major · symphony-no-5-in-b-flat-major · trumpet-concerto
+> violin-concerto-in-d-minor
+> ```
+>
+> ADR-0008's precondition is genuinely satisfied, so the flag is safe to run —
+> it just has not been. Verify with `migrate_schema.py --dry-run` rather than
+> trusting either paragraph.
 
 > This section previously read *"There is no build… no dependencies installed, so
 > the `.tsx` files do not typecheck yet"*, which had been false since the AWK-22

@@ -30,3 +30,6 @@ __pycache__/
 # timestamped, and of no value once read. `*.log` above already caught the console
 # files, which is why only the .yml snapshots ever showed up.
 .playwright-mcp/
+
+# AWK-37: the IMSLP harvest cache. Regenerable, and 55k composer pages.
+.imslp-cache/

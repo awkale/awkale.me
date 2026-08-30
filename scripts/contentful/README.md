@@ -491,6 +491,74 @@ python3 scripts/contentful/backfill_seasons.py --apply
 TypeScript what the applier derives in Python — deliberate double-entry, so a
 bug in either shows up as a disagreement rather than a confident migration.
 
+## Period, form and diacritics — AWK-37
+
+ADR-0007 retires `genre` for two axes: `period`, held on the composer and
+overridable on the work, and `forms`, a tag set on the work. Both are filters and
+neither is routed, so **the published page count is unchanged**. Two scripts and
+two artifacts, because the derived half and the decided half have different
+review costs:
+
+| File | Is | Regenerate? |
+| --- | --- | --- |
+| `imslp_harvest.py` | The only thing here that talks to IMSLP | — |
+| `imslp-harvest.json` | Derived: matched pages, eras, styles, harvested forms | Yes, freely |
+| `period-and-forms.json` | Decided: aliases, hand periods, form curation, guards | **Never** |
+| `seed_period_and_forms.py` | Applies the second layered over the first | — |
+
+```bash
+python3 scripts/contentful/imslp_harvest.py            # cached under .imslp-cache/
+python3 scripts/contentful/seed_period_and_forms.py    # report, writes nothing
+python3 scripts/contentful/seed_period_and_forms.py --apply
+```
+
+Five things are worth knowing before running it.
+
+**Only an exact folded name match is accepted automatically.** Every looser rule
+was tried and produced confident nonsense — surname-only gives `Gustavson, Mark`
+→ `Gustavson, Eva` and `Marquez, Arturo` → `Márquez, Antonio`; surname-plus-initial
+gets Prokofiev and Rimsky-Korsakov right and `Thompson, Randall` → `Thompson, Ray`
+wrong. A rule right four times in five is worse than none, because nothing
+downstream can tell which five. The 40 names a fold cannot settle are decided in
+`composerAliases`, where **a null means checked-and-absent**, not unchecked.
+
+**Diacritics come from the pair, not from a probe.** IMSLP holds both spellings
+as separate pages — `Bartok, Bela` *and* `Bartók, Béla` — so an identical folded
+key means the same person by construction and the accented page is the canonical
+spelling. Probing the folded title instead does **not** work: `Dvorak, Antonin`
+404s, `Bartok, Bela` resolves to a page carrying no era, and `Faure, Gabriel`
+resolves and returns `Romantic`, which looks exactly like success. 13 composers
+gain an accent; slugs fold to ASCII and are untouched.
+
+**IMSLP runs a MediaWiki old enough to answer `query-continue`.** A pagination
+loop written against current MediaWiki docs stops at the first page and reports a
+complete result — it silently capped Bach at 500 of 1,431 work pages. A short
+list looks exactly like a small composer.
+
+**The form harvest yields seven works, and that is not a bug to fix.** Of the 114
+played works carrying no genre, 24 match an IMSLP page and 7 carry a whitelisted
+category. The cause is structural: the archive names excerpts (`Act II, Carmen`)
+where IMSLP names works, and Barber, Bernstein, Britten, Khachaturian, Glass,
+Tippett, Rota, Piazzolla and John Williams have **no IMSLP work pages at all**,
+being in copyright. The remaining 107 are `docs/archive/form-curation.md` — a
+worksheet, not an input. ADR-0007 permits `forms` to stay incomplete.
+
+**`work.genre` is not cleared and the field is not deleted.** ADR-0007 sequences
+this as three separately-owned steps: AWK-30 added `forms`, this migrates the
+data, and only then can `genre` go. Deleting it in the pass that migrates it
+destroys the only thing a re-run could read.
+
+Dry run is the default, `--apply` publishes, and **a disagreeing value is never
+overwritten** — a row the space and the plan disagree about is reported as a
+CONFLICT and skipped, which is what makes a hand correction durable across
+re-runs.
+
+`period-and-forms.test.ts` asserts the FILE against `archive-schema.json`'s
+vocabularies and against the harvest, the same double-entry as above. It cannot
+check whether Sibelius should read Romantic or Early 20th century; those five
+two-era composers are judgement calls, and the test only asserts that whatever
+was chosen is one of the two IMSLP actually files.
+
 ## Usage
 
 ```bash
