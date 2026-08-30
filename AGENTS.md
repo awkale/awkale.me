@@ -41,7 +41,7 @@ See `docs/agents/domain.md`.
 | `scripts/contentful/participation.json` | The seeding plan derived from that checklist. Generated, guarded by `participation.test.ts`. Keys on **date**; `graphId` is a join key, not an address. |
 | `.env.example` | The three build variables, with the token blank. Committed on purpose — `.gitignore` carries a `!.env.example` exception — because the NAMES are what has to be right, and a wrong one renders an empty site rather than erroring. |
 | `app/lib/contentful.ts` | The CDA client. No SDK: `fetch`, pagination, retry. Asserts the three env vars before fetching anything. |
-| `app/lib/archive.ts` | **The one build-time sweep.** Three consumers — `prerenderPaths`, `buildEnd`'s search index, and every route loader — all read `loadArchive()`, which fetches once and memoizes. A second enumeration is the thing this exists to prevent. |
+| `app/lib/archive.ts` | **The one build-time sweep.** Three consumers — `prerenderPaths`, `buildEnd`'s search index, and every route loader — all read `loadArchive()`, which fetches once and memoizes. A second enumeration is the thing this exists to prevent. **Two fields are resolved here rather than at the route**, and both carry an `…IsOwn` flag saying whether the value was the entry's own: `ProgramEntry.conductorName` (AWK-60) and `Work.period` (AWK-37, which inherits from the composer per ADR-0007). Resolve a third the same way — a route that repeats a fallback is a route that can disagree with the next one. |
 | `app/lib/invariants.ts` | The **eleven** checks — for **eight** rules — that Contentful cannot express as validations. See ADR-0008's amendment on the hashed-slug shape. The count in this cell has been wrong twice; the file's own header keeps it, so read that. The newest is AWK-61's `slug-has-no-stray-whitespace`, the only rule that sweeps all five stored slugs including `hall` and `conductor`, which no route reads. |
 | `app/lib/search.ts` | AWK-41's ranking, grouping and per-kind cap. Pure and DOM-free **on purpose** — React Aria's own collection filter is switched off so these rules are the only ones running, and can be tested without a popover. Folds diacritics, so `dvorak` reaches `Dvořák`. |
 | `app/lib/images.ts` | **The only place a `/.netlify/images` URL is built** (ADR-0013, AWK-40), and the only place the eager/lazy tier is decided. `/.netlify/images` is Netlify-only, so this module is where the site's imagery couples to ADR-0002's host. It throws on a source outside the allowlist, because the alternative is a 400 nothing reports. |
@@ -291,6 +291,13 @@ AWK-37; wiring the CDA is AWK-39.
 > gap: ADR-0007 lets Form stay incomplete while Period carries the browsing. They
 > are listed in `docs/archive/form-curation.md`, which is a worksheet nothing
 > reads.
+>
+> **Seeding the data was not enough to render it.** `loadArchive()` read
+> `work.fields.period ?? null` with no composer fallback, so 333 of 338 work pages
+> showed an em dash with the answer sitting on the composer record. The
+> inheritance ADR-0007 specifies is now resolved in the sweep, and all 338 pages
+> carry a Period: Romantic 155 · Early 20th century 89 · Modern 61 · Classical 28
+> · Baroque 4 · Jazz 1.
 
 The one exception is `recording`, which holds **three published entries** —
 AWK-32's curated BSO videos, all on `cnc-20221218`. They are the only real
