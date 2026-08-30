@@ -370,6 +370,8 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
   const shape: ArchiveShape = {
     concerts: concerts.map((c) => ({
       id: c.sys.id,
+      date: c.fields.date ?? null,
+      orchestras: linkIds(c.fields.orchestra),
       program: linkIds(c.fields.program),
       satOut: linkIds(c.fields.satOut),
     })),

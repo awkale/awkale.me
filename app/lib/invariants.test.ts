@@ -12,21 +12,38 @@ import { type ArchiveShape, assertInvariants, findViolations } from './invariant
  * obviously-bad data would pass while the realistic case walked through.
  */
 type Work = ArchiveShape['works'][number]
+type Concert = ArchiveShape['concerts'][number]
 
 /**
- * Works are given loosely and completed here, so a case states only the fields
- * its rule reads. Without that, adding `arrangerId` and `arrangementType` under
- * AWK-23 meant editing twelve slug cases that have nothing to do with arrangers,
- * and every future field on `work` would do the same.
+ * Works and concerts are given loosely and completed here, so a case states only
+ * the fields its rule reads. Without that, adding `arrangerId` and
+ * `arrangementType` under AWK-23 meant editing twelve slug cases that have
+ * nothing to do with arrangers, and every future field would do the same.
+ *
+ * Concerts joined them under AWK-59, which added `date` and `orchestras` for the
+ * program-item rule and broke eight satOut and recording cases that care about
+ * neither — the exact tax this pattern exists to avoid.
  */
-function shape(over: Partial<Omit<ArchiveShape, 'works'>> & { works?: Partial<Work>[] } = {}): ArchiveShape {
-  const { works, ...rest } = over
+function shape(
+  over: Partial<Omit<ArchiveShape, 'works' | 'concerts'>> & {
+    works?: Partial<Work>[]
+    concerts?: Partial<Concert>[]
+  } = {}
+): ArchiveShape {
+  const { works, concerts, ...rest } = over
   return {
-    concerts: [],
     projects: [],
     imageGroups: [],
     recordings: [],
     ...rest,
+    concerts: (concerts ?? []).map((c) => ({
+      id: '',
+      date: null,
+      orchestras: [],
+      program: [],
+      satOut: [],
+      ...c,
+    })),
     works: (works ?? []).map((w) => ({
       id: '',
       slug: '',
@@ -283,6 +300,111 @@ describe("sideBySide's two-image limit (ADR-0004)", () => {
       imageGroups: [
         { id: 'img-a', label: 'Wizard', layout: 'grid', imageCount: 5 },
         { id: 'img-b', label: 'Hero', layout: 'fullWidth', imageCount: 1 },
+      ],
+    })
+
+    expect(findViolations(input)).toEqual([])
+  })
+})
+
+describe('a program item is one performance (AWK-59)', () => {
+  /** The real shape: a run is one program played twice by one orchestra. */
+  const run = [
+    { id: 'cnc-20110408', date: '2011-04-08', orchestras: ['orc-bso'], program: ['pi-20110408-1'] },
+    { id: 'cnc-20110410', date: '2011-04-10', orchestras: ['orc-bso'], program: ['pi-20110408-1'] },
+  ]
+
+  it('accepts a run — one program, two dates, one orchestra', () => {
+    // 24 items in the space are exactly this, spanning 1 to 4 days. A rule that
+    // flagged them would be worse than no rule: it would be turned off.
+    expect(findViolations(shape({ concerts: run }))).toEqual([])
+  })
+
+  it('accepts an item on a single concert', () => {
+    const input = shape({
+      concerts: [{ id: 'cnc-20110408', date: '2011-04-08', orchestras: ['orc-bso'], program: ['pi-1'] }],
+    })
+
+    expect(findViolations(input)).toEqual([])
+  })
+
+  it('rejects an item shared across two orchestras', () => {
+    // The case that prompted the rule: an Offenbach overture entered on a 2017
+    // BSO concert, then reused on a 1992 LIYO one during hand entry.
+    const input = shape({
+      concerts: [
+        { id: 'cnc-19920614', date: '1992-06-14', orchestras: ['orc-liyo'], program: ['pi-20170219-1'] },
+        { id: 'cnc-20170219', date: '2017-02-19', orchestras: ['orc-bso'], program: ['pi-20170219-1'] },
+      ],
+    })
+
+    const rules = findViolations(input).map((v) => v.rule)
+
+    // Both fire, and they are genuinely independent — see the two cases below.
+    expect(rules).toContain('program-item-one-orchestra')
+    expect(rules).toContain('program-item-run-is-close')
+    expect(findViolations(input)[0]?.entry).toBe('pi-20170219-1')
+  })
+
+  it('rejects a same-orchestra share too far apart to be a run', () => {
+    // Orchestra alone is not enough. An orchestra replaying a work years later
+    // is a new performance, with its own soloists and its own place in a program.
+    const input = shape({
+      concerts: [
+        { id: 'cnc-20110408', date: '2011-04-08', orchestras: ['orc-bso'], program: ['pi-20110408-1'] },
+        { id: 'cnc-20180408', date: '2018-04-08', orchestras: ['orc-bso'], program: ['pi-20110408-1'] },
+      ],
+    })
+
+    expect(findViolations(input).map((v) => v.rule)).toEqual(['program-item-run-is-close'])
+  })
+
+  it('rejects a same-day share across two orchestras', () => {
+    // And date alone is not enough either. Two orchestras on one day is a
+    // shared bill, not one performance.
+    const input = shape({
+      concerts: [
+        { id: 'cnc-a', date: '2011-04-08', orchestras: ['orc-bso'], program: ['pi-x'] },
+        { id: 'cnc-b', date: '2011-04-08', orchestras: ['orc-bho'], program: ['pi-x'] },
+      ],
+    })
+
+    expect(findViolations(input).map((v) => v.rule)).toEqual(['program-item-one-orchestra'])
+  })
+
+  it('holds at the 14-day boundary and fails past it', () => {
+    const at = (date: string) => [
+      { id: 'cnc-a', date: '2011-04-08', orchestras: ['orc-bso'], program: ['pi-x'] },
+      { id: 'cnc-b', date, orchestras: ['orc-bso'], program: ['pi-x'] },
+    ]
+
+    expect(findViolations(shape({ concerts: at('2011-04-22') }))).toEqual([])
+    expect(findViolations(shape({ concerts: at('2011-04-23') })).map((v) => v.rule)).toEqual([
+      'program-item-run-is-close',
+    ])
+  })
+
+  it('does not invent a span for undated concerts', () => {
+    // Three concerts in the archive have no usable date. A missing date is not
+    // evidence of a bad share, and guessing one would flag them all.
+    const input = shape({
+      concerts: [
+        { id: 'cnc-a', date: null, orchestras: ['orc-bho'], program: ['pi-x'] },
+        { id: 'cnc-b', date: null, orchestras: ['orc-bho'], program: ['pi-x'] },
+      ],
+    })
+
+    expect(findViolations(input)).toEqual([])
+  })
+
+  it('reads the orchestra from the concert, not from the item id', () => {
+    // invariants.ts:83's warning, as a test. A run's second night carries the
+    // FIRST night's item ids, so cnc-20070523 legitimately links pi-20070520-*.
+    // Any rule deriving a date from the id would flag all 24 good items.
+    const input = shape({
+      concerts: [
+        { id: 'cnc-20070520', date: '2007-05-20', orchestras: ['orc-bso'], program: ['pi-20070520-1'] },
+        { id: 'cnc-20070523', date: '2007-05-23', orchestras: ['orc-bso'], program: ['pi-20070520-1'] },
       ],
     })
 

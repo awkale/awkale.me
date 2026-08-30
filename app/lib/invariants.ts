@@ -1,12 +1,13 @@
 /**
  * The invariants Contentful cannot express, asserted in the build.
  *
- * Six rules across six records, and every one of them exists because
+ * Seven rules across six records, and every one of them exists because
  * Contentful validates a field against a LITERAL and never against another
  * field. Both links in a pair can be individually valid while the pair is
  * nonsense, and the schema has no way to say so:
  *
  *   satOut ⊆ program                    ADR-0006 — an array conditional on another array
+ *   a program item is one performance   AWK-59 — a link's owners must agree with each other
  *   arranger needs a type               ADR-0005 — two fields that are meaningless apart
  *   (composer, slug) unique             ADR-0008 — a scoped unique; Contentful has only space-wide
  *   the hashed slug shape               ADR-0008 — a format the importer emits and the URLs must not
@@ -15,10 +16,15 @@
  *   sideBySide holds two images         ADR-0004 — an array max conditional on a sibling symbol
  *   recording.programItem ⊆ concert     ADR-0012 — a link conditional on a link's array
  *
- * Eight checks for six rules: the slug rule is shape AND uniqueness, which fail
- * independently and need separate messages, and featuredRank grew a second rule
+ * Ten checks for seven rules: the slug rule is shape AND uniqueness, which fail
+ * independently and need separate messages; featuredRank grew a second rule
  * when AWK-31 noticed that one nullable field still cannot stop two projects both
- * holding rank 1.
+ * holding rank 1; and the program-item rule is orchestra AND date span, which a
+ * single message could not tell apart.
+ *
+ * AWK-59's rule is the first here that reads a link's OWNERS against each other
+ * rather than a record against itself. A program item is individually valid on
+ * every concert that links it; what is wrong is the set of concerts doing so.
  *
  * The arranger rule is AWK-23's, and ADR-0005 called for it before the data
  * existed: "Contentful cannot express 'required if the other is present', so this
@@ -44,7 +50,7 @@ export type InvariantViolation = {
 }
 
 export type ArchiveShape = {
-  concerts: { id: string; program: string[]; satOut: string[] }[]
+  concerts: { id: string; date: string | null; orchestras: string[]; program: string[]; satOut: string[] }[]
   works: {
     id: string
     slug: string
@@ -75,6 +81,18 @@ export type ArchiveShape = {
  * loudly on a real title is recoverable, and a hashed slug shipping silently into
  * ~600 addresses is the failure this whole file exists to prevent.
  */
+const MS_PER_DAY = 86_400_000
+
+/**
+ * How far apart two performances of one program may sit and still be a run.
+ *
+ * Measured, not chosen: the 24 legitimately shared program items in the space
+ * span 1 to 4 days. 14 leaves room for a run across two weekends and still
+ * rejects the case that prompted this — a 1992 LIYO concert and a 2017 BSO one
+ * sharing an item, 9,016 days apart.
+ */
+const RUN_MAX_DAYS = 14
+
 const COMPOSER_PREFIXED = /--/
 const HASH_SUFFIX = /-[0-9a-f]{6}$/
 
@@ -93,6 +111,57 @@ export function findViolations(archive: ArchiveShape): InvariantViolation[] {
           rule: 'satout-subset-of-program',
           entry: concert.id,
           detail: `satOut holds ${item}, which is not on this concert's program`,
+        })
+      }
+    }
+  }
+
+  // AWK-59, two independent failures per shared item. A Program item is one Work
+  // AS PERFORMED ON ONE OCCASION -- it carries that night's order, soloists and
+  // credits -- so it belongs to one Concert. The exception is a run: one program
+  // played on two dates by one orchestra, where both Concerts legitimately link
+  // the same items. Twenty-four items in the space are that, and they span 1 to
+  // 4 days.
+  //
+  // Read the date and the orchestra from the CONCERTS THAT OWN THE LINK, never
+  // from the item id, for the same reason the satOut rule does: a run's second
+  // night carries the first night's ids, so cnc-20070523 links pi-20070520-*.
+  // An id-derived date would flag all twenty-four.
+  const owningConcerts = new Map<string, ArchiveShape['concerts']>()
+  for (const concert of archive.concerts) {
+    for (const item of concert.program) {
+      const owners = owningConcerts.get(item) ?? []
+      owners.push(concert)
+      owningConcerts.set(item, owners)
+    }
+  }
+
+  for (const [item, owners] of owningConcerts) {
+    if (owners.length > 1) {
+      const orchestras = [...new Set(owners.flatMap((c) => c.orchestras))].sort()
+      if (orchestras.length > 1) {
+        violations.push({
+          rule: 'program-item-one-orchestra',
+          entry: item,
+          detail:
+            `is on the program of ${owners.length} concerts across ${orchestras.length} orchestras ` +
+            `(${orchestras.join(', ')}) — a program item is one performance, so each orchestra ` +
+            `needs its own pointing at the same work`,
+        })
+      }
+
+      const dates = owners
+        .map((c) => c.date)
+        .filter((d): d is string => d !== null)
+        .sort()
+      const span = dates.length > 1 ? (Date.parse(dates.at(-1)!) - Date.parse(dates[0]!)) / MS_PER_DAY : 0
+      if (span > RUN_MAX_DAYS) {
+        violations.push({
+          rule: 'program-item-run-is-close',
+          entry: item,
+          detail:
+            `is shared by concerts ${Math.round(span)} days apart (${dates[0]} to ${dates.at(-1)}) — ` +
+            `a run is one program played twice, not the same performance reused`,
         })
       }
     }
