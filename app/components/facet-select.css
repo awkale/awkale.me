@@ -1,0 +1,320 @@
+/* ===========================================================================
+   facet-select — the Performance history's two browse facets, conductor and hall.
+   ---------------------------------------------------------------------------
+   Same convention as mode-toggle and site-search: a semantic class consumes local
+   variables, and React Aria's own data attributes remap them. No JS-driven classes.
+
+   Conductor and hall are the only two facets that ship (ADR-0006). Soloist was cut
+   because 256 of the 404 programme occasions carry no soloist at all, and season
+   was dropped as an institutional artifact.
+
+   REPLACED facet-chip.css under AWK-55. That file styled a row of ToggleButton
+   chips — one per value, count on the face — and it went whole rather than being
+   edited: with a multi-select ComboBox there is no chip row left to style. It also
+   carried a [data-disabled] rule that nothing ever set and now never could, since
+   a zero-yield option stays selectable on purpose (a value reading 53 that cannot
+   be chosen is incoherent, and finding the zero-yield ones would need exactly the
+   cross-filtered pass that keeps the counts absolute).
+
+   Attributes React Aria sets, and what they mean here:
+     [data-focused]         the field has focus (on .facet-select-input)
+     [data-open]            the popover is showing (on .facet-select-box)
+     [data-focused]         the row under the keyboard cursor (on an option)
+     [data-hovered]         pointer over an option, tag or button
+     [data-selected]        the option is part of the current selection
+     [data-focus-visible]   keyboard focus specifically
+     [data-allows-removing] the tag group takes onRemove, so tags carry an ×
+   =========================================================================== */
+
+/* --- the row -------------------------------------------------------------- */
+.facet-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.facet-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  /* Aligns with the fields rather than their labels, which sit a line higher. */
+  margin-top: 1.05rem;
+  min-height: 1.7rem;
+}
+
+.facet-clear {
+  padding: 0.24rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.facet-clear[data-hovered] {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.facet-clear[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* Permanently mounted and empty when nothing is selected — a live region has to
+   exist before its contents change to announce reliably. So it must not be given
+   `display: none`, and it must not collapse the row's height as text arrives. */
+.facet-status {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+/* --- the control ---------------------------------------------------------- */
+.facet-select {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.facet-select-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.facet-select-label {
+  /* .eyebrow in the base layer carries size, tracking and colour. */
+  display: block;
+}
+
+.facet-select-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.facet-select-input {
+  --field-bg: var(--card);
+  --field-border: var(--border);
+
+  width: clamp(9rem, 20vw, 14rem);
+  /* Right padding leaves room for the trigger sitting over the field. */
+  padding: 0.3rem 1.6rem 0.3rem 0.6rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+  background: var(--field-bg);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.facet-select-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.facet-select-input[data-hovered] {
+  --field-border: var(--muted-hover);
+}
+
+.facet-select-input[data-focused] {
+  --field-border: var(--ring);
+
+  outline: 2px solid var(--ring);
+  outline-offset: -1px;
+}
+
+/* The disclosure. Drawn in CSS rather than shipped as an icon — the site has no
+   icon set and this is the only glyph that would need one. */
+.facet-select-trigger {
+  position: absolute;
+  right: 0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 0;
+  border-radius: calc(var(--radius) * 0.7);
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+.facet-select-trigger::after {
+  content: '';
+  width: 0;
+  height: 0;
+  border-top: 0.3rem solid var(--muted-foreground);
+  border-right: 0.25rem solid transparent;
+  border-left: 0.25rem solid transparent;
+}
+
+.facet-select-trigger[data-hovered] {
+  background: var(--muted);
+}
+
+.facet-select-trigger[data-hovered]::after {
+  border-top-color: var(--foreground);
+}
+
+.facet-select-trigger[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.facet-select-popover {
+  width: min(20rem, calc(100vw - 2 * var(--gutter)));
+  max-height: 50vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 45%);
+}
+
+.facet-select-list {
+  padding: 0.25rem;
+  outline: none;
+}
+
+.facet-select-empty {
+  padding: 0.75rem 0.6rem;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.facet-select-option {
+  --row-bg: transparent;
+  --row-text: var(--foreground);
+  --row-count: var(--muted-foreground);
+
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: calc(var(--radius) * 0.7);
+  background: var(--row-bg);
+  color: var(--row-text);
+  font-size: 0.82rem;
+  cursor: pointer;
+  outline: none;
+}
+
+/* [data-focused] is the keyboard cursor and [data-hovered] the pointer. Both
+   read as "this is the row you would choose", so both get the same fill. */
+.facet-select-option[data-hovered],
+.facet-select-option[data-focused] {
+  --row-bg: var(--muted);
+}
+
+.facet-select-option[data-selected] {
+  --row-bg: var(--primary);
+  --row-text: var(--primary-foreground);
+  /* The count sits inside the filled row, so it has to follow or it vanishes. */
+  --row-count: var(--primary-foreground);
+}
+
+.facet-select-option[data-selected][data-hovered],
+.facet-select-option[data-selected][data-focused] {
+  --row-bg: var(--primary-hover);
+}
+
+.facet-select-option[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+/* Absolute, never cross-filtered: this is how many concerts of the whole
+   Performance history carry the value, not how many are on screen. */
+.facet-select-count {
+  font-size: 0.72em;
+  color: var(--row-count);
+}
+
+/* --- the current selection ------------------------------------------------ */
+/* Rendered from the query string rather than from the ComboBox's own value, so
+   a value the control has no option for still shows and is still removable. */
+.facet-select-taglist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  outline: none;
+}
+
+/* Deliberately NOT hidden when empty, though React Aria offers [data-empty] for
+   exactly that. The group is a focus target: React Aria moves focus into it as
+   tags are removed, and a `display: none` target drops focus to <body> instead.
+   With no children it occupies no height anyway, so hiding it bought nothing. */
+
+.facet-select-tag {
+  --tag-bg: var(--primary);
+  --tag-text: var(--primary-foreground);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.14rem 0.2rem 0.14rem 0.5rem;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  font-size: 0.72rem;
+  outline: none;
+}
+
+.facet-select-tag[data-hovered] {
+  --tag-bg: var(--primary-hover);
+}
+
+.facet-select-tag[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.facet-select-tag-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+}
+
+.facet-select-tag-remove[data-hovered] {
+  background: rgb(255 255 255 / 25%);
+}
+
+.facet-select-tag-remove[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .facet-select-option,
+  .facet-select-tag,
+  .facet-select-tag-remove,
+  .facet-clear {
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease,
+      color 0.12s ease;
+  }
+}

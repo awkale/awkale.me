@@ -33,9 +33,20 @@
 # `ssr: false` does not have. `'self'` still blocks `<script src="…">` from any other
 # origin, which is the property ADR-0010 actually wanted; what `'unsafe-inline'`
 # gives up is hardening against INJECTED inline script, which needs attacker-
-# controlled content, and this site renders none — no user input, no query-param
-# rendering, no remote HTML. NOTE browsers IGNORE `'unsafe-inline'` when a hash or
-# nonce is present, so never add one here expecting belt-and-braces.
+# controlled content.
+#
+# THAT LAST CLAUSE USED TO READ "and this site renders none — no user input, no
+# query-param rendering, no remote HTML". AWK-55 made the middle third false:
+# `/concerts/` now renders `?conductor=` and `?hall=` values, as facet tag text and
+# in the `aria-label` of each tag's remove button. Both go through JSX, so React
+# escapes them and they reach the DOM as text and never as markup — there is no
+# injection here, and no change to the directives below. But the site is no longer
+# in the category the original reasoning leaned on, so a future edit rendering a
+# query parameter through `dangerouslySetInnerHTML`, or into an inline `<script>`,
+# would now have real reach. Check that before widening this.
+#
+# NOTE browsers IGNORE `'unsafe-inline'` when a hash or nonce is present, so never
+# add one here expecting belt-and-braces.
 #
 # `style-src` needs it too, measured not assumed: 114 inline `style=` attributes in
 # the built output, all React Aria's visually-hidden text.

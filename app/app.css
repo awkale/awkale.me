@@ -28,7 +28,7 @@
 /* Component CSS. One file per component, imported here so ordering is explicit
    rather than dependent on module graph traversal. */
 @import './components/mode-toggle.css';
-@import './components/facet-chip.css';
+@import './components/facet-select.css';
 @import './components/contact-form.css';
 @import './components/site-search.css';
 

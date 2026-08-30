@@ -1,7 +1,7 @@
 /* ===========================================================================
    site-search — ADR-0011's archive search, in the header of every page.
    ---------------------------------------------------------------------------
-   Same convention as mode-toggle and facet-chip: a semantic class consumes
+   Same convention as mode-toggle and facet-select: a semantic class consumes
    local variables, and React Aria's own data attributes remap them. No
    JS-driven classes.
 

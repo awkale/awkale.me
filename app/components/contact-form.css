@@ -7,7 +7,7 @@
    make it two, in exchange for nothing: a native POST has no state to manage and
    works with JavaScript disabled, which is the property that decision is for.
 
-   So unlike mode-toggle.css and facet-chip.css there are no `[data-hovered]` /
+   So unlike mode-toggle.css and facet-select.css there are no `[data-hovered]` /
    `[data-focus-visible]` hooks here — nothing supplies them. The states are the
    browser's own: `:focus-visible`, and `:user-invalid` for a field the visitor
    has actually left in a bad state (never bare `:invalid`, which paints every
