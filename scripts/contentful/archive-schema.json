@@ -30,7 +30,13 @@
     "The help-text half is a manual step in the web app after the field lands.",
     "",
     "`season.orchestras` (AWK-59) is the field that found this: it was added with",
-    "a name and no help text, because nothing in this pipeline could give it one."
+    "a name and no help text, because nothing in this pipeline could give it one.",
+    "",
+    "`programItem.conductor` (AWK-60) needs it more than any field here, because",
+    "LEAVING IT EMPTY MEANS SOMETHING: the item inherits `concert.conductor`. An",
+    "empty reference field that carries a meaning is invisible in the web app, so",
+    "the help text is the only place that rule can be read by the person entering",
+    "data. Set it by hand after the field lands."
   ],
 
   "sources": {
@@ -43,7 +49,8 @@
     "work.arranger": "docs/adr/0005-composer-identity-and-arrangements.md",
     "work.arrangementType": "docs/adr/0005-composer-identity-and-arrangements.md",
     "work.arrangementOf": "docs/adr/0005-composer-identity-and-arrangements.md",
-    "season.orchestras": "docs/adr/0006-performance-history-content-model.md"
+    "season.orchestras": "docs/adr/0006-performance-history-content-model.md",
+    "programItem.conductor": "docs/adr/0006-performance-history-content-model.md"
   },
 
   "vocabularyNotes": {
@@ -183,6 +190,23 @@
           "localized": false,
           "required": false,
           "validations": [{ "unique": true }],
+          "disabled": false,
+          "omitted": false
+        }
+      ]
+    },
+
+    {
+      "id": "programItem",
+      "addFields": [
+        {
+          "id": "conductor",
+          "name": "Conductor",
+          "type": "Link",
+          "linkType": "Entry",
+          "localized": false,
+          "required": false,
+          "validations": [{ "linkContentType": ["conductor"] }],
           "disabled": false,
           "omitted": false
         }

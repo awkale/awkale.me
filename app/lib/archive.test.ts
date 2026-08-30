@@ -339,6 +339,92 @@ describe('the invariants run over the whole space', () => {
   })
 })
 
+describe('the per-item conductor (AWK-60)', () => {
+  /** Tristan, the second conductor of the 2022-12-18 fixture this models. */
+  function addTristan() {
+    space.conductor.push(entry('conductor', 'cnd-tristan', { firstName: 'Felipe', lastName: 'Tristan' }))
+  }
+
+  it('inherits the concert conductor when the item names none', async () => {
+    // The case 807 of 819 items are in. `conductorIsOwn` is what keeps the page
+    // from repeating one name down a column nobody needed.
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program[0]).toMatchObject({
+      conductorName: 'Nicholas Armstrong',
+      conductorIsOwn: false,
+    })
+  })
+
+  it("prefers the item's own conductor over the concert's", async () => {
+    // 2022-12-18: Armstrong took the Rossini and the Elgar, Tristan the
+    // Tchaikovsky, and before this field the entry said Armstrong three times.
+    addTristan()
+    space.programItem[0].fields.conductor = link('cnd-tristan')
+    space.concert = [concert('cnc-1', '2022-12-18', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program[0]).toMatchObject({
+      conductorName: 'Felipe Tristan',
+      conductorIsOwn: true,
+    })
+    // The concert still names its own principal. The override is per item and
+    // says nothing about the evening's heading.
+    expect(archive.concerts[0].conductor).toBe('Nicholas Armstrong')
+  })
+
+  it('splits one concert between two conductors', async () => {
+    addTristan()
+    space.programItem.push(
+      entry('programItem', 'pi-2', {
+        label: 'Coriolan Overture',
+        order: 2,
+        work: link('wrk-fifth'),
+        conductor: link('cnd-tristan'),
+      })
+    )
+    space.concert = [concert('cnc-1', '2022-12-18', { attended: true, program: [link('pi-1'), link('pi-2')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program.map((i) => [i.conductorName, i.conductorIsOwn])).toEqual([
+      ['Nicholas Armstrong', false],
+      ['Felipe Tristan', true],
+    ])
+  })
+
+  it("records the item's conductor on the work's performance list", async () => {
+    // The semantic change AWK-60 makes to output that already shipped: a work
+    // page names who conducted THAT WORK, which on a split concert is the finer
+    // answer and on every other concert is the same string as before.
+    addTristan()
+    space.programItem[0].fields.conductor = link('cnd-tristan')
+    space.concert = [concert('cnc-1', '2022-12-18', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances[0]).toMatchObject({
+      date: '2022-12-18',
+      conductor: 'Felipe Tristan',
+    })
+  })
+
+  it('falls back to null when neither item nor concert names one', async () => {
+    // 2007-12-16 has no conductor at all, and an item on it must not invent one.
+    space.concert = [concert('cnc-1', '2007-12-16', { attended: true, conductor: undefined })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program[0]).toMatchObject({
+      conductorName: null,
+      conductorIsOwn: false,
+    })
+  })
+})
+
 describe('concert detail', () => {
   it('resolves hall, conductor and orchestra through their links', async () => {
     space.concert = [concert('cnc-1', '2012-03-15', { attended: true, orchestra: [link('orc-bso')] })]

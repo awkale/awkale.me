@@ -77,6 +77,7 @@ describe('archive-schema.json', () => {
         'concert.attended',
         'concert.satOut',
         'conductor.slug',
+        'programItem.conductor',
         'season.orchestras',
         'work.arrangementOf',
         'work.arrangementType',
@@ -325,6 +326,30 @@ describe('archive-schema.json', () => {
       // deliberately NOT in the build: `season` is not in loadArchive() and ADR-0006
       // keeps it that way.
       expect(orchestras.validations).toEqual([])
+    })
+  })
+
+  describe('conductor — AWK-60', () => {
+    const conductor = field('programItem', 'conductor')
+
+    it('is a single link, because one item is conducted by one person', () => {
+      // `concert.conductor` is also a single Link and stays that way. The split
+      // this field records is BETWEEN items, not within one — on 2022-12-18
+      // Armstrong took two items and Tristan the Tchaikovsky.
+      expect(conductor.type).toBe('Link')
+      expect(conductor.linkType).toBe('Entry')
+    })
+
+    it('accepts conductor entries and nothing else', () => {
+      expect(conductor.validations).toEqual([{ linkContentType: ['conductor'] }])
+    })
+
+    it('is optional, because empty is the value 807 of 819 items carry', () => {
+      // Null means "the concert's conductor", resolved in app/lib/archive.ts.
+      // Required would force the concert's conductor to be copied onto every
+      // item — the same value in two places, free to drift, and 819 writes to
+      // record something already recorded once per concert.
+      expect(conductor.required).toBe(false)
     })
   })
 

@@ -68,7 +68,7 @@ type ConcertFields = {
   orchestra: Link[]
   attended: boolean
 }
-type ProgramItemFields = { label: string; order: number; work: Link; soloists: Link[] }
+type ProgramItemFields = { label: string; order: number; work: Link; soloists: Link[]; conductor: Link }
 type WorkFields = {
   title: string
   slug: string
@@ -119,6 +119,20 @@ export type ProgramEntry = {
    */
   arrangerName: string | null
   arrangementType: string | null
+  /**
+   * Who conducted THIS item — the concert's conductor unless the item overrides.
+   *
+   * AWK-60. `concert.conductor` is a single Link, so a shared concert could name
+   * only one of its conductors: on 2022-12-18 Armstrong took the Rossini and the
+   * Elgar and Tristan took the Tchaikovsky, and the entry said Armstrong three
+   * times. The item's own link is the exception, and empty is the normal case.
+   *
+   * Always populated by the time it reaches a page, so a caller never repeats
+   * the fallback. `conductorIsOwn` is what says whether it was inherited.
+   */
+  conductorName: string | null
+  /** True when the item carried its own conductor rather than inheriting one. */
+  conductorIsOwn: boolean
 }
 
 export type Concert = {
@@ -544,6 +558,19 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       const work = workId === null ? undefined : workById.get(workId)
       const composer = work ? composerById.get(linkId(work.fields.composer) ?? '') : undefined
 
+      // AWK-60. Empty is the normal case and means "the concert's conductor",
+      // resolved here rather than stored, so the name lives in exactly one place
+      // and cannot drift from the concert it was copied off.
+      //
+      // A RUN SHARES ITS PROGRAM ITEMS, so an item's own conductor is asserted
+      // for every night of the run. Twenty-four items in the space are shared
+      // that way and, as of 2026-08-30, none of them sit on concerts with
+      // different conductors — so nothing is wrong and there is nothing yet for
+      // a check to catch. If a run ever splits its conducting between nights the
+      // item cannot express it, and the answer is a ninth invariant in
+      // app/lib/invariants.ts, not a second field here.
+      const ownConductor = name(conductorById.get(linkId(item.fields.conductor) ?? ''))
+
       if (workId !== null && work) {
         qualifyingWorks.add(workId)
         const list = performances.get(workId) ?? []
@@ -552,7 +579,9 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
         // a repeat — is still one evening, and counting it twice would render a
         // duplicated row and make `times()` say "twice" about a single night.
         if (!list.some((p) => p.date === date)) {
-          list.push({ date, slug: date, hall, conductor })
+          // The ITEM's conductor, not the concert's: a work page names who
+          // conducted that work, which on a split concert is the finer answer.
+          list.push({ date, slug: date, hall, conductor: ownConductor ?? conductor })
         }
         performances.set(workId, list)
       }
@@ -567,6 +596,8 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
         composerName: composer?.fields.sortName ?? null,
         arrangerName: arrangerNameOf(work, composerById),
         arrangementType: work?.fields.arrangementType ?? null,
+        conductorName: ownConductor ?? conductor,
+        conductorIsOwn: ownConductor !== null,
       })
     }
 

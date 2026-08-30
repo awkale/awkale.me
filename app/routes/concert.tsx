@@ -30,6 +30,16 @@ export async function loader({ params }: Route.LoaderArgs) {
 export default function Concert({ loaderData }: Route.ComponentProps) {
   const { concert } = loaderData
 
+  // AWK-60, and it is per concert rather than per row on purpose. If ANY item
+  // names its own conductor the column appears and every row fills it in,
+  // including the rows that inherited — a column present but blank on two rows
+  // of three reads as missing data rather than as "the same person as above".
+  //
+  // The heading line keeps naming `concert.conductor` either way. On a split
+  // concert that is the evening's principal, not a claim about every item, and
+  // the column is what answers per item.
+  const conductorSplit = concert.program.some((item) => item.conductorIsOwn)
+
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
       <div className="mx-auto max-w-[var(--width-wide)]">
@@ -45,6 +55,9 @@ export default function Concert({ loaderData }: Route.ComponentProps) {
               <th className="eyebrow w-10 border-b border-border px-2 py-1.5 text-right font-medium">#</th>
               <th className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">Composer</th>
               <th className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">Work</th>
+              {conductorSplit ? (
+                <th className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">Conductor</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -77,6 +90,11 @@ export default function Concert({ loaderData }: Route.ComponentProps) {
                     item.label
                   )}
                 </td>
+                {conductorSplit ? (
+                  <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
+                    {item.conductorName ?? '—'}
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

@@ -213,6 +213,12 @@ occasions.
 
 Two optional fields added to `concert`. No other type changes.
 
+> **Amended 2026-08-30.** "No other type changes" no longer holds: `programItem`
+> gained an optional `conductor` under AWK-60, because a concert shared between
+> two conductors could otherwise name only one of them. See
+> [the amendment](#amendment--a-program-item-may-name-its-own-conductor-2026-08-30)
+> at the foot of this record.
+
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `attended` | Boolean | no | `true` published, `false` missed, unset not-his-history |
@@ -383,3 +389,87 @@ failure shape. The year is derived from concert dates or it is not derived at al
 Two Seasons have no dated concerts and carry a hand-assigned year on that basis:
 Season 1 (1973-1974, extrapolated back from Season 2) and Season 11 (1983-1984,
 bracketed by Seasons 10 and 12, and `LOST` per its own note).
+
+## Amendment — a Program item may name its own conductor (2026-08-30)
+
+AWK-60. This record's Schema section said **two** optional fields on `concert` and
+"no other type changes". There is now a third change, on a second type:
+`programItem.conductor`, an optional `Link<conductor>`.
+
+### The case that forced it
+
+`concert.conductor` is a single Link, so a concert conducted by two people can
+record only one. Two concerts need it:
+
+* **2022-12-18** — Nicholas Armstrong and Felipe Tristan shared a BSO programme at
+  the Brooklyn Museum of Art. Armstrong took the Rossini and the Elgar; Tristan
+  conducted the Tchaikovsky Violin Concerto. The entry named Armstrong, and
+  `participation-checklist.md` recorded the same, so Tristan appeared nowhere.
+* **1993-07-26** — the Long Island Youth Orchestra at Dallas Brooks Hall,
+  Melbourne. The printed programme names **six** conductors across six blocks:
+  four choir conductors, Bruce Worland for the combined choirs and orchestra, and
+  Martin Dreiwitz for the orchestral half and the closing item.
+
+### Empty means "the concert's conductor"
+
+The field is optional and **normally empty**, which is a decision rather than a
+default. The alternative — stamping the concert's conductor onto every one of the
+819 program items — copies a value that already exists once per concert, is free
+to drift from it, and answers a question nobody asked of 807 of them.
+
+So the fallback is resolved at read time in `app/lib/archive.ts`, and
+`ProgramEntry` carries both the resolved `conductorName` and a `conductorIsOwn`
+flag saying whether it was inherited. A caller never re-implements the fallback.
+
+**An empty field that carries a meaning is invisible in the web app**, which is
+why this one's help text is load-bearing rather than decorative.
+`archive-schema.json` cannot set help text — Contentful stores it on the editor
+interface — so it is a manual step, and the schema file's own `note` says so.
+
+### Why not `credits`
+
+`programItem.credits` already holds 27 guest-choir conductors as
+`"Jason Asbury, Director"` strings, which makes it look like the answer this
+record already chose. It is not, and the reason is worth stating plainly:
+**nothing reads it.** `app/lib/archive.ts` types a program item as
+`{ label, order, work, soloists, conductor }` — `credits`, `note`, `character` and
+`composer` are stored by the importer and never fetched. A conductor recorded
+there renders nowhere.
+
+An unlinked `conductor` entry fares no better. There is no `/conductors` route,
+conductor is not a search kind, and the sweep resolves a conductor to a name only
+through a link. A conductor record that nothing links is invisible too.
+
+This does not settle whether `credits` should be rendered. That is a separate
+question and is left open; accompanists remain unrendered.
+
+### Rendering — per concert, not per row
+
+A concert shows a Conductor column only if **at least one** of its items names its
+own conductor, and then every row fills it in, inherited or not. A column present
+but blank on two rows of three reads as missing data rather than as "the same
+person as above". All 251 existing concerts render unchanged, because none of them
+had an override until 2022-12-18 gained one.
+
+The concert heading keeps naming `concert.conductor` either way. On a split
+concert that is the evening's principal, not a claim about every item.
+
+### One thing this quietly changes
+
+Each Work's performance list carries `{ date, hall, conductor }`, and that
+conductor was always the concert's. It is now the **item's** — a work page names
+who conducted *that work*, which on a split concert is the finer answer and
+everywhere else is the identical string.
+
+### The trap, and why there is no ninth invariant
+
+A run is one programme played on two nights, and both Concerts link the **same**
+program items — 24 items in the space are shared that way. Such an item can carry
+only one conductor, so a run that split its conducting between nights could not be
+expressed.
+
+Verified 2026-08-30: of those 24 shared items, **none** sit on concerts with
+different conductors. Nothing is wrong, and an invariant guarding a case that does
+not exist is a check that can only ever fire on a false positive. It is recorded
+as a comment at the point of resolution instead. Promote it to a ninth invariant
+in `app/lib/invariants.ts` when a real case appears — not before.
