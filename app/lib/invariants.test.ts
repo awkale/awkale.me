@@ -32,6 +32,9 @@ function shape(
 ): ArchiveShape {
   const { works, concerts, ...rest } = over
   return {
+    composers: [],
+    halls: [],
+    conductors: [],
     projects: [],
     imageGroups: [],
     recordings: [],
@@ -223,6 +226,97 @@ describe('the hashed slug shape (ADR-0008)', () => {
     })
 
     expect(findViolations(input)).toHaveLength(1)
+  })
+})
+
+describe('a stored slug is trimmed (AWK-61)', () => {
+  it('accepts a clean slug', () => {
+    const input = shape({ works: [{ id: 'wrk-a', slug: 'festive-overture', composerId: 'cmp-a' }] })
+
+    expect(findViolations(input)).toEqual([])
+  })
+
+  it('rejects the trailing space that took three steps to find', () => {
+    // The live case, verbatim. `work-slug-not-hashed` cannot see it -- a space is
+    // neither `--` nor six hex -- and Contentful's `unique` is satisfied by the
+    // very thing that is wrong, since 'x ' and 'x' are two distinct values.
+    const input = shape({
+      works: [{ id: 'ZP4k1djlvR7XeCAHhqKEQ', slug: 'pomp-and-circumstance-march-no-1 ', composerId: 'cmp-a' }],
+    })
+
+    expect(rules(input)).toEqual(['slug-has-no-stray-whitespace'])
+  })
+
+  it('rejects a leading space too', () => {
+    const input = shape({ works: [{ id: 'wrk-a', slug: ' festive-overture', composerId: 'cmp-a' }] })
+
+    expect(rules(input)).toEqual(['slug-has-no-stray-whitespace'])
+  })
+
+  it('quotes the value so the space is legible in the message', () => {
+    // The whole point of the rule. A detail reading `slug pomp-... has stray
+    // whitespace` reproduces the original problem one layer up: the reader
+    // still cannot see what is wrong with the value.
+    const input = shape({ works: [{ id: 'wrk-a', slug: 'festive-overture ', composerId: 'cmp-a' }] })
+
+    expect(findViolations(input)[0]?.detail).toContain('`festive-overture `')
+  })
+
+  it('stays quiet on an empty slug', () => {
+    // archive.ts maps an absent slug to '', which trims to itself. An unset
+    // field is a different problem and must not be reported as whitespace.
+    const input = shape({ works: [{ id: 'wrk-a', slug: '', composerId: 'cmp-a' }] })
+
+    expect(findViolations(input)).toEqual([])
+  })
+
+  it('leaves interior whitespace alone, which is the rule as written', () => {
+    // `slug === slug.trim()` by decision, not oversight. An interior space
+    // percent-encodes to %20 exactly as a trailing one does, so this is a known
+    // gap rather than a passing case anyone should read as correct.
+    const input = shape({ works: [{ id: 'wrk-a', slug: 'festive overture', composerId: 'cmp-a' }] })
+
+    expect(findViolations(input)).toEqual([])
+  })
+
+  it('sweeps composer slugs, which address the other built route', () => {
+    const input = shape({ composers: [{ id: 'cmp-elgar-edward', slug: 'elgar-edward ' }] })
+
+    expect(findViolations(input)).toEqual([
+      {
+        rule: 'slug-has-no-stray-whitespace',
+        entry: 'cmp-elgar-edward',
+        detail: 'slug `elgar-edward ` has leading or trailing whitespace, which percent-encodes into its URL',
+      },
+    ])
+  })
+
+  it('sweeps project slugs', () => {
+    const input = shape({ projects: [{ id: 'prj-a', slug: ' waterfall-ui', featuredRank: null, hasBody: true }] })
+
+    expect(rules(input)).toEqual(['slug-has-no-stray-whitespace'])
+  })
+
+  it('sweeps hall and conductor slugs, which no route reads today', () => {
+    // Neither addresses a page. They are swept anyway because the cost is one
+    // entry in the list and the alternative is discovering, the next time
+    // something does read them, that they were never checked.
+    const input = shape({
+      halls: [{ id: 'hal-wwh', slug: 'walt-whitman-hall ' }],
+      conductors: [{ id: 'cnd-a', slug: ' willis-huang' }],
+    })
+
+    expect(rules(input)).toEqual(['slug-has-no-stray-whitespace', 'slug-has-no-stray-whitespace'])
+  })
+
+  it('reports the whitespace alongside the shape failure, not instead of it', () => {
+    // Two independent things wrong with one field. Collapsing them would fix the
+    // hash, rebuild, and find the space still there on the next run.
+    const input = shape({
+      works: [{ id: 'wrk-a', slug: 'elgar-edward--pomp-814ca6 ', composerId: 'cmp-a' }],
+    })
+
+    expect(rules(input).sort()).toEqual(['slug-has-no-stray-whitespace', 'work-slug-not-hashed'])
   })
 })
 

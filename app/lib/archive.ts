@@ -80,7 +80,7 @@ type WorkFields = {
 }
 type ComposerFields = { firstName: string; lastName: string; sortName: string; slug: string; period: string }
 type HallFields = { name: string; slug: string }
-type ConductorFields = { firstName: string; lastName: string }
+type ConductorFields = { firstName: string; lastName: string; slug?: string }
 type OrchestraFields = { name: string; abbreviation: string }
 type RecordingFields = { url: string; label: string; kind: string; concert: Link; programItem: Link }
 type ProjectFields = {
@@ -402,6 +402,14 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       arrangerId: linkId(w.fields.arranger),
       arrangementType: w.fields.arrangementType ?? null,
     })),
+    // Slugs only, for AWK-61's rule. An absent slug maps to '' rather than being
+    // dropped: '' trims to itself, so an unset field cannot false-fire as
+    // whitespace, and it stays a different problem from a stray space.
+    // `conductor.slug` exists in archive-schema.json and is unset on all 44
+    // entries, which is exactly why it is swept rather than assumed clean.
+    composers: composers.map((c) => ({ id: c.sys.id, slug: c.fields.slug ?? '' })),
+    halls: halls.map((h) => ({ id: h.sys.id, slug: h.fields.slug ?? '' })),
+    conductors: conductors.map((c) => ({ id: c.sys.id, slug: c.fields.slug ?? '' })),
     projects: projects.map((p) => ({
       id: p.sys.id,
       slug: p.fields.slug ?? '',

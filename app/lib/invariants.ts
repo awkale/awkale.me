@@ -1,7 +1,7 @@
 /**
  * The invariants Contentful cannot express, asserted in the build.
  *
- * Seven rules across six records, and every one of them exists because
+ * Eight rules across six ADRs, and every one of them exists because
  * Contentful validates a field against a LITERAL and never against another
  * field. Both links in a pair can be individually valid while the pair is
  * nonsense, and the schema has no way to say so:
@@ -11,16 +11,22 @@
  *   arranger needs a type               ADR-0005 — two fields that are meaningless apart
  *   (composer, slug) unique             ADR-0008 — a scoped unique; Contentful has only space-wide
  *   the hashed slug shape               ADR-0008 — a format the importer emits and the URLs must not
+ *   a stored slug is trimmed            AWK-61 — a value against its own trimmed self
  *   featuredRank requires body          ADR-0003 — a field conditional on another field's emptiness
  *   featuredRank is distinct            ADR-0003, per AWK-31's amendment
  *   sideBySide holds two images         ADR-0004 — an array max conditional on a sibling symbol
  *   recording.programItem ⊆ concert     ADR-0012 — a link conditional on a link's array
  *
- * Ten checks for seven rules: the slug rule is shape AND uniqueness, which fail
+ * Eleven checks for eight rules: the slug rule is shape AND uniqueness, which fail
  * independently and need separate messages; featuredRank grew a second rule
  * when AWK-31 noticed that one nullable field still cannot stop two projects both
  * holding rank 1; and the program-item rule is orchestra AND date span, which a
  * single message could not tell apart.
+ *
+ * AWK-61's rule runs the other way: ONE check across five content types, because
+ * the question it asks does not vary by type and five near-identical messages
+ * would say the same thing five times. It is also the only rule here that reads
+ * `hall` and `conductor` at all — see the comment on the check itself.
  *
  * AWK-59's rule is the first here that reads a link's OWNERS against each other
  * rather than a record against itself. A program item is individually valid on
@@ -59,6 +65,15 @@ export type ArchiveShape = {
     arrangerId: string | null
     arrangementType: string | null
   }[]
+  /**
+   * The three content types the build reads for NOTHING but their slugs, so
+   * AWK-61's rule has something to sweep. `composer` addresses a route; `hall` and
+   * `conductor` address none and are carried anyway, since a slug nothing reads
+   * is exactly the one whose whitespace survives longest.
+   */
+  composers: { id: string; slug: string }[]
+  halls: { id: string; slug: string }[]
+  conductors: { id: string; slug: string }[]
   projects: { id: string; slug: string; featuredRank: number | null; hasBody: boolean }[]
   imageGroups: { id: string; label: string; layout: string; imageCount: number }[]
   recordings: { id: string; label: string; concertId: string; programItemId: string | null }[]
@@ -165,6 +180,35 @@ export function findViolations(archive: ArchiveShape): InvariantViolation[] {
             `a run is one program played twice, not the same performance reused`,
         })
       }
+    }
+  }
+
+  // AWK-61. `slug === slug.trim()` — a relation between a value and ITSELF, which
+  // is why no validation can hold it. Contentful's `unique` is satisfied by the
+  // very thing that is wrong: 'x ' and 'x' are two distinct values.
+  //
+  // Unenforced this surfaces three steps downstream and names none of its causes.
+  // The prerender enumerator declares the literal path and the prerenderer writes
+  // the percent-encoded one, so a single trailing space reads as a page-set drift
+  // between the manifest and the emitted pages — a failure mentioning no slug, no
+  // space and no Contentful.
+  //
+  // ALL FIVE stored slugs, not the two that build routes. `hall` and `conductor`
+  // are read by nothing today and `conductor.slug` is unset on all 44 entries;
+  // sweeping them costs one entry in this list, and the alternative is finding out
+  // they were never checked at the moment something starts reading them.
+  //
+  // The value is backticked because an unquoted one reproduces the original
+  // problem one layer up — `slug pomp-and-circumstance-march-no-1  has stray
+  // whitespace` shows the reader nothing.
+  const slugged = [...archive.works, ...archive.composers, ...archive.halls, ...archive.conductors, ...archive.projects]
+  for (const record of slugged) {
+    if (record.slug !== record.slug.trim()) {
+      violations.push({
+        rule: 'slug-has-no-stray-whitespace',
+        entry: record.id,
+        detail: `slug \`${record.slug}\` has leading or trailing whitespace, which percent-encodes into its URL`,
+      })
     }
   }
 
