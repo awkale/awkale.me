@@ -335,21 +335,14 @@ def plan_works(works, work_ids, genre_names, harvest, declaration, composer_peri
     excerpt_re = re.compile(excerpt["pattern"])
     overrides = {k: v for k, v in declaration["workPeriods"].items() if k != "note"}
 
-    # Curated buckets, flattened to workId -> [forms]. Each bucket names one form
-    # and lists the works that gain it.
+    # workId -> {title, forms}. Keyed by work rather than by form, so a work
+    # wanting two forms is one row and a new form value needs no new container.
     additions, titles_expected = {}, {}
-    for bucket, form in (
-        ("ballets", "Ballet"),
-        ("arias", "Aria"),
-        ("dances", "Dance"),
-        ("excerpts", "Excerpt"),
-        ("filmMusic", "Film music"),
-    ):
-        for work_id, title in curated[bucket].items():
-            if work_id == "note":
-                continue
-            additions.setdefault(work_id, set()).add(form)
-            titles_expected.setdefault(work_id, title)
+    for work_id, row in curated.items():
+        if work_id == "note":
+            continue
+        additions[work_id] = set(row["forms"])
+        titles_expected[work_id] = row["title"]
     for work_id, row in overrides.items():
         titles_expected.setdefault(work_id, row["title"])
 

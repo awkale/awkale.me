@@ -281,103 +281,121 @@
 
   "workForms": {
     "note": [
-      "The hand-curated half of job 2, and only the REPAIRS -- the works whose",
-      "migrated genre is wrong or incomplete. The 107 works carrying no genre at",
-      "all are not here; they are docs/archive/form-curation.md, because ADR-0007",
-      "is explicit that assigning them is taste rather than data entry and that",
-      "nothing in the spec is blocked on it.",
+      "The hand-curated half of job 2: work id -> the forms that work receives, on",
+      "top of whatever genreForms and the derived Excerpt rule already produced.",
+      "Nothing is ever removed, because the multi-valued field IS the repair -- the",
+      "Firebird Suite becomes [Suite, Ballet] rather than having to choose, which is",
+      "the choice the old single field got wrong.",
       "",
-      "Forms listed here are ADDED to whatever genreForms and the Excerpt rule",
-      "already produced. Nothing is ever removed, because the multi-valued field is",
-      "the entire repair: the Firebird Suite becomes [Suite, Ballet] rather than",
-      "having to choose, which is the choice the old single field got wrong."
+      "KEYED BY WORK, NOT BY FORM. This was five form-named buckets until the",
+      "curation backlog made the shape wrong: a bucket per form means a work wanting",
+      "two forms is listed twice, and every new form value needs a new bucket.",
+      "`Ballet Suite from \"La Strada\"` was already listed twice, in `ballets` and",
+      "`filmMusic`, which is the shape failing on 28 entries rather than 104.",
+      "",
+      "The 28 below are the MIGRATION REPAIRS -- works whose retired genre was wrong",
+      "or incomplete, not works that had none. Three groups, and they are the three",
+      "failures ADR-0007 diagnoses:",
+      "",
+      "  * 16 BALLETS filed as suites, because their titles say Suite and Suite was",
+      "    tested first. They keep Suite and gain Ballet. `Selections from Romeo and",
+      "    Juliet Suites` sat in the Aria bucket instead -- the `, from` pattern",
+      "    reached it first -- so it gains both, plus Excerpt from the derived rule.",
+      "    The three works already filed as Ballet are correct and absent here.",
+      "  * The 13-strong ARIA bucket, taken apart. Six are genuine (three of them",
+      "    duets, kept because Aria is the vocabulary's only word for a sung operatic",
+      "    number); four are dances named as such by their own titles; one is film",
+      "    music; one needs Excerpt the derived rule cannot see. Mapping Aria to Aria",
+      "    would have migrated the error rather than the data.",
+      "  * `Scenes from I Pagliacci` writes `from` with no comma before it and no",
+      "    quoted title after, so the Excerpt pattern misses it. Naming the one case",
+      "    is cheaper than loosening a regex to bare `\\bfrom\\b`, which would catch",
+      "    every title merely containing the word.",
+      "",
+      "THE 104 WORKS CARRYING NO FORM AT ALL ARE NOT HERE. They are",
+      "docs/archive/form-curation.md, a worksheet nothing reads. ADR-0007 is explicit",
+      "that assigning them is taste rather than data entry, and that Form may stay",
+      "incomplete while Period carries the browsing -- Period is now complete at",
+      "338 of 338, so an empty row there is a decided state, not a gap. Add one by",
+      "moving it into this map; the applier is idempotent, so curating ten at a time",
+      "costs nothing.",
+      "",
+      "A form must be one of the 25 in archive-schema.json. That list is a Contentful",
+      "`in` validation and migrate_schema.py is additive -- it will NOT reshape a",
+      "field that already exists -- so a 26th value is a schema edit in the web app,",
+      "not an edit here."
     ],
 
-    "ballets": {
-      "note": [
-        "ADR-0007's ~15 misfiled ballets, measured at 16 against the live space.",
-        "Every one is filed under Suite because its title says Suite and Suite was",
-        "tested first. They keep Suite and gain Ballet.",
-        "",
-        "`Selections from Romeo and Juliet Suites` sat in the ARIA bucket rather",
-        "than Suite -- the `, from` pattern reached it first -- so it gains Suite",
-        "and Ballet both, and Excerpt from the derived rule.",
-        "",
-        "The three works already filed as Ballet are correct and absent from this",
-        "list: Dance of the Hours, The Perfect Fool, and the Aida Act II ballet",
-        "music."
-      ],
-      "wrk-appalachian-spring-suite-for-f-3b8b50": "Appalachian Spring Suite for Full Orchestra",
-      "wrk-ballet-suite-from-la-strada-e3f510": "Ballet Suite from \"La Strada\"",
-      "wrk-billy-the-kid-ballet-suite-12d759": "Billy the Kid Ballet Suite",
-      "wrk-coppelia-ballet-suite-26fc3a": "Coppelia Ballet Suite",
-      "wrk-daphnis-et-chloe-suite-no-2-c2583e": "Daphnis et Chloe Suite No. 2",
-      "wrk-divertimento-the-fairy-s-kiss-4b4e6c": "Divertimento, The Fairy's Kiss Suite",
-      "wrk-les-animaux-modeles-suite-de-b-53eb7b": "Les Animaux Modeles, Suite de Ballet",
-      "wrk-les-biches-suite-320e44": "Les Biches Suite",
-      "wrk-les-sylphides-ballet-suite-e0ae28": "Les Sylphides Ballet Suite",
-      "wrk-romeo-and-juliet-suite-no-2-924f49": "Romeo and Juliet Suite No. 2",
-      "wrk-selections-from-the-nutcracker-49b26c": "Selections from The Nutcracker Suite",
-      "wrk-spartacus-suite-no-2-8ee84a": "Spartacus, Suite No. 2",
-      "wrk-the-firebird-suite-1919-84f2ad": "The Firebird Suite (1919)",
-      "wrk-the-miraculous-manadrin-suite-86d4bb": "The Miraculous Manadrin Suite",
-      "wrk-the-nutcracker-suite-65bec1": "The Nutcracker Suite",
-      "wrk-the-nutcracker-suite-c5dabb": "The Nutcracker Suite"
+    "wrk-ah-mes-amis-from-la-fille-du-r-6f782b": {
+      "title": "\"Ah! Mes Amis\", from La Fille du Regiment",
+      "forms": ["Aria"]
     },
-
-    "arias": {
-      "note": [
-        "The genuine arias in the 13-work Aria bucket -- ADR-0007 says 'about four",
-        "of the thirteen', and six survive inspection. Three of the six are duets",
-        "rather than solo arias (Au Fond du Temple Saint, Evening Prayer, Flower",
-        "Duet); they are kept because `Aria` is the vocabulary's only word for a",
-        "sung operatic number and ADR-0007 keeps the word while rejecting the",
-        "bucket. The remaining seven are dances, film music and orchestral",
-        "selections, and take only Excerpt plus whatever their own row says."
-      ],
-      "wrk-ah-mes-amis-from-la-fille-du-r-6f782b": "\"Ah! Mes Amis\", from La Fille du Regiment",
-      "wrk-au-fond-du-temple-saint-from-l-bd654b": "\"Au Fond du Temple Saint\", from Les Pecheurs de Perles",
-      "wrk-evening-prayer-from-hansel-und-f66956": "\"Evening Prayer\", from Hansel und Gretel",
-      "wrk-flower-duet-from-lakme-d530f8": "Flower Duet, from Lakme",
-      "wrk-largo-al-factotum-from-il-barb-82d518": "\"Largo al Factotum\", from Il Barbiere di Siviglia",
-      "wrk-o-mimi-tu-piu-non-torni-from-l-08ece6": "\"O Mimi, tu piu non torni\", from La Boheme"
+    "wrk-au-fond-du-temple-saint-from-l-bd654b": {
+      "title": "\"Au Fond du Temple Saint\", from Les Pecheurs de Perles",
+      "forms": ["Aria"]
     },
-
-    "dances": {
-      "note": [
-        "The four works the Aria bucket held that are dances, named as such by",
-        "their own titles. They are the clearest evidence for ADR-0007's charge",
-        "that the bucket was not about arias."
-      ],
-      "wrk-bacchanale-from-samson-et-dali-39d09b": "Bacchanale, from Samson et Dalila",
-      "wrk-dance-of-the-seven-veils-from-d76fbe": "Dance of the Seven Veils, from Salome",
-      "wrk-ritual-dances-from-the-midsumm-e89f3d": "Ritual Dances, from The Midsummer Marriage",
-      "wrk-symphonic-dances-from-west-sid-9ffa7f": "Symphonic Dances, from West Side Story"
+    "wrk-evening-prayer-from-hansel-und-f66956": {
+      "title": "\"Evening Prayer\", from Hansel und Gretel",
+      "forms": ["Aria"]
     },
-
-    "excerpts": {
-      "note": [
-        "The excerpts the derived rule does not reach. `Scenes from I Pagliacci`",
-        "writes `from` with no comma before it and no quoted title after it, so",
-        "the pattern misses it -- and widening the pattern to bare `\\bfrom\\b`",
-        "would catch `Music from the Ballet` alongside every work whose title",
-        "merely contains the word.",
-        "",
-        "Naming the one case is cheaper than loosening the rule, and it keeps the",
-        "derivation honest: the regex claims only what it can prove from the title.",
-        "This is the last work in the 13-strong Aria bucket to be re-filed."
-      ],
-      "wrk-scenes-from-i-pagliacci-3ed6df": "Scenes from I Pagliacci"
+    "wrk-largo-al-factotum-from-il-barb-82d518": {
+      "title": "\"Largo al Factotum\", from Il Barbiere di Siviglia",
+      "forms": ["Aria"]
     },
-
-    "filmMusic": {
-      "note": [
-        "`Film music`, one of the eight values ADR-0007 adds. Adventures on Earth",
-        "sat in the Aria bucket; La Strada is also a ballet suite and holds both."
-      ],
-      "wrk-adventures-on-earth-from-e-t-t-2a2779": "Adventures on Earth, from \"E.T. The Extra-Terrestrial\"",
-      "wrk-ballet-suite-from-la-strada-e3f510": "Ballet Suite from \"La Strada\""
-    }
+    "wrk-o-mimi-tu-piu-non-torni-from-l-08ece6": {
+      "title": "\"O Mimi, tu piu non torni\", from La Boheme",
+      "forms": ["Aria"]
+    },
+    "wrk-adventures-on-earth-from-e-t-t-2a2779": {
+      "title": "Adventures on Earth, from \"E.T. The Extra-Terrestrial\"",
+      "forms": ["Film music"]
+    },
+    "wrk-appalachian-spring-suite-for-f-3b8b50": {
+      "title": "Appalachian Spring Suite for Full Orchestra",
+      "forms": ["Ballet"]
+    },
+    "wrk-bacchanale-from-samson-et-dali-39d09b": { "title": "Bacchanale, from Samson et Dalila", "forms": ["Dance"] },
+    "wrk-ballet-suite-from-la-strada-e3f510": {
+      "title": "Ballet Suite from \"La Strada\"",
+      "forms": ["Ballet", "Film music"]
+    },
+    "wrk-billy-the-kid-ballet-suite-12d759": { "title": "Billy the Kid Ballet Suite", "forms": ["Ballet"] },
+    "wrk-coppelia-ballet-suite-26fc3a": { "title": "Coppelia Ballet Suite", "forms": ["Ballet"] },
+    "wrk-dance-of-the-seven-veils-from-d76fbe": {
+      "title": "Dance of the Seven Veils, from Salome",
+      "forms": ["Dance"]
+    },
+    "wrk-daphnis-et-chloe-suite-no-2-c2583e": { "title": "Daphnis et Chloe Suite No. 2", "forms": ["Ballet"] },
+    "wrk-divertimento-the-fairy-s-kiss-4b4e6c": {
+      "title": "Divertimento, The Fairy's Kiss Suite",
+      "forms": ["Ballet"]
+    },
+    "wrk-flower-duet-from-lakme-d530f8": { "title": "Flower Duet, from Lakme", "forms": ["Aria"] },
+    "wrk-les-animaux-modeles-suite-de-b-53eb7b": {
+      "title": "Les Animaux Modeles, Suite de Ballet",
+      "forms": ["Ballet"]
+    },
+    "wrk-les-biches-suite-320e44": { "title": "Les Biches Suite", "forms": ["Ballet"] },
+    "wrk-les-sylphides-ballet-suite-e0ae28": { "title": "Les Sylphides Ballet Suite", "forms": ["Ballet"] },
+    "wrk-ritual-dances-from-the-midsumm-e89f3d": {
+      "title": "Ritual Dances, from The Midsummer Marriage",
+      "forms": ["Dance"]
+    },
+    "wrk-romeo-and-juliet-suite-no-2-924f49": { "title": "Romeo and Juliet Suite No. 2", "forms": ["Ballet"] },
+    "wrk-scenes-from-i-pagliacci-3ed6df": { "title": "Scenes from I Pagliacci", "forms": ["Excerpt"] },
+    "wrk-selections-from-the-nutcracker-49b26c": {
+      "title": "Selections from The Nutcracker Suite",
+      "forms": ["Ballet"]
+    },
+    "wrk-spartacus-suite-no-2-8ee84a": { "title": "Spartacus, Suite No. 2", "forms": ["Ballet"] },
+    "wrk-symphonic-dances-from-west-sid-9ffa7f": {
+      "title": "Symphonic Dances, from West Side Story",
+      "forms": ["Dance"]
+    },
+    "wrk-the-firebird-suite-1919-84f2ad": { "title": "The Firebird Suite (1919)", "forms": ["Ballet"] },
+    "wrk-the-miraculous-manadrin-suite-86d4bb": { "title": "The Miraculous Manadrin Suite", "forms": ["Ballet"] },
+    "wrk-the-nutcracker-suite-65bec1": { "title": "The Nutcracker Suite", "forms": ["Ballet"] },
+    "wrk-the-nutcracker-suite-c5dabb": { "title": "The Nutcracker Suite", "forms": ["Ballet"] }
   },
 
   "formCategories": {

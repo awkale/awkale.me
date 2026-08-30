@@ -41,7 +41,7 @@ interface Decisions {
   workPeriods: Record<string, { title: string; period: string; why: string }>
   genreForms: Record<string, string[]>
   excerptRule: { pattern: string; form: string }
-  workForms: Record<string, Record<string, string>>
+  workForms: Record<string, { title: string; forms: string[] }>
   formCategories: Record<string, string>
   guards: Record<string, number>
 }
@@ -140,9 +140,10 @@ describe('the retired genre vocabulary survives the migration', () => {
   it('maps Aria to nothing, because that bucket is the thing being repaired', () => {
     // ADR-0007: the bucket holds 13 works and about four are arias. Carrying the
     // name over would migrate the error rather than the data, so the genuine
-    // ones are named individually in workForms.arias instead.
+    // ones are named individually in workForms instead.
     expect(decisions.genreForms.Aria).toEqual([])
-    expect(entries(decisions.workForms.arias)).not.toHaveLength(0)
+    const arias = entries(decisions.workForms).filter(([, row]) => row.forms.includes('Aria'))
+    expect(arias).toHaveLength(6)
   })
 })
 
@@ -198,13 +199,41 @@ describe('the composer decisions do not restate what the fold already settles', 
 })
 
 describe('the work curations address real rows', () => {
-  const curated = ['ballets', 'arias', 'dances', 'excerpts', 'filmMusic'] as const
-
-  it.each(curated)('%s names works the harvest also saw', (bucket) => {
-    for (const [id, title] of entries(decisions.workForms[bucket])) {
-      expect(harvest.works, `${bucket}: ${id} is not an in-scope work`).toHaveProperty(id)
-      expect(harvest.works[id].title, `${bucket}: ${id} was written against a different title`).toBe(title)
+  it('names only works the harvest also saw, with the titles they were written against', () => {
+    for (const [id, row] of entries(decisions.workForms)) {
+      expect(harvest.works, `${id} is not an in-scope work`).toHaveProperty(id)
+      expect(harvest.works[id].title, `${id} was written against a different title`).toBe(row.title)
     }
+  })
+
+  it('assigns only forms in the vocabulary, and never an empty set', () => {
+    // An empty array is not "no opinion" — it is a row that will never write,
+    // which the worksheet already expresses by omission. Keeping the two apart
+    // stops a half-finished edit from looking like a decision.
+    for (const [id, row] of entries(decisions.workForms)) {
+      expect(row.forms.length, `${id} has an empty forms array; delete the row instead`).toBeGreaterThan(0)
+      for (const form of row.forms) expect(FORMS).toContain(form)
+    }
+  })
+
+  it('holds the 28 migration repairs, and no rows with duplicate forms', () => {
+    const rows = entries(decisions.workForms)
+    expect(rows).toHaveLength(28)
+    for (const [id, row] of rows) {
+      expect(new Set(row.forms).size, `${id} repeats a form`).toBe(row.forms.length)
+    }
+  })
+
+  it('still repairs the 16 ballets ADR-0007 counted', () => {
+    const ballets = entries(decisions.workForms).filter(([, row]) => row.forms.includes('Ballet'))
+    expect(ballets).toHaveLength(16)
+  })
+
+  it('carries the one work needing two forms as a single row', () => {
+    // The reason the shape changed. Under the old form-keyed buckets this work
+    // was listed twice, in `ballets` and in `filmMusic`.
+    const strada = entries(decisions.workForms).find(([, row]) => row.title.includes('La Strada'))
+    expect(strada?.[1].forms).toEqual(['Ballet', 'Film music'])
   })
 
   it('names work period overrides that are in scope, with the right titles', () => {
@@ -212,11 +241,6 @@ describe('the work curations address real rows', () => {
       expect(harvest.works, `${id} is not an in-scope work`).toHaveProperty(id)
       expect(harvest.works[id].title).toBe(row.title)
     }
-  })
-
-  it('repairs the ballets ADR-0007 counted', () => {
-    // "~15 misfiled ballets", measured at 16 against the live space.
-    expect(entries(decisions.workForms.ballets)).toHaveLength(16)
   })
 
   it('keeps the two Nutcrackers apart', () => {
@@ -228,7 +252,7 @@ describe('the work curations address real rows', () => {
     expect(jazz).toHaveLength(1)
     expect(nutcrackers.map(([id]) => id)).toContain(jazz[0][0])
     // Both are ballets; only one is Ellington's.
-    for (const [id] of nutcrackers) expect(decisions.workForms.ballets).toHaveProperty(id)
+    for (const [id] of nutcrackers) expect(decisions.workForms[id].forms).toContain('Ballet')
   })
 })
 
