@@ -50,6 +50,7 @@ export type InvariantViolation = {
 }
 
 export type ArchiveShape = {
+  /** `orchestras` holds abbreviations, not ids — these are read by a person in the web app. */
   concerts: { id: string; date: string | null; orchestras: string[]; program: string[]; satOut: string[] }[]
   works: {
     id: string

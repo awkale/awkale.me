@@ -228,14 +228,51 @@ describe('archive-schema.json', () => {
 
   describe('the gated steps', () => {
     const { gated } = schema as unknown as {
-      gated: { id: string; contentType: string; field: string; blockedBy: string; why: string[] }[]
+      gated: {
+        id: string
+        contentType: string
+        field: string
+        blockedBy: string
+        why: string[]
+        removeValidation?: string
+        setRequired?: boolean
+      }[]
     }
 
-    it('holds both unique-drops, and nothing else', () => {
-      // Every entry here removes a space-wide `unique` standing in for an
-      // invariant Contentful cannot express. A gate appearing without that
-      // shape means someone widened the mechanism past what it was built for.
-      expect(gated.map((g) => g.id).sort()).toEqual(['drop-season-number-unique', 'drop-work-slug-unique'])
+    it('holds the four gated steps, and nothing else', () => {
+      // This is the only mechanism in the repo that takes a guarantee AWAY from
+      // a production space, or adds one that can invalidate an entry. A gate
+      // appearing here that nobody expected means the mechanism was widened
+      // past what it was built for.
+      expect(gated.map((g) => g.id).sort()).toEqual([
+        'drop-season-number-unique',
+        'drop-work-slug-unique',
+        'require-composer-slug',
+        'require-work-slug',
+      ])
+    })
+
+    it('gives every gate exactly one operation', () => {
+      // `removeValidation` loosens, `setRequired` tightens. A gate declaring
+      // both, or neither, is one the applier cannot dispatch.
+      for (const gate of gated) {
+        const ops = [gate.removeValidation, gate.setRequired].filter((o) => o !== undefined)
+        expect(ops, `${gate.id} needs one operation`).toHaveLength(1)
+      }
+    })
+
+    it('requires a slug only where one addresses a page', () => {
+      // ADR-0008 stores slugs rather than deriving them, so an empty one is a
+      // record with no address. That is true of work and composer, which build
+      // /concerts/composers/{composer}/works/{work}, and of nothing else.
+      //
+      // conductor.slug is deliberately absent: all 39 lack one, because
+      // backfill_slugs.py names it under NOT IN SCOPE — the conductor facet is
+      // a query-string filter, not a route. Requiring it would invalidate every
+      // conductor for a field nothing reads.
+      const required = gated.filter((g) => g.setRequired).map((g) => `${g.contentType}.${g.field}`)
+
+      expect(required.sort()).toEqual(['composer.slug', 'work.slug'])
     })
 
     it('names the assertion that has to exist first, for each', () => {

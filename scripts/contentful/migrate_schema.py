@@ -35,7 +35,8 @@ ENV = os.environ.get("CONTENTFUL_ENVIRONMENT_ID", "master")
 BASE = f"https://api.contentful.com/spaces/{SPACE}/environments/{ENV}"
 SCHEMA = Path(__file__).parent / "archive-schema.json"
 
-FLAGS = {"--dry-run", "--drop-work-slug-unique", "--drop-season-number-unique", "--yes"}
+FLAGS = {"--dry-run", "--drop-work-slug-unique", "--drop-season-number-unique",
+         "--require-work-slug", "--require-composer-slug", "--yes"}
 TAKES_VALUE = {"--token-file"}
 
 
@@ -60,6 +61,8 @@ def _parse_argv(argv):
                 f"usage: migrate_schema.py [--dry-run]\n"
                 f"                         [--drop-work-slug-unique [--yes]]\n"
                 f"                         [--drop-season-number-unique [--yes]]\n"
+                f"                         [--require-work-slug [--yes]]\n"
+                f"                         [--require-composer-slug [--yes]]\n"
                 f"                         [--token-file PATH]"
             )
         seen.add(arg)
@@ -71,6 +74,8 @@ ARGS = _parse_argv(sys.argv[1:])
 DRY = "--dry-run" in ARGS
 DROP_WORK_SLUG = "--drop-work-slug-unique" in ARGS
 DROP_SEASON_NUMBER = "--drop-season-number-unique" in ARGS
+REQUIRE_WORK_SLUG = "--require-work-slug" in ARGS
+REQUIRE_COMPOSER_SLUG = "--require-composer-slug" in ARGS
 ASSUME_YES = "--yes" in ARGS
 
 
@@ -308,6 +313,69 @@ def add_fields():
     return total_added + total_stranded, total_drift
 
 
+def _gate(gate_id):
+    """The gate's declaration, and the confirmation it demands.
+
+    Shared by every gated step rather than copied, because the WARNING is the
+    load-bearing part. Each of these removes a guarantee from a production
+    space on the operator's word, and a prompt that drifts between them is a
+    prompt someone stops reading."""
+    schema = json.loads(SCHEMA.read_text())
+    gate = next(g for g in schema["gated"] if g["id"] == gate_id)
+
+    # NOT a gate this script can enforce. It cannot see whether the replacement
+    # is in place, so `blockedBy` is a note to a human, and running the flag to
+    # "check" would perform the change. Say so plainly, and make the operator
+    # confirm rather than implying the script is guarding anything.
+    print(f"  {gate['blockedBy']} must already be landed and green. This script")
+    print("  CANNOT verify that — it is your confirmation, not a check.")
+    return gate
+
+
+def _confirm(gate):
+    """False when the operator declines. `--yes` is the unattended answer."""
+    if ASSUME_YES:
+        return True
+    if not sys.stdin.isatty():
+        sys.exit("  refusing to run unattended; pass --yes if that is intended")
+    answer = input(f"  Is {gate['blockedBy']} landed and green? [y/N] ").strip()
+    if answer.lower() in ("y", "yes"):
+        return True
+    print("  aborted; nothing written")
+    return False
+
+
+def require_field(gate_id):
+    """Make a field required. The opposite direction of travel from add_fields().
+
+    Every field this script ADDS is optional, which is what makes adding one to
+    a type full of published entries safe. This does the reverse, so it is gated:
+    a required field does not invalidate stored data, but every entry lacking a
+    value fails its next publish. The gate's `why` records the gap count checked
+    before it was written."""
+    print(f"\n{gate_id}")
+    gate = _gate(gate_id)
+
+    ct = http("GET", f"/content_types/{gate['contentType']}")
+    field = next((f for f in ct["fields"] if f["id"] == gate["field"]), None)
+    if field is None:
+        sys.exit(f"  {gate['contentType']}.{gate['field']} does not exist")
+
+    if field.get("required"):
+        print(f"  = {gate['contentType']}.{gate['field']} is already required; nothing to do")
+        return 0
+
+    print(f"  + required     {gate['contentType']}.{gate['field']}")
+    if DRY:
+        return 1
+    if not _confirm(gate):
+        return 0
+
+    field["required"] = True
+    save(ct, f"-> wrote and re-activated {gate['contentType']}")
+    return 1
+
+
 def drop_unique(gate_id):
     """A gated step. Separate on purpose — see `gated` in archive-schema.json.
 
@@ -318,15 +386,9 @@ def drop_unique(gate_id):
     per gate would duplicate the confirmation prompt, which is the part that
     must not drift."""
     schema = json.loads(SCHEMA.read_text())
-    gate = next(g for g in schema["gated"] if g["id"] == gate_id)
-
-    print(f"\n{gate['contentType']}.{gate['field']} — removing `unique`")
-    # NOT a gate this script can enforce. It cannot see whether AWK-39's
-    # assertion is in the build, so `blockedBy` is a note to a human, and running
-    # this flag to "check" would remove the constraint. Say so plainly, and make
-    # the operator confirm rather than implying the script is guarding anything.
-    print(f"  {gate['blockedBy']} must already be landed and green. This script")
-    print("  CANNOT verify that — it is your confirmation, not a check.")
+    gate_preview = next(g for g in schema["gated"] if g["id"] == gate_id)
+    print(f"\n{gate_preview['contentType']}.{gate_preview['field']} — removing `unique`")
+    gate = _gate(gate_id)
 
     ct = http("GET", f"/content_types/{gate['contentType']}")
     field = next((f for f in ct["fields"] if f["id"] == gate["field"]), None)
@@ -342,14 +404,8 @@ def drop_unique(gate_id):
     print(f"  - unique       removed ({len(before)} validation(s) -> {len(after)})")
     if DRY:
         return 1
-
-    if not ASSUME_YES:
-        if not sys.stdin.isatty():
-            sys.exit("  refusing to run unattended; pass --yes if that is intended")
-        answer = input(f"  Is {gate['blockedBy']} landed and green? [y/N] ").strip()
-        if answer.lower() not in ("y", "yes"):
-            print("  aborted; nothing written")
-            return 0
+    if not _confirm(gate):
+        return 0
 
     field["validations"] = after
     save(ct, f"-> wrote and re-activated {gate['contentType']}")
@@ -365,15 +421,25 @@ def main():
     else:
         print(f"WRITING to {SPACE}/{ENV}")
 
-    if DROP_WORK_SLUG and DROP_SEASON_NUMBER:
-        sys.exit("run one gated step at a time; they are separate decisions")
+    gates = {
+        "--drop-work-slug-unique": (drop_unique, "drop-work-slug-unique"),
+        "--drop-season-number-unique": (drop_unique, "drop-season-number-unique"),
+        "--require-work-slug": (require_field, "require-work-slug"),
+        "--require-composer-slug": (require_field, "require-composer-slug"),
+    }
+    asked = [flag for flag in gates if flag in ARGS]
 
-    if DROP_WORK_SLUG:
-        # Gated step runs alone. Bundling it with the additions would make a
+    if len(asked) > 1:
+        sys.exit(
+            f"run one gated step at a time; they are separate decisions "
+            f"({', '.join(asked)})"
+        )
+
+    if asked:
+        # A gated step runs alone. Bundling one with the additions would make a
         # single command satisfy and violate ADR-0008's ordering at once.
-        changed, drift = drop_unique("drop-work-slug-unique"), 0
-    elif DROP_SEASON_NUMBER:
-        changed, drift = drop_unique("drop-season-number-unique"), 0
+        run, gate_id = gates[asked[0]]
+        changed, drift = run(gate_id), 0
     else:
         changed, drift = add_fields()
 

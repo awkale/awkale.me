@@ -371,7 +371,13 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
     concerts: concerts.map((c) => ({
       id: c.sys.id,
       date: c.fields.date ?? null,
-      orchestras: linkIds(c.fields.orchestra),
+      // Abbreviations, not ids. These reach a person through an invariant
+      // message they are reading in the Contentful web app, where an id is
+      // nothing they can look up. `orchestra.abbreviation` is unique, so it
+      // still compares as an identity; the id remains the fallback.
+      orchestras: linkIds(c.fields.orchestra).map(
+        (id) => orchestraById.get(id)?.fields.abbreviation ?? orchestraById.get(id)?.fields.name ?? id
+      ),
       program: linkIds(c.fields.program),
       satOut: linkIds(c.fields.satOut),
     })),
