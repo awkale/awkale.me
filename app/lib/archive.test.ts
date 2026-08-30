@@ -339,6 +339,61 @@ describe('the invariants run over the whole space', () => {
   })
 })
 
+describe('a work inherits its composer’s period (AWK-37)', () => {
+  /**
+   * ADR-0007: Period is "held on the Composer and inherited by their Works,
+   * except where a Work states its own". The seed writes `composer.period` on
+   * all 153 in-scope composers and `work.period` on 5, so WITHOUT the
+   * inheritance 333 of 338 work pages render an em dash while the data sits
+   * right there on the composer.
+   *
+   * Resolved here rather than at the route, matching AWK-60's `conductorName`:
+   * a page never repeats the fallback, and `periodIsOwn` keeps the distinction
+   * for anything that needs it.
+   */
+  beforeEach(() => {
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true })]
+  })
+
+  it('takes the composer’s period when the work states none', async () => {
+    space.composer[0].fields.period = 'Classical'
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0]).toMatchObject({ period: 'Classical', periodIsOwn: false })
+  })
+
+  it('prefers the work’s own period over the composer’s', async () => {
+    // ADR-0007's worked example, in the shape the seed actually wrote it:
+    // Ellington's Nutcracker inherits Tchaikovsky's Romantic and must read Jazz.
+    space.composer[0].fields.period = 'Romantic'
+    space.work[0].fields.period = 'Jazz'
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0]).toMatchObject({ period: 'Jazz', periodIsOwn: true })
+  })
+
+  it('stays null when neither states one', async () => {
+    // 45 composers took a hand period precisely so this stays rare, but a work
+    // by a composer with no period must render an em dash rather than throw.
+    const archive = await sweepFixture()
+
+    expect(archive.works[0]).toMatchObject({ period: null, periodIsOwn: false })
+  })
+
+  it('leaves the composer’s own period alone', async () => {
+    // The composer page reads `composer.period` directly. Inheritance is a
+    // property of the WORK, and must not write anything back.
+    space.composer[0].fields.period = 'Classical'
+    space.work[0].fields.period = 'Jazz'
+
+    const archive = await sweepFixture()
+
+    expect(archive.composers[0].period).toBe('Classical')
+  })
+})
+
 describe('the per-item conductor (AWK-60)', () => {
   /** Tristan, the second conductor of the 2022-12-18 fixture this models. */
   function addTristan() {

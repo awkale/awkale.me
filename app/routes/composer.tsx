@@ -84,8 +84,11 @@ export default function Composer({ loaderData }: Route.ComponentProps) {
                       the work and the credit describes it. */}
                     {credit && <span className="text-muted-foreground"> {credit}</span>}
                   </td>
-                  {/* Period and forms are AWK-37's, and empty until it runs. An em
-                    dash is the honest rendering of a field nobody has filled. */}
+                  {/* AWK-37 filled both. Period is the work's own or its composer's,
+                    already resolved by loadArchive() — every row on this page shows
+                    the same value unless a work overrides it, which is the point of
+                    inheriting. Forms may legitimately be empty on 104 works, so the
+                    em dash stays the honest rendering there (ADR-0007). */}
                   <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
                     {w.period ?? '—'}
                   </td>

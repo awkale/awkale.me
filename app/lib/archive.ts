@@ -160,7 +160,26 @@ export type Work = {
   /** The arranger's surname and the verb — see ProgramEntry. Both or neither. */
   arrangerName: string | null
   arrangementType: string | null
+  /**
+   * The work's Period — its own if it states one, otherwise its Composer's.
+   *
+   * AWK-37. ADR-0007 holds Period on the Composer and inherits it, "except
+   * where a Work states its own", because the Composer page carries the era on
+   * 108 of 113 matched while the Work page's own style is absent on five of
+   * eight canonical works probed. Inverting that dependency yields a mostly
+   * empty field.
+   *
+   * So the seed writes `composer.period` on all 153 in-scope Composers and
+   * `work.period` on 5 — and without the fallback resolved HERE, 333 of 338
+   * work pages render an em dash while the answer sits on the composer.
+   *
+   * Always populated by the time it reaches a page, so a caller never repeats
+   * the fallback. `periodIsOwn` is what says whether it was inherited. Same
+   * shape as `ProgramEntry.conductorName`, deliberately.
+   */
   period: string | null
+  /** True when the work stated its own Period rather than inheriting one. */
+  periodIsOwn: boolean
   forms: string[]
   performances: Performance[]
 }
@@ -657,7 +676,8 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
         composerName: composer.fields.sortName ?? '',
         arrangerName: arrangerNameOf(work, composerById),
         arrangementType: work.fields.arrangementType ?? null,
-        period: work.fields.period ?? null,
+        period: work.fields.period ?? composer.fields.period ?? null,
+        periodIsOwn: work.fields.period != null,
         forms: work.fields.forms ?? [],
         performances: (performances.get(workId) ?? []).sort((a, b) => a.date.localeCompare(b.date)),
       })
