@@ -366,6 +366,39 @@ gate the script can enforce: it cannot see whether AWK-39 landed.
 > the flag ran: **647 works with a composer, 647 distinct `(composer, slug)`
 > pairs, zero collisions.** The two works with no composer at all are AWK-38's.
 
+**`soloist.instrument` is the same publish-time trap, and it caught AWK-69.** The
+field is an **Array** whose `items` carry an `in` validation — 39 allowed values
+as of 2026-08-31 — and like `unique`, Contentful enforces `in` **at publish
+time, not at write time**. So a `PUT` of a value outside the list returns 200 and
+the follow-up publish returns 422, leaving the entry written-but-unpublished with
+the Delivery API still serving the old one. Exactly AWK-37's eleven works, in a
+different field.
+
+> That list is **mirrored by hand in `scripts/contentful/parse_archive.py`'s
+> `ENUM`** — same 39 values, same order, verified equal on 2026-08-31. Nothing
+> asserts it, so change one and change the other. Reading the field's own
+> `validations` is not enough to see it: the array's field-level `validations` is
+> `[]` and the `in` lives under `items.validations`, which is how AWK-69 came to
+> believe the field was unconstrained.
+>
+> **A role missing from `ENUM` fails silently rather than loudly.**
+> `get_performer` files any unrecognised credit segment into
+> `programItem.character` and leaves the soloist's `instrument` empty — a
+> duplicate fact in the wrong field, which nothing renders and no invariant
+> checks. **AWK-69 cleared the last three on 2026-08-31**: `pi-20081213-2`
+> (Piccolo), `pi-20051023-3` (Organ) and `pi-20120415-1` (Bass-Baritone), each
+> written to its soloist's `instrument` first and republished, then added to both
+> lists so a re-import stops recreating them. `character` now holds only the
+> three genuine roles it is for — `Isolde`, `Dancer`, `Filmmaker`, on 3 of 853
+> live program items.
+>
+> One thing AWK-69 did **not** settle: `instrument` is named *"Instrument / Voice
+> / Role"* and already holds `Director` (18), `Narrator` (9) and `Soloist` (8), so
+> the boundary between it and `character` is softer than either field's name
+> suggests. The archived `pi-20081213-2-2` still carries `Piccolo`; it is one of
+> AWK-20's 16 superseded items, hidden from the Delivery API, and was left alone.
+
+
 > This section previously read *"There is no build… no dependencies installed, so
 > the `.tsx` files do not typecheck yet"*, which had been false since the AWK-22
 > scaffolding was wired up. Corrected 2026-08-03. It is the same stale-record

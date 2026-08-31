@@ -50,12 +50,25 @@ BLANK = {"", "unknown", "none", "n/a", "na", "various", "tbd"}
 def is_blank(v):
     return v is None or str(v).strip().lower() in BLANK
 
-# instrument/voice/role values allowed by the soloist.instrument enum
-ENUM = ["Violin","Viola","Violoncello","Double Bass","Flute","Oboe","Clarinet","Bassoon",
-        "French Horn","Trumpet","Trombone","Tuba","Percussion","Harp","Piano","Saxophone",
-        "Alto Saxophone","Harpsichord","Guitar","Accordion","Marimba","Vibraphone","Xylophone",
-        "Timpani","Drums","Basso Continuo","Soprano","Mezzo-Soprano","Contralto","Alto",
-        "Tenor","Baritone","Bass","Director","Narrator","Soloist"]
+# instrument/voice/role values allowed by the soloist.instrument enum.
+#
+# THIS LIST MIRRORS THE LIVE CONTENT TYPE, by hand. soloist.instrument is an
+# Array whose `items` carry an `in` validation holding these same 39 values in
+# this same order, and Contentful enforces `in` at PUBLISH time -- so a value
+# added here but not there is written and then silently left unpublished, with
+# the Delivery API serving the old entry. AWK-69 found that out the expensive
+# way. Change one, change the other.
+#
+# A role missing from here does not fail: get_performer() files it into
+# `character` instead and leaves the soloist's instrument empty, which is a
+# duplicate fact in the wrong field rather than an error. AWK-69 cleared the
+# last three (Piccolo, Organ, Bass-Baritone) and added them below.
+ENUM = ["Violin","Viola","Violoncello","Double Bass","Flute","Piccolo","Oboe","Clarinet",
+        "Bassoon","French Horn","Trumpet","Trombone","Tuba","Percussion","Harp","Piano",
+        "Organ","Saxophone","Alto Saxophone","Harpsichord","Guitar","Accordion","Marimba",
+        "Vibraphone","Xylophone","Timpani","Drums","Basso Continuo","Soprano","Mezzo-Soprano",
+        "Contralto","Alto","Tenor","Baritone","Bass-Baritone","Bass","Director","Narrator",
+        "Soloist"]
 # sheet spelling -> canonical enum value (keeps us off duplicate instruments)
 ALIAS = {"cello": "Violoncello", "violincello": "Violoncello", "horn": "French Horn",
          "accordian": "Accordion", "french horn": "French Horn", "contrabass": "Double Bass",
