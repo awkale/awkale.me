@@ -27,21 +27,95 @@
    =========================================================================== */
 
 /* --- the row -------------------------------------------------------------- */
+/* One trigger and a status line. Both browse filters live inside the popover,
+   after the shape of React Aria's own filterable-table example. */
 .facet-bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.75rem 1.25rem;
-  margin-top: 0.75rem;
-}
-
-.facet-bar-actions {
-  display: flex;
   align-items: center;
   gap: 0.6rem;
-  /* Aligns with the fields rather than their labels, which sit a line higher. */
-  margin-top: 1.05rem;
+  margin-top: 0.75rem;
   min-height: 1.7rem;
+}
+
+.facet-filters-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.facet-filters-trigger[data-hovered] {
+  background: var(--muted);
+}
+
+.facet-filters-trigger[data-pressed] {
+  /* Momentary, so it reads as a press rather than a state change. */
+  transform: translateY(0.5px);
+}
+
+.facet-filters-trigger[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* How many VALUES are applied, not how many facets. Duplicated into the
+   trigger's aria-label, because a badge alone is silent. */
+.facet-filters-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 0.68rem;
+}
+
+.facet-filters-popover {
+  width: min(22rem, calc(100vw - 2 * var(--gutter)));
+  max-height: 70vh;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 45%);
+}
+
+.facet-filters-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  /* `inherit` rather than a value of its own: the popover owns the height, and
+     the dialog scrolls inside whatever it is given. */
+  max-height: inherit;
+  overflow: auto;
+  padding: 0.9rem;
+  outline: none;
+}
+
+.facet-filters-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.facet-filters-title {
+  margin: 0;
+  font-family: var(--face-display);
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .facet-clear {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button } from 'react-aria-components'
+import { Button, Dialog, DialogTrigger, Heading, Popover } from 'react-aria-components'
 import { Link, useSearchParams } from 'react-router'
 
 import { FacetSelect } from '../components/facet-select'
@@ -86,7 +86,13 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
     ? { conductors: readFacet(searchParams, CONDUCTOR), halls: readFacet(searchParams, HALL) }
     : { conductors: [], halls: [] }
 
-  const isFiltered = selection.conductors.length > 0 || selection.halls.length > 0
+  /*
+    How many values are applied, across both facets — the number on the trigger's
+    badge. It counts VALUES, not facets: two Conductors and a Hall reads 3, which
+    is what someone deciding whether to open the popover wants to know.
+  */
+  const appliedCount = selection.conductors.length + selection.halls.length
+  const isFiltered = appliedCount > 0
 
   /*
     FILTERING HAPPENS HERE, IN THE BROWSER, AND CANNOT MOVE INTO THE LOADER.
@@ -161,40 +167,75 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
           <span className="tabular">{counts.halls}</span> halls
         </p>
 
+        {/*
+          Both browse filters live behind ONE control, after the shape of React
+          Aria's own filterable-table example: a single trigger carrying a count
+          of what is applied, a popover holding every filter, and a clear control
+          inside it. Two facets do not need a whole row of the page, and the set
+          is fixed at two (ADR-0006) only until it isn't — this shape absorbs a
+          third without redesigning the header.
+
+          The cost, and it is a real one: with the popover shut the reader sees
+          HOW MANY filters are applied but not WHICH. The count and the status
+          line below carry it; the names are one click away. Inline chips showed
+          them at all times, which is what this trades for a quiet page.
+        */}
         <div className="facet-bar">
-          <FacetSelect
-            label="Conductor"
-            plural="conductors"
-            inputRef={conductorField}
-            items={facets.conductors}
-            selected={selection.conductors}
-            onChange={(next) => setFacet(CONDUCTOR, next)}
-          />
-          <FacetSelect
-            label="Hall"
-            plural="halls"
-            items={facets.halls}
-            selected={selection.halls}
-            onChange={(next) => setFacet(HALL, next)}
-          />
+          <DialogTrigger>
+            <Button
+              className="facet-filters-trigger"
+              // The badge is a visual count; the label has to say it too, or a
+              // screen reader hears "Filters" whether two are applied or none.
+              aria-label={isFiltered ? `Filters, ${appliedCount} applied` : 'Filters'}
+            >
+              Filters
+              {isFiltered && <span className="facet-filters-badge tabular">{appliedCount}</span>}
+            </Button>
 
-          <div className="facet-bar-actions">
-            {isFiltered && (
-              <Button className="facet-clear" onPress={clearFacets}>
-                Clear filters
-              </Button>
-            )}
+            <Popover className="facet-filters-popover" offset={6}>
+              <Dialog className="facet-filters-dialog" aria-label="Filters">
+                <div className="facet-filters-head">
+                  <Heading slot="title" className="facet-filters-title">
+                    Filters
+                  </Heading>
 
-            {/*
-              PERMANENTLY MOUNTED, carrying empty text when nothing is selected.
-              A live region that mounts on demand does not announce reliably —
-              assistive technology has to be observing the node before its
-              contents change. This is the repo's first live region.
-            */}
-            <p className="facet-status" role="status">
-              {isFiltered ? `Showing ${visible.length} of ${counts.concerts} concerts` : ''}
-            </p>
-          </div>
+                  {isFiltered && (
+                    <Button className="facet-clear" onPress={clearFacets}>
+                      Clear
+                    </Button>
+                  )}
+                </div>
+
+                <FacetSelect
+                  label="Conductor"
+                  plural="conductors"
+                  inputRef={conductorField}
+                  items={facets.conductors}
+                  selected={selection.conductors}
+                  onChange={(next) => setFacet(CONDUCTOR, next)}
+                />
+                <FacetSelect
+                  label="Hall"
+                  plural="halls"
+                  items={facets.halls}
+                  selected={selection.halls}
+                  onChange={(next) => setFacet(HALL, next)}
+                />
+              </Dialog>
+            </Popover>
+          </DialogTrigger>
+
+          {/*
+            OUTSIDE the popover, and permanently mounted with empty text when
+            nothing is selected. A live region that mounts on demand does not
+            announce reliably — assistive technology has to be observing the node
+            before its contents change. One inside the popover would be worse
+            still: it would not exist at all until the reader opened it.
+            This is the repo's first live region.
+          */}
+          <p className="facet-status" role="status">
+            {isFiltered ? `Showing ${visible.length} of ${counts.concerts} concerts` : ''}
+          </p>
         </div>
 
         <table className="mt-5 w-full border-collapse text-[0.8rem]">

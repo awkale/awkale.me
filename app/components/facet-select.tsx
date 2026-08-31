@@ -97,6 +97,7 @@ export function FacetSelect({
     what the reader is looking at, not what they have chosen.
   */
   const [query, setQuery] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
 
   const localField = useRef<HTMLInputElement>(null)
   const field = inputRef ?? localField
@@ -122,7 +123,19 @@ export function FacetSelect({
   )
 
   return (
-    <div className="facet-select">
+    /*
+      Escape must dismiss ONE layer. This control sits inside the Filters
+      popover, and both overlays answer the same key press — so without this,
+      dismissing the option list also closed the panel around it and threw the
+      reader back to the trigger. Swallow the key while the list is open; when it
+      is shut, Escape belongs to the panel and passes straight through.
+    */
+    <div
+      className="facet-select"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && isOpen) event.stopPropagation()
+      }}
+    >
       <ComboBox
         className="facet-select-box"
         selectionMode="multiple"
@@ -135,8 +148,9 @@ export function FacetSelect({
         // indication that anything was hidden — a reader who typed "arm" once
         // and came back later would be told this orchestra has one conductor.
         // site-search.tsx clears its field on navigation for the same reason.
-        onOpenChange={(isOpen) => {
-          if (!isOpen) setQuery('')
+        onOpenChange={(open) => {
+          setIsOpen(open)
+          if (!open) setQuery('')
         }}
         // The popover has to be able to open on a query that matches nothing,
         // or the "No matches" state below is unreachable.
