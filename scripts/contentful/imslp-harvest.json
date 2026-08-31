@@ -9,12 +9,12 @@
     "transitional composers under both, and `composer.period` is a single",
     "Symbol, so those are settled by hand in `composerPeriods`."
   ],
-  "harvestedAt": "2026-08-30",
+  "harvestedAt": "2026-08-31",
   "counts": {
-    "worksInScope": 338,
-    "composersInScope": 153,
-    "composersMatched": 113,
-    "composersWithOneEra": 108,
+    "worksInScope": 346,
+    "composersInScope": 156,
+    "composersMatched": 116,
+    "composersWithOneEra": 111,
     "composersWithSeveralEras": [
       "Hindemith, Paul",
       "Schubert, Franz",
@@ -23,8 +23,8 @@
       "Strauss, Richard"
     ],
     "composersUnmatched": 0,
-    "worksMatched": 117,
-    "worksWithHarvestedForms": 33
+    "worksMatched": 120,
+    "worksWithHarvestedForms": 32
   },
   "composers": {
     "1fMmco9iSJOaiQpUxfUqG8": {
@@ -148,7 +148,7 @@
       "canonicalName": null
     },
     "cmp-bartok-bela": {
-      "sortName": "Bartok, Bela",
+      "sortName": "Bartók, Béla",
       "imslpPage": "Bartók, Béla",
       "eras": ["Early 20th century"],
       "canonicalName": "Bartók, Béla"
@@ -268,13 +268,13 @@
       "canonicalName": null
     },
     "cmp-chavez-carlos": {
-      "sortName": "Chavez, Carlos",
+      "sortName": "Chávez, Carlos",
       "imslpPage": "Chávez, Carlos",
       "eras": ["Early 20th century"],
       "canonicalName": "Chávez, Carlos"
     },
     "cmp-chopin-frederic": {
-      "sortName": "Chopin, Frederic",
+      "sortName": "Chopin, Frédéric",
       "imslpPage": "Chopin, Frédéric",
       "eras": ["Romantic"],
       "canonicalName": "Chopin, Frédéric"
@@ -309,6 +309,12 @@
       "eras": ["Early 20th century"],
       "canonicalName": null
     },
+    "cmp-david-ferdinand": {
+      "sortName": "David, Ferdinand",
+      "imslpPage": "David, Ferdinand",
+      "eras": ["Romantic"],
+      "canonicalName": null
+    },
     "cmp-de-falla-manuel": {
       "sortName": "Falla, Manuel de",
       "imslpPage": "Falla, Manuel de",
@@ -328,7 +334,7 @@
       "canonicalName": null
     },
     "cmp-delibes-leo": {
-      "sortName": "Delibes, Leo",
+      "sortName": "Delibes, Léo",
       "imslpPage": "Delibes, Léo",
       "eras": ["Romantic"],
       "canonicalName": "Delibes, Léo"
@@ -352,7 +358,7 @@
       "canonicalName": null
     },
     "cmp-dvorak-antonin": {
-      "sortName": "Dvorak, Antonin",
+      "sortName": "Dvořák, Antonín",
       "imslpPage": "Dvořák, Antonín",
       "eras": ["Romantic"],
       "canonicalName": "Dvořák, Antonín"
@@ -376,7 +382,7 @@
       "canonicalName": null
     },
     "cmp-faure-gabriel": {
-      "sortName": "Faure, Gabriel",
+      "sortName": "Fauré, Gabriel",
       "imslpPage": "Fauré, Gabriel",
       "eras": ["Romantic"],
       "canonicalName": "Fauré, Gabriel"
@@ -386,6 +392,12 @@
       "imslpPage": "Finzi, Gerald",
       "eras": ["Early 20th century"],
       "canonicalName": null
+    },
+    "cmp-franck-cesar": {
+      "sortName": "Franck, Cesar",
+      "imslpPage": "Franck, César",
+      "eras": ["Romantic"],
+      "canonicalName": "Franck, César"
     },
     "cmp-frank-gabriela-lena": {
       "sortName": "Frank, Gabriela Lena",
@@ -412,7 +424,7 @@
       "canonicalName": null
     },
     "cmp-gliere-reinhold": {
-      "sortName": "Gliere, Reinhold",
+      "sortName": "Glière, Reinhold",
       "imslpPage": "Glière, Reinhold",
       "eras": ["Romantic"],
       "canonicalName": "Glière, Reinhold"
@@ -454,7 +466,7 @@
       "canonicalName": null
     },
     "cmp-grofe-ferde": {
-      "sortName": "Grofe, Ferde",
+      "sortName": "Grofé, Ferde",
       "imslpPage": "Grofé, Ferde",
       "eras": ["Early 20th century"],
       "canonicalName": "Grofé, Ferde"
@@ -514,7 +526,7 @@
       "canonicalName": null
     },
     "cmp-janacek-leos": {
-      "sortName": "Janacek, Leos",
+      "sortName": "Janáček, Leoš",
       "imslpPage": "Janáček, Leoš",
       "eras": ["Romantic"],
       "canonicalName": "Janáček, Leoš"
@@ -645,6 +657,12 @@
       "eras": ["Modern"],
       "canonicalName": null
     },
+    "cmp-piston-walter": {
+      "sortName": "Piston, Walter",
+      "imslpPage": "Piston, Walter",
+      "eras": ["Early 20th century"],
+      "canonicalName": null
+    },
     "cmp-ponchielli-amilcare": {
       "sortName": "Ponchielli, Amilcare",
       "imslpPage": "Ponchielli, Amilcare",
@@ -724,7 +742,7 @@
       "canonicalName": null
     },
     "cmp-rodrigo-joaquin": {
-      "sortName": "Rodrigo, Joaquin",
+      "sortName": "Rodrigo, Joaquín",
       "imslpPage": "Rodrigo, Joaquín",
       "eras": ["Early 20th century"],
       "canonicalName": "Rodrigo, Joaquín"
@@ -748,7 +766,7 @@
       "canonicalName": null
     },
     "cmp-saint-saens-camille": {
-      "sortName": "Saint-Saens, Camille",
+      "sortName": "Saint-Saëns, Camille",
       "imslpPage": "Saint-Saëns, Camille",
       "eras": ["Romantic"],
       "canonicalName": "Saint-Saëns, Camille"
@@ -796,7 +814,7 @@
       "canonicalName": null
     },
     "cmp-smetana-bedrich": {
-      "sortName": "Smetana, Bedrich",
+      "sortName": "Smetana, Bedřich",
       "imslpPage": "Smetana, Bedřich",
       "eras": ["Romantic"],
       "canonicalName": "Smetana, Bedřich"
@@ -856,7 +874,7 @@
       "canonicalName": null
     },
     "cmp-turina-joaquin": {
-      "sortName": "Turina, Joaquin",
+      "sortName": "Turina, Joaquín",
       "imslpPage": "Turina, Joaquín",
       "eras": ["Early 20th century"],
       "canonicalName": "Turina, Joaquín"
@@ -1035,7 +1053,7 @@
       "title": "Tzigane",
       "imslpPage": "Tzigane, M.76 (Ravel, Maurice)",
       "styles": ["Early 20th century"],
-      "forms": ["Rhapsody"]
+      "forms": []
     },
     "ThS0y701SHY16ofNcPmEW": {
       "title": "Symphony No. 5 in D Major",
@@ -1379,6 +1397,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-concertino-for-trombone-and-orchestra": {
+      "title": "Concertino, for trombone and orchestra",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "wrk-concerto-for-alto-saxophone-dd191a": {
       "title": "Concerto for Alto Saxophone",
       "imslpPage": null,
@@ -1655,6 +1679,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-hungarian-rhapsody-no-1": {
+      "title": "Hungarian Rhapsody No. 1",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "wrk-hungarian-rhapsody-no-2-in-d-m-247be9": {
       "title": "Hungarian Rhapsody No. 2 in D Minor",
       "imslpPage": null,
@@ -1777,6 +1807,12 @@
     },
     "wrk-malintzin-bf7724": {
       "title": "Malintzin",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
+    "wrk-marche-ecossaise": {
+      "title": "Marche Ecossaise",
       "imslpPage": null,
       "styles": [],
       "forms": []
@@ -2183,6 +2219,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-rhapsody-in-blue": {
+      "title": "Rhapsody in Blue",
+      "imslpPage": "Rhapsody in Blue (Gershwin, George)",
+      "styles": [],
+      "forms": []
+    },
     "wrk-ricercar-for-sonorous-instrume-ed9460": {
       "title": "Ricercar for Sonorous Instruments",
       "imslpPage": null,
@@ -2381,6 +2423,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-suite-from-the-ballet-the-incredible-flutist": {
+      "title": "Suite from the ballet \"The Incredible Flutist\"",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "wrk-suite-from-the-threepenny-oper-25aed1": {
       "title": "Suite from The Threepenny Opera",
       "imslpPage": null,
@@ -2407,6 +2455,12 @@
     },
     "wrk-symphonic-dances-from-west-sid-9ffa7f": {
       "title": "Symphonic Dances, from West Side Story",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
+    "wrk-symphonic-metamorphosis-on-themes-of-carl-maria-von-weber": {
+      "title": "Symphonic Metamorphosis on Themes of Carl Maria von Weber",
       "imslpPage": null,
       "styles": [],
       "forms": []
@@ -2444,6 +2498,12 @@
     "wrk-symphony-in-c-major-f36730": {
       "title": "Symphony in C Major",
       "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
+    "wrk-symphony-in-d-minor-b515c4": {
+      "title": "Symphony in D Minor",
+      "imslpPage": "Symphony in D minor (Franck, César)",
       "styles": [],
       "forms": []
     },
@@ -2949,6 +3009,12 @@
       "title": "Violin Concerto in E Minor",
       "imslpPage": "Violin Concerto, Op.64 (Mendelssohn, Felix)",
       "styles": [],
+      "forms": []
+    },
+    "wrk-violin-concerto-no-5-in-a-majo-39368c": {
+      "title": "Violin Concerto No. 5 in A Major",
+      "imslpPage": "Violin Concerto No.5 in A major, K.219 (Mozart, Wolfgang Amadeus)",
+      "styles": ["Classical"],
       "forms": ["Concerto"]
     },
     "wrk-vorspiel-und-liebestod-from-tr-66f23b": {
