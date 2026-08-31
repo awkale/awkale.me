@@ -179,7 +179,10 @@
   --field-bg: var(--card);
   --field-border: var(--border);
 
-  width: clamp(9rem, 20vw, 14rem);
+  /* Fills the popover rather than sizing itself. The clamp that used to be here
+     was for a field standing in the page beside the table; inside a panel of a
+     known width it only truncated the placeholder. */
+  width: 100%;
   /* Right padding leaves room for the trigger sitting over the field. */
   padding: 0.3rem 1.6rem 0.3rem 0.6rem;
   border: 1px solid var(--field-border);
@@ -390,5 +393,24 @@
       background-color 0.12s ease,
       border-color 0.12s ease,
       color 0.12s ease;
+  }
+}
+
+/* --- touch ---------------------------------------------------------------- */
+/* iOS Safari ZOOMS THE PAGE when a form control smaller than 16px takes focus,
+   and then leaves the reader zoomed in. 16px exactly is the threshold, so 1rem
+   clears it.
+
+   `(pointer: coarse)` rather than a width breakpoint: the trigger is the input
+   device, not the viewport. A narrow desktop window has the same width and does
+   not zoom, and a tablet is wide and does.
+
+   NOT fixed by `maximum-scale=1` or `user-scalable=no` on the viewport meta.
+   That stops the zoom by banning pinch-zoom for everyone, which fails WCAG 1.4.4
+   and takes magnification away from the people who most need it. The viewport
+   tag in app/root.tsx is correct as it stands — leave it alone. */
+@media (pointer: coarse) {
+  .facet-select-input {
+    font-size: 1rem;
   }
 }

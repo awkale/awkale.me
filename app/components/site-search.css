@@ -160,3 +160,25 @@
     transition: background-color 0.12s ease;
   }
 }
+
+/* --- touch ---------------------------------------------------------------- */
+/* iOS Safari ZOOMS THE PAGE when a form control smaller than 16px takes focus,
+   and then leaves the reader zoomed in. 16px exactly is the threshold, so 1rem
+   clears it.
+
+   `(pointer: coarse)` rather than a width breakpoint: the trigger is the input
+   device, not the viewport. A narrow desktop window has the same width and does
+   not zoom, and a tablet is wide and does.
+
+   NOT fixed by `maximum-scale=1` or `user-scalable=no` on the viewport meta.
+   That stops the zoom by banning pinch-zoom for everyone, which fails WCAG 1.4.4
+   and takes magnification away from the people who most need it. The viewport
+   tag in app/root.tsx is correct as it stands — leave it alone.
+
+   This one is in the header of EVERY page, so it zoomed the whole site on the
+   first tap of the search field, not just one route. */
+@media (pointer: coarse) {
+  .site-search-input {
+    font-size: 1rem;
+  }
+}
