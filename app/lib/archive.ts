@@ -148,7 +148,15 @@ export type Concert = {
   recordings: Recording[]
 }
 
-export type Performance = { date: string; slug: string; hall: string | null; conductor: string | null }
+/**
+ * One evening a work was played, as a work page lists it.
+ *
+ * `orchestra` rather than `hall` (AWK-72): on a page about the piece, who played
+ * it says more than where, and the concert page still carries the hall. It is the
+ * ABBREVIATION where one is set — a work page renders it in a narrow column, and
+ * `BSO` is the whole of `Brooklyn Symphony Orchestra` in a sixth of the width.
+ */
+export type Performance = { date: string; slug: string; orchestra: string | null; conductor: string | null }
 
 export type Work = {
   id: string
@@ -562,6 +570,28 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
   for (const concert of attended) {
     const satOut = new Set(linkIds(concert.fields.satOut))
     const hall = hallById.get(linkId(concert.fields.hall) ?? '')?.fields.name ?? null
+    // Resolved HERE, at concert level, not inside the item loop below: a
+    // performance is one evening however many programme rows carry the work, and
+    // the orchestra is a fact about the concert.
+    //
+    // Abbreviation, then name, then NOTHING — deliberately one link shorter than
+    // the chain the invariant messages use. They end at the raw entry id because a
+    // person reads them in the Contentful web app, where an id is something they
+    // can look up; this string is read by a visitor on a work page, where it is
+    // line noise. An unresolvable link is an absent orchestra, and the cell says
+    // so with an em dash.
+    //
+    // JOINED, not truncated to the first. Every concert in the space links exactly
+    // one orchestra, but nothing asserts that — `program-item-one-orchestra` is
+    // about an item shared across concerts — and the concert record models the
+    // field as the list it is. A side-by-side concert would name both here, the
+    // same way the concert page does.
+    const orchestra =
+      linkIds(concert.fields.orchestra)
+        .map((id) => orchestraById.get(id))
+        .map((orchestra) => orchestra?.fields.abbreviation ?? orchestra?.fields.name)
+        .filter((label): label is string => Boolean(label))
+        .join(' · ') || null
     const conductor = name(conductorById.get(linkId(concert.fields.conductor) ?? ''))
     const date = concert.fields.date ?? ''
 
@@ -608,7 +638,7 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
         if (!list.some((p) => p.date === date)) {
           // The ITEM's conductor, not the concert's: a work page names who
           // conducted that work, which on a split concert is the finer answer.
-          list.push({ date, slug: date, hall, conductor: ownConductor ?? conductor })
+          list.push({ date, slug: date, orchestra, conductor: ownConductor ?? conductor })
         }
         performances.set(workId, list)
       }

@@ -58,7 +58,7 @@ export default function Work({ loaderData }: Route.ComponentProps) {
         <table className="mt-4 w-full border-collapse text-[0.8rem]">
           <thead>
             <tr>
-              {['Date', 'Hall', 'Conductor'].map((h) => (
+              {['Date', 'Orchestra', 'Conductor'].map((h) => (
                 <th key={h} className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">
                   {h}
                 </th>
@@ -73,7 +73,7 @@ export default function Work({ loaderData }: Route.ComponentProps) {
                     {formatDate(p.date)}
                   </Link>
                 </td>
-                <td className="border-b border-border-subtle px-2 py-1.5 align-baseline">{p.hall ?? '—'}</td>
+                <td className="border-b border-border-subtle px-2 py-1.5 align-baseline">{p.orchestra ?? '—'}</td>
                 <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
                   {p.conductor ?? '—'}
                 </td>

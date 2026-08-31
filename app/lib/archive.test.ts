@@ -480,6 +480,92 @@ describe('the per-item conductor (AWK-60)', () => {
   })
 })
 
+describe("the orchestra on a work's performance list (AWK-72)", () => {
+  it('names the orchestra by abbreviation', async () => {
+    // THE ABBREVIATION, NOT THE NAME. This renders in a three-column table on a
+    // work page, where `BSO` says everything `Brooklyn Symphony Orchestra` does
+    // in a sixth of the width. The concert page still writes the name out.
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, orchestra: [link('orc-bso')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances[0]).toMatchObject({ date: '2012-03-15', orchestra: 'BSO' })
+  })
+
+  it('falls back to the full name when an orchestra has no abbreviation', async () => {
+    // NOT EXERCISED BY LIVE DATA, and kept anyway. It was, briefly: on
+    // 2026-08-31 `All-Nassau County Elementary Orchestra` carried no
+    // abbreviation and printed its 42 characters in 5 of the 406 rendered rows,
+    // until Alex set the field the same day. All seven orchestras carry one now.
+    //
+    // `abbreviation` is optional on the content type, so the next orchestra
+    // anyone adds arrives without one — and the long name beats an empty cell.
+    // This is what says so.
+    space.orchestra.push(entry('orchestra', 'orc-nassau', { name: 'All-Nassau County Elementary Orchestra' }))
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, orchestra: [link('orc-nassau')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances[0].orchestra).toBe('All-Nassau County Elementary Orchestra')
+  })
+
+  it('leaves it null when the concert names no orchestra', async () => {
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances[0].orchestra).toBeNull()
+  })
+
+  it('renders nothing rather than a Contentful id when the link does not resolve', async () => {
+    // The invariant-shape builder falls back to the raw id on purpose — a person
+    // reads that message in the Contentful web app, where an id is something they
+    // can paste into a URL. THIS string is read by a visitor on a work page, where
+    // it is line noise, so an unresolvable link is an absent orchestra and the
+    // cell renders the em dash.
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, orchestra: [link('orc-unpublished')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances[0].orchestra).toBeNull()
+  })
+
+  it('names both orchestras of a joint concert', async () => {
+    // Nothing asserts one orchestra per concert — `program-item-one-orchestra` is
+    // about an item shared ACROSS concerts, and the concert record models the
+    // field as a list. Every concert in the space links exactly one today, so this
+    // is the side-by-side concert nobody has authored yet, joined the way the
+    // concert page joins its own.
+    space.orchestra.push(entry('orchestra', 'orc-liyo', { name: 'Long Island Youth Orchestra', abbreviation: 'LIYO' }))
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, orchestra: [link('orc-bso'), link('orc-liyo')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances[0].orchestra).toBe('BSO · LIYO')
+  })
+
+  it('reads the orchestra off the concert once, however many rows carry the work', async () => {
+    // The list deduplicates by date, so a work broken out across two rows is one
+    // performance — and one orchestra, resolved at concert level rather than
+    // per item.
+    space.programItem.push(
+      entry('programItem', 'pi-2', { label: 'Symphony No. 5, movement II', order: 2, work: link('wrk-fifth') })
+    )
+    space.concert = [
+      concert('cnc-1', '2012-03-15', {
+        attended: true,
+        program: [link('pi-1'), link('pi-2')],
+        orchestra: [link('orc-bso')],
+      }),
+    ]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances).toHaveLength(1)
+    expect(archive.works[0].performances[0].orchestra).toBe('BSO')
+  })
+})
+
 describe('concert detail', () => {
   it('resolves hall, conductor and orchestra through their links', async () => {
     space.concert = [concert('cnc-1', '2012-03-15', { attended: true, orchestra: [link('orc-bso')] })]
