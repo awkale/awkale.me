@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Dialog, DialogTrigger, Heading, Popover } from 'react-aria-components'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 
+import { ConcertsTable } from '../components/concerts-table'
 import { FacetSelect } from '../components/facet-select'
 import { loadArchive } from '../lib/archive'
 import { filterConcerts, readFacet } from '../lib/facets'
@@ -238,84 +239,8 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
           </p>
         </div>
 
-        <table className="mt-5 w-full border-collapse text-[0.8rem]">
-          <thead>
-            <tr>
-              <Th>Date</Th>
-              <Th>Hall</Th>
-              <Th>Conductor</Th>
-              <Th className="text-right">Items</Th>
-              <Th>Programme</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.length === 0 && (
-              /* One full-width row rather than an empty table, so the column
-                 headers and the clear control stay on screen and the reader can
-                 recover. A selection that yields nothing is reachable on
-                 purpose: an unknown `?conductor=` value matches nothing and is
-                 honoured rather than dropped (app/lib/facets.ts). */
-              <tr>
-                <Td colSpan={5} className="text-muted-foreground">
-                  No concerts match these filters.
-                </Td>
-              </tr>
-            )}
-
-            {visible.map((c) => (
-              <tr key={c.id} className="hover:bg-muted">
-                <Td className="tabular">
-                  <Link to={`/concerts/${c.slug}/`} className="no-underline hover:underline">
-                    {c.date}
-                  </Link>
-                </Td>
-                <Td>{c.hall ?? '—'}</Td>
-                {/* The em dash is honest defensive rendering, not a known gap.
-                    A comment here used to claim 2007-12-16 had no conductor and
-                    was therefore invisible to this filter; that was never true
-                    in production — `cnc-20071216` is published with conductor
-                    Nicholas Armstrong. The blank existed only in the derived
-                    bso-graph.json, and the site builds from the Delivery API. */}
-                <Td className={c.conductor ? '' : 'text-muted-foreground'}>{c.conductor ?? '—'}</Td>
-                <Td className="tabular text-right">{c.program.length}</Td>
-                <Td className="text-muted-foreground">
-                  {c.program
-                    .slice(0, 2)
-                    .map((i) => i.label)
-                    .join(', ')}
-                  {c.program.length > 2 ? '…' : ''}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ConcertsTable concerts={visible} />
       </div>
     </main>
-  )
-}
-
-function Th({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <th
-      className={`eyebrow sticky top-[3.6rem] border-b border-border bg-background px-2 py-1.5 text-left font-medium ${className}`}
-    >
-      {children}
-    </th>
-  )
-}
-
-function Td({
-  children,
-  className = '',
-  colSpan,
-}: {
-  children: React.ReactNode
-  className?: string
-  colSpan?: number
-}) {
-  return (
-    <td colSpan={colSpan} className={`border-b border-border-subtle px-2 py-1.5 align-baseline ${className}`}>
-      {children}
-    </td>
   )
 }

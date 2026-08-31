@@ -1,0 +1,240 @@
+/* ===========================================================================
+   concerts-table — the Performance history's 127-row index on /concerts/.
+   ---------------------------------------------------------------------------
+   Same convention as facet-select, mode-toggle and site-search: semantic classes
+   consume local variables, and React Aria's own data attributes remap them. No
+   JS-driven classes.
+
+   REPLACED the route's inline `<Th>`/`<Td>` helpers under AWK-70. Those were
+   Tailwind utilities on a plain `<table>`; resizable columns need a React Aria
+   collection, and its state surface is data attributes, which is exactly what this
+   layer is for.
+
+   Attributes React Aria sets, and what they mean here:
+     [data-hovered]           pointer over a row
+     [data-focus-visible]     keyboard focus, on a row, a cell or the resizer
+     [data-resizing]          the resizer is being dragged
+     [data-resizable-direction]  which way this resizer can still travel
+     [data-empty]             the body has no rows (the filtered-to-nothing case)
+
+   THE STICKY HEADER AND HORIZONTAL SCROLL ARE MUTUALLY EXCLUSIVE, which is the one
+   thing to understand before editing this file. `position: sticky` resolves against
+   the nearest scrollport, so the moment the container gets `overflow-x: auto` its
+   overflow-y computes to auto as well, that div becomes the scrollport, and a
+   header sticking to a box which never scrolls vertically stops pinning to the
+   page. There is no CSS that keeps both.
+
+   So it is split at the breakpoint, deliberately:
+
+     >= 40rem   no scroll container; the header pins to the page under the site
+                header. The columns' minWidths (520px, see COLUMNS in the .tsx)
+                fit here, so the table never needs to scroll.
+     <  40rem   the container scrolls sideways and the header gives up pinning.
+                A page that scrolls horizontally is a bug; a header that scrolls
+                away on a phone is a shrug.
+
+   React Aria forces `table-layout: fixed` and `width: min-content` on the table
+   inside a ResizableTableContainer, computing every column width from the
+   container's measured width. Do not set widths here — set them on the Column.
+   =========================================================================== */
+
+/* --- the container -------------------------------------------------------- */
+.concerts-table {
+  --concerts-header-offset: 3.6rem; /* clears the site header. */
+
+  margin-block-start: 1.25rem;
+  width: 100%;
+}
+
+@media (width < 40rem) {
+  .concerts-table {
+    /* Nothing sticks in here — see the header note above, and the `th` rule that
+       gives up `position: sticky` at this same breakpoint. */
+    overflow-x: auto;
+  }
+}
+
+/* --- the grid ------------------------------------------------------------- */
+/* `separate` rather than `collapse`: a collapsed border belongs to the table
+   rather than to the cell, and it detaches from a sticky header when it scrolls.
+   typeset.css makes the same choice for the same reason. */
+.concerts-grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8rem;
+  outline: none;
+
+  /* `!important` EARNS ITS KEEP HERE, and is the only one in the file. React Aria
+     writes `width: min-content` INLINE on the table, which nothing but !important
+     can override, and that inline value is 698px — the sum of the columns' fallback
+     widths — until a resize observer has run. On a prerendered page that is what a
+     no-JS reader gets permanently, and what every reader gets for one frame: a
+     698px table adrift in an 80rem column with Programme truncated to its 180px
+     minimum. Full width restores the plain table's `w-full` reading, and after
+     hydration the two agree exactly — React Aria sizes the columns to the
+     container, so `min-content` and `100%` are then the same number. */
+  width: 100% !important;
+}
+
+/* --- the header ----------------------------------------------------------- */
+/* `.eyebrow` (app/app.css, not tokens.css) owns the size, tracking and case; it is
+   applied on the Column alongside this class, exactly as the plain table's `<Th>`
+   carried it. Dropping it is a silent regression — the header renders at the grid's
+   0.8rem in mixed case instead of 0.66rem uppercase — so the two travel together.
+   Sticky lives on the `th`, not the `thead`: that is what the plain table did, and
+   it is the better-supported of the two. */
+.concerts-th {
+  background-color: var(--color-background);
+  border-block-end: 1px solid var(--color-border);
+  font-weight: 500;
+  outline: none;
+  padding: 0.375rem 0.5rem;
+  position: sticky;
+  text-align: start;
+  top: var(--concerts-header-offset);
+  z-index: 1;
+}
+
+/* `relative`, NOT `static`. Both drop the stickiness, but only `relative` keeps
+   the `th` a containing block for the absolutely positioned resizer — under
+   `static` all four resizers resolve against the initial containing block, stack
+   on top of each other near the viewport edge, and push the DOCUMENT 8px wide,
+   which is the horizontal page scroll this breakpoint exists to prevent.
+   Measured at 390px: offsetParent went to BODY and every resizer sat at x=366. */
+@media (width < 40rem) {
+  .concerts-th {
+    position: relative;
+    top: auto;
+  }
+}
+
+.concerts-th[data-focus-visible] {
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
+}
+
+/* The label truncates rather than wrapping the header to two lines: a resized
+   column narrower than its own title is the reader's decision, and a header that
+   changes height as they drag reads as breakage. */
+.concerts-th-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- the resizer ---------------------------------------------------------- */
+/* Sits on the column's trailing edge, one pixel wide with a padded hit area behind
+   it — `padding` plus `background-clip: content-box` is what separates the target
+   from the mark, so the mark stays hairline.
+   ENTIRELY INSIDE ITS OWN COLUMN, which is not fussiness: every `.concerts-th` is
+   `position: sticky` with a `z-index`, so each header is its own stacking context
+   and the next one — later in the DOM, same z-index — paints and hit-tests over
+   anything that hangs past the boundary. A symmetric `padding-inline: 8px` with
+   `right: -8px` therefore advertises a 17px target and delivers 9px. All 12 sit to
+   the left of the edge instead, where they are reachable. */
+.concerts-resizer {
+  background-clip: content-box;
+  background-color: var(--color-border);
+  box-sizing: content-box;
+  height: 1.25rem;
+  padding-inline: 12px 0;
+  position: absolute;
+  right: 0;
+  top: 0.25rem;
+  touch-action: none;
+  width: 1px;
+}
+
+.concerts-resizer[data-resizable-direction='both'] {
+  cursor: ew-resize;
+}
+.concerts-resizer[data-resizable-direction='left'] {
+  cursor: e-resize;
+}
+.concerts-resizer[data-resizable-direction='right'] {
+  cursor: w-resize;
+}
+
+.concerts-resizer[data-hovered],
+.concerts-resizer[data-resizing] {
+  background-color: var(--color-foreground);
+  width: 2px;
+}
+
+.concerts-resizer[data-focus-visible] {
+  background-color: var(--color-ring);
+  outline: 2px solid var(--color-ring);
+  outline-offset: -1px;
+  width: 2px;
+}
+
+/* The resizer is positioned against the header cell, which needs no
+   `position: relative` of its own: `position: sticky` already makes the `th` a
+   containing block for an absolute child, and adding `relative` would cost the
+   stickiness. */
+
+/* --- rows and cells ------------------------------------------------------- */
+.concerts-row {
+  outline: none;
+}
+
+/* `:hover`, NOT `[data-hovered]`. React Aria only tracks hover on a row that is
+   selectable, actionable or draggable — `useHover({ isDisabled: !allowsSelection &&
+   !hasAction && !isDraggable })` in Table.mjs — and this table is none of the
+   three, deliberately: the row carries no action because the link lives in the Date
+   cell. So the data attribute never appears and styling it silently drops the
+   highlight the plain table had. Plain CSS hover is the whole behaviour here. */
+.concerts-row:hover {
+  background-color: var(--color-muted);
+}
+
+.concerts-row[data-focus-visible] {
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
+}
+
+/* One line per row, always. This is a dense index — its own comment says a column
+   of 127 dates lines up — so a wrapping cell that makes one row three lines tall
+   costs more than the ellipsis does, and resizing is the recovery. */
+.concerts-cell {
+  border-block-end: 1px solid var(--color-border-subtle);
+  outline: none;
+  overflow: hidden;
+  padding: 0.375rem 0.5rem;
+  text-overflow: ellipsis;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.concerts-cell[data-focus-visible] {
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
+}
+
+.concerts-cell-date {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.concerts-cell-programme,
+.concerts-absent {
+  color: var(--color-muted-foreground);
+}
+
+/* --- the empty state ------------------------------------------------------ */
+/* React Aria spans this across every column on its own, which is the point of
+   `renderEmptyState`: the count is never restated here.
+
+   `[data-empty]` is on the TBODY, not the cell — so the padding has to be aimed at
+   the cell inside it, because padding on a `tbody` is inert and the message would
+   otherwise sit flush against the header rule. Colour can stay on the body and
+   inherit down. */
+.concerts-grid [data-empty] {
+  color: var(--color-muted-foreground);
+  text-align: start;
+}
+
+.concerts-grid [data-empty] td {
+  padding: 0.375rem 0.5rem;
+}
