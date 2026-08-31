@@ -38,8 +38,27 @@ export type FacetItem = { name: string; n: number }
  * This replaced a row of `ToggleButton` chips under AWK-55. The chips were the
  * bug: bare `<ToggleButton>` with no `isSelected` and no `onChange` gets its own
  * UNCONTROLLED on/off state from React Aria, which is why clicking one moved its
- * styling and nothing else. Thirty-seven conductors also made the row a wall
- * above the table it filtered. Both problems die with the control.
+ * styling and nothing else.
+ *
+ * A CHIP ROW WAS NOT THE WRONG DESIGN, THOUGH — IT WAS THE WRONG COMPONENT.
+ * React Aria spells that design `TagGroup` with `selectionMode="multiple"`,
+ * `selectedKeys` and `onSelectionChange`, and Adobe's own filterable-table
+ * example uses exactly that for its filters. A `ToggleButton` was never going to
+ * work: it owns one boolean and reports to nobody, so a row of them has no
+ * shared selection to control. Anyone reading AWK-55 and wondering why the chips
+ * were replaced rather than repaired should know the repair existed.
+ *
+ * WHAT DECIDED IT WAS SEARCH, not the component. `TagGroup` shows every value at
+ * once and cannot be typed into. The live archive carries 18 Conductors and 7
+ * Halls, so a tag row is not unreasonable — but finding a Conductor among 18 by
+ * eye is worse than typing three letters, and the count only grows as
+ * pre-Brooklyn programmes are transcribed. If that reasoning ever stops holding,
+ * `TagGroup` is the swap, and it is a smaller change than it looks: the URL
+ * contract, the pure filter and every test above the control stay as they are.
+ *
+ * (An earlier version of this comment said thirty-seven Conductors. That is the
+ * figure in `bso-graph.json`, which counts Concerts Alex did not play; the facet
+ * only ever sees the attended set.)
  *
  * COUNTS ARE ABSOLUTE AND NEVER RECOMPUTE. `Tara Simoncic 53` is a claim about
  * the Performance history — 53 concerts of Alex's career under that conductor —
