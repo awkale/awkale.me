@@ -1,0 +1,599 @@
+{
+  "note": [
+    "AWK-64's transcription of the three scanned Tilles Center LIYO programs,",
+    "separated from the script that applies it. Read by transcribe_programs.py,",
+    "asserted by tilles-center-programs.test.ts.",
+    "",
+    "DECIDED AND NEVER REGENERATED, in the sense period-and-forms.json uses. The",
+    "sources are three image-only scans in docs/archive/ and nothing derives this",
+    "file -- there is no parser to re-run, because the programs are in no",
+    "spreadsheet and no graph. Re-reading them means rendering them by eye. So a",
+    "correction here is the only record of the correction, and a re-run of the",
+    "applier must not overwrite one.",
+    "",
+    "WHY A DECLARATION AT ALL, when AWK-59 transcribed 1993-07-26 by hand and",
+    "committed only docs: 35 entries went into the live space that day and the",
+    "repository holds no statement of what they were. The prose in",
+    "participation-checklist.md is a summary, not a manifest -- it cannot be",
+    "diffed against the space, and nothing fails if the two disagree. This file",
+    "can be, and the test does.",
+    "",
+    "THE ONE THING THAT WILL SURPRISE WHOEVER READS THE TICKET FIRST: AWK-64 says",
+    "'create the 17 Works'. Eleven of the seventeen already exist. Works are",
+    "shared across Concerts -- the space holds 649 of them for 253 Concerts -- so",
+    "creating seventeen would have produced eleven duplicates, and one of those",
+    "would have failed the build. `reuse.works` is therefore load-bearing, not a",
+    "convenience: see the comment on that object.",
+    "",
+    "PROGRAM WORDING LIVES ON THE ITEM, NOT ON THE WORK. ADR-0006 makes a Work",
+    "the composition as performed and AWK-64 says to keep the program's own",
+    "wording, but a reused Work already carries a title written for another",
+    "concert. Both rules hold at once because app/lib/archive.ts resolves an",
+    "item's display string as `item.fields.label ?? work.fields.title` -- so the",
+    "label is the per-performance string and the place the printed wording goes.",
+    "That is why item 1 of 1992-12-13 reads 'Carneval Overture' while the Work it",
+    "links stays 'Carnival Overture'. The scan says Carneval; the archive has",
+    "said Carnival since the import; neither is corrected to match the other.",
+    "",
+    "New Work titles keep the program's wording with ONE normalisation: `#N`",
+    "becomes `No. N`, because all 649 live titles use `No.` and the `#` is a",
+    "typewriter convention rather than a different name. It affects exactly one",
+    "new title, Hungarian Rhapsody No. 1, whose printed form survives on the",
+    "item label anyway.",
+    "",
+    "PERIOD AND FORM ARE DELIBERATELY ABSENT from the two new Composers and the",
+    "six new Works. ADR-0007 puts every form judgement in period-and-forms.json",
+    "and lets Form stay incomplete -- 'a Work with no form tags is not a defect'",
+    "-- so assigning forms here would open a second home for a decision that",
+    "already has one. Period arrives on its own: seed_period_and_forms.py is",
+    "idempotent, the new Concerts pull Piston, Ferdinand David and Franck into",
+    "scope, and work.period inherits from the composer in the sweep (AWK-37).",
+    "Run imslp_harvest.py then seed_period_and_forms.py after applying this.",
+    "",
+    "CONDUCTOR SLUGS ARE NULL, against the letter of the ticket's checklist. All",
+    "46 live conductors have conductor.slug unset, no route reads it, and the",
+    "only thing that touches it is AWK-61's whitespace invariant. Slugging two of",
+    "forty-eight would leave a partial state for someone to explain later.",
+    "Decided by Alex on 2026-08-31."
+  ],
+
+  "sources": {
+    "1992-12-13": "docs/archive/program-19921213-liyo-tilles-center.pdf",
+    "1993-05-02": "docs/archive/program-19930502-liyo-tilles-center.pdf",
+    "1995-06-11": "docs/archive/program-19950611-liyo-tilles-center.pdf",
+    "note": [
+      "Two pages each, image-only, no text layer. Recompressed to JPEG at 2200px",
+      "on the way in under 640f723 and legible; do not re-scan. Page 1 of each is",
+      "the title page (season, date, hall, conductor, soloists), page 2 the",
+      "program. Read them by extracting the embedded DCTDecode streams -- the",
+      "pages ARE JPEGs, so no renderer is needed and none is installed here."
+    ]
+  },
+
+  "reuse": {
+    "note": [
+      "Live entry ids this transcription links but does not create. Every one was",
+      "verified present on 2026-08-31 before the ids were written down.",
+      "",
+      "THE NAMES BESIDE THE IDS ARE A CHECK, NOT A LABEL. transcribe_programs.py",
+      "re-reads each entry and aborts if the id has gone missing, if it now",
+      "resolves to a different content type, or if its live name no longer",
+      "matches what is recorded here -- the same checked redundancy",
+      "seed_period_and_forms.py keeps over its curated work ids. So correcting a",
+      "name here is not tidying; it is the thing that keeps the check honest.",
+      "The test can only assert these are non-empty and well-formed, because it",
+      "has no network."
+    ],
+    "hall": { "id": "4imlLd0XNZHEoNtyJC3EsD", "name": "Tilles Center" },
+    "orchestra": { "id": "236YCHXmB2L4Dmz8qF8CSF", "name": "Long Island Youth Orchestra" },
+    "conductor": { "id": "73DY0UqtWBtRpQquRp2MQG", "name": "Martin Dreiwitz" },
+    "seasons": {
+      "1992-12-13": { "id": "sea-liyo-30", "label": "LIYO Season 30, 1992-1993" },
+      "1993-05-02": { "id": "sea-liyo-30", "label": "LIYO Season 30, 1992-1993" },
+      "1995-06-11": { "id": "sea-liyo-32", "label": "LIYO Season 32, 1994-1995" }
+    },
+    "composers": {
+      "dvorak": { "id": "cmp-dvorak-antonin", "sortName": "Dvořák, Antonín" },
+      "vaughan-williams": { "id": "2yf5d2rsZaK4cajB84pdFh", "sortName": "Vaughan Williams, Ralph" },
+      "franck": {
+        "id": "cmp-franck-cesar",
+        "sortName": "Franck, César",
+        "why": "Was `Franck, Cesar` when this file was written, and the pre-flight's RENAMED check caught it. The period seed restored the diacritic the same day, because these three Concerts are what first brought Franck into scope at all -- so the accented form is what the space now holds and what this must match. His slug is untouched and still folds to `franck-cesar`, per ADR-0008."
+      },
+      "beethoven": { "id": "2tfdUTvmRn1etYq5czTknE", "sortName": "Beethoven, Ludwig van" },
+      "debussy": { "id": "cmp-debussy-claude", "sortName": "Debussy, Claude" },
+      "hindemith": { "id": "cmp-hindemith-paul", "sortName": "Hindemith, Paul" },
+      "gershwin": { "id": "cmp-gershwin-george", "sortName": "Gershwin, George" },
+      "tchaikovsky": { "id": "cmp-tchaikovsky-pyotr-ilyich", "sortName": "Tchaikovsky, Pyotr Ilyich" },
+      "nicolai": { "id": "cmp-nicolai-otto", "sortName": "Nicolai, Otto" },
+      "mozart": { "id": "cmp-mozart-wolfgang-amadeus", "sortName": "Mozart, Wolfgang Amadeus" },
+      "weber": { "id": "cmp-von-weber-carl-maria", "sortName": "Weber, Carl Maria von" },
+      "liszt": { "id": "cmp-liszt-franz", "sortName": "Liszt, Franz" },
+      "griffes": { "id": "cmp-griffes-charles", "sortName": "Griffes, Charles" },
+      "chabrier": { "id": "cmp-chabrier-emmanuel", "sortName": "Chabrier, Emmanuel" }
+    },
+    "works": {
+      "note": [
+        "The eleven the ticket would have duplicated. `why` records the",
+        "identification, because three of them are not a title match and a later",
+        "reader is entitled to know how the program's line was resolved.",
+        "",
+        "The Tchaikovsky entry is the one that matters most. AWK-64 flags",
+        "'Theme and variations from Suite #3' as a slug-collision risk against the",
+        "existing Tchaikovsky suites and says to check (composer, slug) before",
+        "writing. The check's answer is that the work is not a near-miss, it is",
+        "the SAME work: AWK-59 created it for the 1993-07-26 program, which",
+        "printed the same excerpt. Reuse is what the warning was pointing at.",
+        "Writing a second record would have collided on",
+        "(cmp-tchaikovsky-pyotr-ilyich, theme-and-variations-from-suite-no-3) and",
+        "failed work-slug-unique-per-composer at build time -- the guard that",
+        "replaced work.slug's unique constraint when AWK-37 dropped it."
+      ],
+      "carneval-overture": {
+        "id": "wrk-carnival-overture-b8652b",
+        "title": "Carnival Overture",
+        "composer": "cmp-dvorak-antonin",
+        "why": "Printed 'Carneval Overture'. Same work; the archive's spelling stands and the program's goes on the item label."
+      },
+      "norfolk-rhapsody": {
+        "id": "wrk-norfolk-rhapsody-no-1-a75c93",
+        "title": "Norfolk Rhapsody No. 1",
+        "composer": "2yf5d2rsZaK4cajB84pdFh",
+        "why": "Printed 'Norfolk Rhapsody #1'. The `#N` to `No. N` case, already settled in the space."
+      },
+      "franck-symphony": {
+        "id": "wrk-symphony-in-d-minor-b515c4",
+        "title": "Symphony in D Minor",
+        "composer": "cmp-franck-cesar",
+        "why": "Exact match but for case. Franck's only work in the archive."
+      },
+      "leonore-3": {
+        "id": "wrk-leonore-overture-no-3-8e5797",
+        "title": "Leonore Overture No. 3",
+        "composer": "2tfdUTvmRn1etYq5czTknE",
+        "why": "Printed 'Leonore Overture # 3, opus 72a'. The opus number is the same work's; it survives on the label."
+      },
+      "romeo-and-juliet": {
+        "id": "wrk-fantasy-overture-romeo-and-jul-d3629b",
+        "title": "Fantasy Overture, Romeo and Juliet",
+        "composer": "cmp-tchaikovsky-pyotr-ilyich",
+        "why": "Printed 'Overture - Fantasy \"Romeo and Juliet\"'. Same work, words reversed."
+      },
+      "merry-wives": {
+        "id": "wrk-overture-the-merry-wives-of-wi-fe5511",
+        "title": "Overture, The Merry Wives of Windsor",
+        "composer": "cmp-nicolai-otto",
+        "why": "Printed 'Overture to \"The Merry Wives of Windsor\"'. Nicolai's only work in the archive."
+      },
+      "mozart-violin-5": {
+        "id": "wrk-violin-concerto-no-5-in-a-majo-39368c",
+        "title": "Violin Concerto No. 5 in A Major",
+        "composer": "cmp-mozart-wolfgang-amadeus",
+        "why": "Printed 'Violin Concerto #5 (first movement)'. The complete work is reused and the item carries the qualification in its note -- Alex's call on 2026-08-31, over the alternative of a separate ', mvt I' Work. The space holds five such single-movement Works, so both readings had a precedent."
+      },
+      "weber-bassoon": {
+        "id": "wrk-bassoon-concerto-in-f-major-f74ac6",
+        "title": "Bassoon Concerto in F Major",
+        "composer": "cmp-von-weber-carl-maria",
+        "why": "Printed 'Bassoon Concerto #1 (first movement)'. Weber wrote one bassoon concerto and the archive holds it under its key rather than a number, so '#1' and 'in F Major' are the same piece. First movement only, noted on the item."
+      },
+      "theme-and-variations": {
+        "id": "wrk-theme-and-variations-suite-no-3",
+        "title": "\"Theme and Variations\", from Suite No. 3 in G Major",
+        "composer": "cmp-tchaikovsky-pyotr-ilyich",
+        "why": "Printed 'Theme and variations from Suite #3'. AWK-59 created this record for the 1993-07-26 program's item 13. See this object's note."
+      },
+      "poem-for-flute": {
+        "id": "wrk-poem-for-flute-and-orchestra-62bdc2",
+        "title": "Poem for Flute and Orchestra",
+        "composer": "cmp-griffes-charles",
+        "why": "Exact match."
+      },
+      "espana": {
+        "id": "wrk-espana-c9322b",
+        "title": "Espana",
+        "composer": "cmp-chabrier-emmanuel",
+        "why": "Printed '\"Espana\" Rhapsody'. The archive already tags it forms: ['Rhapsody'], so the printed word is the form, not part of the name. Chabrier's only work in the archive."
+      }
+    }
+  },
+
+  "composers": {
+    "note": [
+      "The two AWK-64 found absent, confirmed absent again on 2026-08-31 across",
+      "all 259 live Composers. Neither carries dates: the programs print none,",
+      "and this file records what the scans say.",
+      "",
+      "`period` is absent on purpose -- see the top note. Both have IMSLP pages,",
+      "so imslp_harvest.py should reach them."
+    ],
+    "cmp-piston-walter": {
+      "firstName": "Walter",
+      "lastName": "Piston",
+      "sortName": "Piston, Walter",
+      "slug": "piston-walter"
+    },
+    "cmp-david-ferdinand": {
+      "firstName": "Ferdinand",
+      "lastName": "David",
+      "sortName": "David, Ferdinand",
+      "slug": "david-ferdinand",
+      "why": "Not to be confused with the three live Composers a search for 'David' finds: Earnest, John David; Davidson, Charles; and Willcocks, David (arr.)."
+    }
+  },
+
+  "conductors": {
+    "note": [
+      "Both were Associate Conductor -- Deaver in 1992-93, Stickley in 1994-95 --",
+      "and each took exactly one item, which is the whole reason AWK-60 built",
+      "programItem.conductor. `slug` is deliberately absent; see the top note."
+    ],
+    "cnd-susan-deaver": { "firstName": "Susan", "lastName": "Deaver" },
+    "cnd-scott-stickley": { "firstName": "Scott", "lastName": "Stickley" }
+  },
+
+  "soloists": {
+    "note": [
+      "Five student soloists, none of them live. Every instrument here is already",
+      "in the space's vocabulary (Piano 23, Violin 26, Bassoon 8, Flute 6,",
+      "Trombone 6), so none introduces a new spelling. soloist.fullName is",
+      "space-wide unique and all five were free.",
+      "",
+      "Instruments come from each program's title page, which lists them; the",
+      "program page names the soloist without the instrument."
+    ],
+    "sol-thomas-jennings": {
+      "firstName": "Thomas",
+      "lastName": "Jennings",
+      "fullName": "Thomas Jennings",
+      "instrument": ["Piano"]
+    },
+    "sol-seth-abrams": {
+      "firstName": "Seth",
+      "lastName": "Abrams",
+      "fullName": "Seth Abrams",
+      "instrument": ["Violin"]
+    },
+    "sol-dickran-kazanjian": {
+      "firstName": "Dickran",
+      "lastName": "Kazanjian",
+      "fullName": "Dickran Kazanjian",
+      "instrument": ["Bassoon"]
+    },
+    "sol-jessica-hull": {
+      "firstName": "Jessica",
+      "lastName": "Hull",
+      "fullName": "Jessica Hull",
+      "instrument": ["Flute"]
+    },
+    "sol-terrence-fay": {
+      "firstName": "Terrence",
+      "lastName": "Fay",
+      "fullName": "Terrence Fay",
+      "instrument": ["Trombone"]
+    }
+  },
+
+  "works": {
+    "note": [
+      "The six genuinely new Works. Slugs are hand-written per ADR-0008 -- the",
+      "importer's hashed form is not an address anyone should ship -- and each was",
+      "checked against its composer's live slugs and against both patterns",
+      "app/lib/invariants.ts rejects. None contains `--`; none ends in six hex",
+      "characters (the near-miss shape that catches a title whose last word is",
+      "six letters from a-f).",
+      "",
+      "`period` and `forms` are absent on purpose. See the top note."
+    ],
+    "wrk-suite-from-the-ballet-the-incredible-flutist": {
+      "title": "Suite from the ballet \"The Incredible Flutist\"",
+      "slug": "suite-from-the-ballet-the-incredible-flutist",
+      "composer": "cmp-piston-walter",
+      "movement": [
+        "Introduction and Dance of the Vendors",
+        "Entrance of the Customers",
+        "Tango of the Merchant's Daughters",
+        "Arrival of the Circus",
+        "The Flutist",
+        "Minuet",
+        "Spanish Waltz",
+        "Siciliana",
+        "Polka Finale"
+      ]
+    },
+    "wrk-marche-ecossaise": {
+      "title": "Marche Ecossaise",
+      "slug": "marche-ecossaise",
+      "composer": "cmp-debussy-claude",
+      "why": "Printed without accents, and kept that way -- the archive's other Debussy titles are unaccented too (Prelude a l'apres midi d'un faune, Danse Sacree et Danse Profane). AWK-37 restored diacritics to composer NAMES, not to work titles."
+    },
+    "wrk-symphonic-metamorphosis-on-themes-of-carl-maria-von-weber": {
+      "title": "Symphonic Metamorphosis on Themes of Carl Maria von Weber",
+      "slug": "symphonic-metamorphosis-on-themes-of-carl-maria-von-weber",
+      "composer": "cmp-hindemith-paul",
+      "movement": ["Allegro", "Turandot: scherzo", "Moderato", "March"],
+      "why": "Hindemith's second work in the archive; the first is Nobilissima Visione. The title names Weber but the composer is Hindemith."
+    },
+    "wrk-rhapsody-in-blue": {
+      "title": "Rhapsody in Blue",
+      "slug": "rhapsody-in-blue",
+      "composer": "cmp-gershwin-george"
+    },
+    "wrk-hungarian-rhapsody-no-1": {
+      "title": "Hungarian Rhapsody No. 1",
+      "slug": "hungarian-rhapsody-no-1",
+      "composer": "cmp-liszt-franz",
+      "why": "Printed 'Hungarian Rhapsody #1'; normalised to `No.` per the top note. The archive already holds No. 2, as 'Hungarian Rhapsody No. 2 in D Minor'."
+    },
+    "wrk-concertino-for-trombone-and-orchestra": {
+      "title": "Concertino, for trombone and orchestra",
+      "slug": "concertino-for-trombone-and-orchestra",
+      "composer": "cmp-david-ferdinand"
+    }
+  },
+
+  "workMovements": {
+    "note": [
+      "Movements for a Work that already exists, kept apart from `works` because",
+      "the applier's semantics differ: this is a merge into an empty field on a",
+      "live record, not a creation. Franck's Symphony in D Minor holds movement:",
+      "[] today and the 1992-12-13 program prints all three, so the scan supplies",
+      "something the archive lacks.",
+      "",
+      "The applier writes this ONLY into an empty field. import_to_contentful.py",
+      "names movement lists as curated data it must never overwrite, and a",
+      "transcription is in no position to disagree with a curator."
+    ],
+    "wrk-symphony-in-d-minor-b515c4": {
+      "title": "Symphony in D Minor",
+      "movement": ["Lento; Allegro non troppo", "Allegretto", "Allegro non troppo"]
+    }
+  },
+
+  "concerts": {
+    "note": [
+      "Ids, titles and item ids follow AWK-59's 1993-07-26 exactly: cnc-YYYYMMDD,",
+      "a title of 'YYYY-MM-DD — LIYO' with an em dash, and pi-YYYYMMDD-N ordered",
+      "from 1. Program items are created fresh per Concert and never shared --",
+      "app/lib/invariants.ts fails a build where one item sits on two Concerts",
+      "more than 14 days apart, because a program item is one performance.",
+      "",
+      "attended is true on all three and satOut is empty on all three: Alex",
+      "played every item of every one, stated 2026-08-31. Unlike 1993-07-26,",
+      "these programs carry no visiting ensemble's blocks, so there is nothing",
+      "for satOut to hold.",
+      "",
+      "`conductor` is Dreiwitz on all three, and the two items he did not take",
+      "carry their own.",
+      "",
+      "`sourceNote` IS NOT WRITTEN TO CONTENTFUL, and that is not an oversight.",
+      "Each program's title page states which concert of which season it is and",
+      "that it began at 7:30 on a Sunday evening; the content model has nowhere to",
+      "put any of it. `concert.dateNote` exists but qualifies a DATE, and filling",
+      "it with a start time would be a misuse that then renders. So the fact is",
+      "kept here, in the committed record, and nowhere else -- exactly what AWK-59",
+      "did with Keith Glover compering on 1993-07-26.",
+      "",
+      "It is worth knowing because the season ordinals are the corroboration:",
+      "'first concert of the 1992-93 season' and '32nd Season' are how these dates",
+      "were assigned to sea-liyo-30 and sea-liyo-32 rather than guessed from the",
+      "year, and CONTEXT.md's LIYO numbering agrees from the other direction. The",
+      "test asserts all three carry one, so the key cannot quietly rot into the",
+      "dead weight it would otherwise look like.",
+      "",
+      "NO ITEM CARRIES `character`, AND ADDING ONE BACK WOULD BE A MISTAKE. The",
+      "field holds the non-instrument role a performer took -- the space's honest",
+      "examples are `Isolde`, `Dancer` and `Filmmaker` -- which is what",
+      "parse_archive.py means by it: the credit left over once the instrument",
+      "enumeration has claimed everything it recognises. An instrument belongs on",
+      "`soloist.instrument`, where these five already carry it.",
+      "",
+      "The first version of this file set `character` to the instrument on all",
+      "five, copying AWK-59's `pi-19930726-12`. That was the wrong precedent to",
+      "copy, and the audit that found it also found the corpus half-agreed: of the",
+      "seven live values predating this ticket, four were instruments or voice",
+      "types and three were roles. Alex chose on 2026-08-31 to make the field mean",
+      "one thing, so these five were cleared AND so was AWK-59's -- a one-off",
+      "correction outside this transcription, recorded here because it is the only",
+      "place that explains why `pi-19930726-12` changed under a different ticket's",
+      "name. The instrument is not lost: it is on the soloist, and in `credits`.",
+      "The test asserts no item here carries the field."
+    ],
+    "cnc-19921213": {
+      "title": "1992-12-13 — LIYO",
+      "date": "1992-12-13",
+      "season": "sea-liyo-30",
+      "hall": "4imlLd0XNZHEoNtyJC3EsD",
+      "orchestra": ["236YCHXmB2L4Dmz8qF8CSF"],
+      "conductor": "73DY0UqtWBtRpQquRp2MQG",
+      "attended": true,
+      "satOut": [],
+      "sourceNote": "30th Anniversary, first concert of the 1992-93 season. Sunday 7:30 PM.",
+      "program": [
+        {
+          "id": "pi-19921213-1",
+          "order": 1,
+          "label": "Carneval Overture",
+          "work": "wrk-carnival-overture-b8652b",
+          "composer": "cmp-dvorak-antonin",
+          "conductor": "cnd-susan-deaver"
+        },
+        {
+          "id": "pi-19921213-2",
+          "order": 2,
+          "label": "Norfolk Rhapsody #1",
+          "work": "wrk-norfolk-rhapsody-no-1-a75c93",
+          "composer": "2yf5d2rsZaK4cajB84pdFh"
+        },
+        {
+          "id": "pi-19921213-3",
+          "order": 3,
+          "label": "Suite from the ballet \"The Incredible Flutist\"",
+          "work": "wrk-suite-from-the-ballet-the-incredible-flutist",
+          "composer": "cmp-piston-walter"
+        },
+        {
+          "id": "pi-19921213-4",
+          "order": 4,
+          "label": "Symphony in D minor",
+          "work": "wrk-symphony-in-d-minor-b515c4",
+          "composer": "cmp-franck-cesar"
+        }
+      ]
+    },
+    "cnc-19930502": {
+      "title": "1993-05-02 — LIYO",
+      "date": "1993-05-02",
+      "season": "sea-liyo-30",
+      "hall": "4imlLd0XNZHEoNtyJC3EsD",
+      "orchestra": ["236YCHXmB2L4Dmz8qF8CSF"],
+      "conductor": "73DY0UqtWBtRpQquRp2MQG",
+      "attended": true,
+      "satOut": [],
+      "sourceNote": "30th Anniversary, third program of the 1992-93 season. Sunday 7:30 PM.",
+      "program": [
+        {
+          "id": "pi-19930502-1",
+          "order": 1,
+          "label": "Leonore Overture # 3, opus 72a",
+          "work": "wrk-leonore-overture-no-3-8e5797",
+          "composer": "2tfdUTvmRn1etYq5czTknE"
+        },
+        {
+          "id": "pi-19930502-2",
+          "order": 2,
+          "label": "Marche Ecossaise",
+          "work": "wrk-marche-ecossaise",
+          "composer": "cmp-debussy-claude"
+        },
+        {
+          "id": "pi-19930502-3",
+          "order": 3,
+          "label": "Symphonic Metamorphosis on Themes of Carl Maria von Weber",
+          "work": "wrk-symphonic-metamorphosis-on-themes-of-carl-maria-von-weber",
+          "composer": "cmp-hindemith-paul"
+        },
+        {
+          "id": "pi-19930502-4",
+          "order": 4,
+          "label": "Rhapsody in Blue",
+          "work": "wrk-rhapsody-in-blue",
+          "composer": "cmp-gershwin-george",
+          "soloists": ["sol-thomas-jennings"],
+          "credits": ["Thomas Jennings, Piano"]
+        },
+        {
+          "id": "pi-19930502-5",
+          "order": 5,
+          "label": "Overture - Fantasy \"Romeo and Juliet\"",
+          "work": "wrk-fantasy-overture-romeo-and-jul-d3629b",
+          "composer": "cmp-tchaikovsky-pyotr-ilyich"
+        }
+      ]
+    },
+    "cnc-19950611": {
+      "title": "1995-06-11 — LIYO",
+      "date": "1995-06-11",
+      "season": "sea-liyo-32",
+      "hall": "4imlLd0XNZHEoNtyJC3EsD",
+      "orchestra": ["236YCHXmB2L4Dmz8qF8CSF"],
+      "conductor": "73DY0UqtWBtRpQquRp2MQG",
+      "attended": true,
+      "satOut": [],
+      "sourceNote": "32nd Season, fourth concert of the 1994/95 season. Sunday 7:30 PM.",
+      "program": [
+        {
+          "id": "pi-19950611-1",
+          "order": 1,
+          "label": "Overture to \"The Merry Wives of Windsor\"",
+          "work": "wrk-overture-the-merry-wives-of-wi-fe5511",
+          "composer": "cmp-nicolai-otto"
+        },
+        {
+          "id": "pi-19950611-2",
+          "order": 2,
+          "label": "Violin Concerto #5 (first movement)",
+          "work": "wrk-violin-concerto-no-5-in-a-majo-39368c",
+          "composer": "cmp-mozart-wolfgang-amadeus",
+          "soloists": ["sol-seth-abrams"],
+          "credits": ["Seth Abrams, Violin"],
+          "note": "First movement only."
+        },
+        {
+          "id": "pi-19950611-3",
+          "order": 3,
+          "label": "Bassoon Concerto #1 (first movement)",
+          "work": "wrk-bassoon-concerto-in-f-major-f74ac6",
+          "composer": "cmp-von-weber-carl-maria",
+          "soloists": ["sol-dickran-kazanjian"],
+          "credits": ["Dickran Kazanjian, Bassoon"],
+          "note": "First movement only."
+        },
+        {
+          "id": "pi-19950611-4",
+          "order": 4,
+          "label": "Theme and variations from Suite #3",
+          "work": "wrk-theme-and-variations-suite-no-3",
+          "composer": "cmp-tchaikovsky-pyotr-ilyich"
+        },
+        {
+          "id": "pi-19950611-5",
+          "order": 5,
+          "label": "Hungarian Rhapsody #1",
+          "work": "wrk-hungarian-rhapsody-no-1",
+          "composer": "cmp-liszt-franz",
+          "conductor": "cnd-scott-stickley"
+        },
+        {
+          "id": "pi-19950611-6",
+          "order": 6,
+          "label": "Poem for Flute and Orchestra",
+          "work": "wrk-poem-for-flute-and-orchestra-62bdc2",
+          "composer": "cmp-griffes-charles",
+          "soloists": ["sol-jessica-hull"],
+          "credits": ["Jessica Hull, Flute"]
+        },
+        {
+          "id": "pi-19950611-7",
+          "order": 7,
+          "label": "Concertino, for trombone and orchestra",
+          "work": "wrk-concertino-for-trombone-and-orchestra",
+          "composer": "cmp-david-ferdinand",
+          "soloists": ["sol-terrence-fay"],
+          "credits": ["Terrence Fay, Trombone"]
+        },
+        {
+          "id": "pi-19950611-8",
+          "order": 8,
+          "label": "\"Espana\" Rhapsody",
+          "work": "wrk-espana-c9322b",
+          "composer": "cmp-chabrier-emmanuel"
+        }
+      ]
+    }
+  },
+
+  "guards": {
+    "note": [
+      "Counts the test asserts, so a hand edit that drops or doubles something",
+      "fails rather than applying quietly. AGENTS.md's standing instruction about",
+      "counts applies to these too: they are asserted here, so they cannot go",
+      "stale the way a number in prose does.",
+      "",
+      "`worksReused` plus `worksCreated` is 17 only by coincidence of this",
+      "transcription -- 11 reused works serve 11 items and 6 new ones serve 6."
+    ],
+    "concerts": 3,
+    "programItems": 17,
+    "worksCreated": 6,
+    "worksReused": 11,
+    "workMovementsMerged": 1,
+    "composersCreated": 2,
+    "composersReused": 14,
+    "conductorsCreated": 2,
+    "soloistsCreated": 5,
+    "itemsWithOwnConductor": 2,
+    "itemsWithSoloists": 5,
+    "entriesCreated": 35
+  }
+}

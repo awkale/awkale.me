@@ -572,6 +572,79 @@ check whether Sibelius should read Romantic or Early 20th century; those five
 two-era composers are judgement calls, and the test only asserts that whatever
 was chosen is one of the two IMSLP actually files.
 
+## The Tilles Center transcription — AWK-64
+
+Three scanned Long Island Youth Orchestra programs — 1992-12-13, 1993-05-02 and
+1995-06-11 — written into the space by `transcribe_programs.py` from
+`tilles-center-programs.json`. Ran 2026-08-31: 35 entries created, one merged,
+all published. The space went from two LIYO Concerts to five.
+
+**The declaration is DECIDED and never regenerated**, in the sense
+`period-and-forms.json` is. The sources are image-only scans with no text layer;
+nothing derives this file, there is no parser to re-run, and re-reading it means
+rendering two pages by eye. A correction to it is the only record of that
+correction. (To read the scans, extract the embedded `DCTDecode` streams — each
+page *is* a JPEG, and no renderer is installed here.)
+
+Four things about it are worth knowing before running it.
+
+**Eleven of the seventeen program lines were already in the space, and the
+ticket said to create all seventeen.** Works are shared across Concerts — 649 of
+them serve 253 Concerts — so a Work is looked up before it is created, and only
+six were new. This is not an optimisation. Creating all seventeen would have
+written a second `"Theme and Variations", from Suite No. 3 in G Major` under
+Tchaikovsky, colliding with the one AWK-59 made for the 1993-07-26 program and
+failing `work-slug-unique-per-composer` at build time — the guard that replaced
+`work.slug`'s `unique` when AWK-37 dropped it. The eleven reused ids live under
+`reuse.works`, each with a `why` recording how the printed line was identified.
+
+**The program's wording lives on `programItem.label`, not on the Work.** ADR-0006
+makes a Work the composition as performed and the ticket said to keep the printed
+wording, but a reused Work already carries a title written for a different
+concert. Both hold at once because `app/lib/archive.ts` resolves an item as
+`label ?? work.title`. So 1992-12-13 item 1 reads **Carneval Overture** while the
+Work it links stays **Carnival Overture**; the scan says one, the archive has said
+the other since the import, and neither is corrected to match.
+
+**The pre-flight is the interesting half of the script.** Before any write it
+resolves all 31 reused ids and aborts on three conditions — the id resolves to
+nothing, to a different content type, or to an entry whose live name no longer
+matches the declaration. That last one is the checked redundancy this file
+describes for `seed_period_and_forms.py`'s curated work ids, and it earned itself
+immediately: `Franck, Cesar` became `Franck, César` when the period seed restored
+his diacritic an hour later. It then re-checks all six new slugs against their
+composer's live works, which is the half `tilles-center-programs.test.ts` cannot
+do offline.
+
+**Period and form are deliberately absent from the new records.** ADR-0007 keeps
+every form judgement in `period-and-forms.json` and lets Form stay incomplete, so
+the applier writes neither. Period arrives on its own — run `imslp_harvest.py`
+then `seed_period_and_forms.py` afterwards. **The harvest needs `--refresh`
+here**: it caches the Delivery API read in `.imslp-cache/archive.json`, so a
+plain re-run after a transcription reports the *previous* scope and matches none
+of the new composers. Partial invalidation does not work either, because
+`eras.json`, `members.json` and `work-categories.json` are all keyed off the
+resolved composer set.
+
+**`programItem.character` is for a role, not an instrument**, and this
+transcription got that wrong first time. The field holds the credit left over
+once `parse_archive.py`'s instrument enumeration has claimed what it recognises —
+`Isolde`, `Dancer`, `Filmmaker` — while the instrument belongs on
+`soloist.instrument`. All five of AWK-64's soloist items set it to the instrument,
+copying AWK-59's `pi-19930726-12`; both were cleared on 2026-08-31 so the field
+means one thing. Three live values elsewhere in the space (`Piccolo`, `Organ`,
+`Bass-Baritone`) are still instruments and were left alone — they belong to other
+tickets.
+
+`tilles-center-programs.test.ts` asserts the FILE: contiguous orders, ids unique
+and following AWK-59's naming, every link resolving to something the declaration
+declares, each soloist's `credits` string agreeing with their own record, no item
+restating an instrument as a `character`, and no slug in either shape ADR-0008
+rejects. Its last pass builds an `ArchiveShape` out
+of the declaration and runs the build's own `findViolations` over it, so the
+transcription is checked by the same code that would fail the build — and a rule
+added to `app/lib/invariants.ts` later starts guarding this file for free.
+
 ## Usage
 
 ```bash
