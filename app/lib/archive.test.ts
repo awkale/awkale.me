@@ -575,8 +575,51 @@ describe('concert detail', () => {
     expect(archive.concerts[0]).toMatchObject({
       hall: 'Walt Whitman Hall',
       conductor: 'Nicholas Armstrong',
-      orchestras: ['Brooklyn Symphony Orchestra'],
+      orchestras: [{ name: 'Brooklyn Symphony Orchestra', abbreviation: 'BSO' }],
     })
+  })
+
+  it('carries both registers of the orchestra name, so each surface picks its own (AWK-70)', async () => {
+    // BOTH, not one. The concert page spells the orchestra out in a subtitle with
+    // room for it; the concerts table renders it in a column where 126 of 127 rows
+    // are three or four characters. Neither is the other's truncation, so the
+    // record carries the pair and the surface chooses — rather than one string
+    // that is wrong on one of the two pages.
+    space.orchestra.push(entry('orchestra', 'orc-liyo', { name: 'Long Island Youth Orchestra', abbreviation: 'LIYO' }))
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, orchestra: [link('orc-bso'), link('orc-liyo')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].orchestras).toEqual([
+      { name: 'Brooklyn Symphony Orchestra', abbreviation: 'BSO' },
+      { name: 'Long Island Youth Orchestra', abbreviation: 'LIYO' },
+    ])
+  })
+
+  it('leaves the abbreviation null when the orchestra carries none', async () => {
+    // `abbreviation` is `required: false` on the content type, so the next
+    // orchestra anyone adds arrives without one. The name is never null — that is
+    // what makes it the reader's fallback — and the table falls back to it rather
+    // than rendering a blank cell for a concert that plainly had an orchestra.
+    space.orchestra.push(entry('orchestra', 'orc-nassau', { name: 'All-Nassau County Elementary Orchestra' }))
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, orchestra: [link('orc-nassau')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].orchestras).toEqual([
+      { name: 'All-Nassau County Elementary Orchestra', abbreviation: null },
+    ])
+  })
+
+  it('drops an orchestra whose link does not resolve rather than naming its id', async () => {
+    // Same call as `Performance.orchestra` (AWK-72), for the same reason: an
+    // unresolvable link reaching a visitor as a Contentful id is line noise. The
+    // invariant shape still ends at the id, where a person can look it up.
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, orchestra: [link('orc-unpublished')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].orchestras).toEqual([])
   })
 
   it('tolerates the one played concert with no conductor recorded', async () => {

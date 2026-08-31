@@ -46,7 +46,7 @@ export default function Concert({ loaderData }: Route.ComponentProps) {
         <p className="kicker">Concert</p>
         <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">{formatDate(concert.date)}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {[concert.hall, concert.conductor, ...concert.orchestras].filter(Boolean).join(' · ')}
+          {[concert.hall, concert.conductor, ...concert.orchestras.map((o) => o.name)].filter(Boolean).join(' · ')}
         </p>
 
         <table className="mt-6 w-full border-collapse text-[0.8rem]">

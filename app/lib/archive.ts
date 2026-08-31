@@ -81,7 +81,11 @@ type WorkFields = {
 type ComposerFields = { firstName: string; lastName: string; sortName: string; slug: string; period: string }
 type HallFields = { name: string; slug: string }
 type ConductorFields = { firstName: string; lastName: string; slug?: string }
-type OrchestraFields = { name: string; abbreviation: string }
+// `abbreviation` is `required: false` on the content type, verified against it
+// rather than assumed (AWK-72), so it is genuinely absent on an orchestra nobody
+// has given one. Typed optional so every reader has to say what it does about
+// that, instead of a cast at each site.
+type OrchestraFields = { name: string; abbreviation?: string }
 type RecordingFields = { url: string; label: string; kind: string; concert: Link; programItem: Link }
 type ProjectFields = {
   title: string
@@ -142,7 +146,19 @@ export type Concert = {
   date: string
   hall: string | null
   conductor: string | null
-  orchestras: string[]
+  /**
+   * BOTH REGISTERS OF THE NAME, because the two surfaces that read this want
+   * different ones (AWK-70). The concert page spells it out in a subtitle with room
+   * for `Brooklyn Symphony Orchestra`; the concerts table renders it in a column
+   * where 126 of 127 rows are three or four characters and wants `BSO`. Neither is
+   * the other's truncation, so the record carries the pair and the reader chooses.
+   *
+   * `name` is never null — it is what makes it the fallback when `abbreviation` is
+   * unset, which is allowed on the content type. An orchestra whose link does not
+   * resolve is absent from the list entirely rather than named by its id; see the
+   * chain on `Performance.orchestra` for why a visitor never reads one.
+   */
+  orchestras: { name: string; abbreviation: string | null }[]
   /** Only what he played — a sat-out item is omitted, never marked (ADR-0006). */
   program: ProgramEntry[]
   recordings: Recording[]
@@ -665,8 +681,8 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       hall,
       conductor,
       orchestras: linkIds(concert.fields.orchestra)
-        .map((id) => orchestraById.get(id)?.fields.name)
-        .filter((n): n is string => Boolean(n)),
+        .map((id) => orchestraById.get(id))
+        .flatMap((o) => (o?.fields.name ? [{ name: o.fields.name, abbreviation: o.fields.abbreviation ?? null }] : [])),
       program: program.sort((a, b) => a.order - b.order),
       // A SAT-OUT ITEM'S RECORDING IS DROPPED WITH THE ITEM. The invariant only
       // requires `programItem ∈ program`, which a sat-out item still satisfies —
