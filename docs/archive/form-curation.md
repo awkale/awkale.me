@@ -1,6 +1,14 @@
-# Form curation — the 104 works nothing can answer for
+# Form curation — the 109 works nothing can answer for
 
-Generated under AWK-37 from the live space. **A worksheet, not an input** —
+Generated under AWK-37 from the live space, and regenerated under AWK-64, which
+added five: the new Works of the three Tilles Center LIYO programs that no
+automatic route could file. The sixth, Piston's *Suite from the ballet "The
+Incredible Flutist"*, is absent because the derived `Excerpt` rule caught its
+title — which is the rule doing its job, not a form judgement anyone made.
+Regenerating found no row that had gone stale; all 104 of AWK-37's still carry
+zero forms.
+
+**A worksheet, not an input** —
 nothing reads this file, and the seed does not consult it. Fill a row in by
 adding the work to a bucket in `workForms` in
 `scripts/contentful/period-and-forms.json`, then re-run the seed.
@@ -8,7 +16,7 @@ adding the work to a bucket in `workForms` in
 These are the works that end up with **zero** forms after every automatic route
 has run: the retired `genre` mapping, the IMSLP harvest, and the derived
 `Excerpt` rule. ADR-0007 is explicit that assigning them is taste rather than
-data entry — doing it is "inventing a category for *Boléro*", 104 times — and
+data entry — doing it is "inventing a category for *Boléro*", 109 times — and
 equally explicit that **nothing in the spec is blocked on them**. Period carries
 the browse load and Form is permitted to stay incomplete, so an empty row here
 is a decided state, not a defect.
@@ -50,8 +58,10 @@ rather than dropped.
 | Copland, Aaron | Rodeo: Four Dance Episodes | `wrk-rodeo-four-dance-episodes-f5f13f` |
 | Cowan, Marie | Waltzing Matilda | `wrk-waltzing-matilda` |
 | Cowell, Henry | Hymn and Fuguing Tune No. 3 | `wrk-hymn-and-fuguing-tune-no-3-2c0f0c` |
+| David, Ferdinand | Concertino, for trombone and orchestra | `wrk-concertino-for-trombone-and-orchestra` |
 | Debussy, Claude | Danse Sacree et Danse Profane | `wrk-danse-sacree-et-danse-profane-2fba35` |
 | Debussy, Claude | Images pour Orchestre, No. 2 "Iberia" | `wrk-images-pour-orchestre-no-2-ibe-383379` |
+| Debussy, Claude | Marche Ecossaise | `wrk-marche-ecossaise` |
 | Del Borgo, Elliot | Petite Overture | `5YEj92lOrzdwen2auHp0JP` |
 | Delius, Frederick | Sleigh Ride | `wrk-sleigh-ride-2805ce` |
 | Delius, Frederick | The Walk to the Paradise Garden | `wrk-the-walk-to-the-paradise-garde-a5cc9d` |
@@ -66,6 +76,7 @@ rather than dropped.
 | Faure, Gabriel | Pavane for Orchestra | `wrk-pavane-for-orchestra-f79d04` |
 | Frank, Gabriela Lena | Three Latin American Dances | `wrk-three-latin-american-dances-964215` |
 | Gershwin, George | Porgy and Bess: A Symphonic Picture | `wrk-porgy-and-bess-a-symphonic-pic-26550e` |
+| Gershwin, George | Rhapsody in Blue | `wrk-rhapsody-in-blue` |
 | Greenhoe, Eli | "Sojourn" for Chamber Orchestra | `wrk-sojourn-for-chamber-orchestra-e590c7` |
 | Greenhoe, Eli | Learning to Dance | `wrk-learning-to-dance-f76f89` |
 | Griffes, Charles | Poem for Flute and Orchestra | `wrk-poem-for-flute-and-orchestra-62bdc2` |
@@ -73,10 +84,12 @@ rather than dropped.
 | Gustavson, Mark | Hymn to the Vanished | `542oxPwDnDOCKEQ7pDIXJr` |
 | Haydn, Franz Joseph | The Creation | `wrk-the-creation-fd7c46` |
 | Hindemith, Paul | Nobilissima Visione | `wrk-nobilissima-visione-b3313c` |
+| Hindemith, Paul | Symphonic Metamorphosis on Themes of Carl Maria von Weber | `wrk-symphonic-metamorphosis-on-themes-of-carl-maria-von-weber` |
 | Holst, Gustav | The Planets, 5 mvts | `wrk-the-planets-5-mvts-ce17cb` |
 | Honegger, Arthur | Mouvement Symphonique No. 1: Pacific 231 | `wrk-mouvement-symphonique-no-1-pac-1e3fdb` |
 | Kempton, Jeremy Niles | Ricercar for Sonorous Instruments | `wrk-ricercar-for-sonorous-instrume-ed9460` |
 | Kennan, Kent | Night Soliloquy | `wrk-night-soliloquy-507f8a` |
+| Liszt, Franz | Hungarian Rhapsody No. 1 | `wrk-hungarian-rhapsody-no-1` |
 | Liszt, Franz | Les Preludes (d'apres Lamartine) | `wrk-les-preludes-d-apres-lamartine-2a1468` |
 | Mackey, John | Redline Tango | `wrk-redline-tango-6f46e6` |
 | Mahler, Gustav | Das Lied von der Erde | `wrk-das-lied-von-der-erde-86e602` |

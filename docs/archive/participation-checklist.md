@@ -883,16 +883,19 @@ ensembles* rather than by the orchestra, and the Concert entry holds the whole
 program as printed. Those items are ticked — they are `satOut` in Contentful and
 so are omitted from the rendered page — but the tick records "another ensemble
 performed this", not a work Alex declined. Ten of the seventeen items on
-1993-07-26 are that.
+1993-07-26 are that, and **it is the only Concert here where any of it applies**:
+the three Tilles Center programs are the orchestra's own subscription concerts,
+carry no visiting ensemble, and hold no `satOut` at all.
 
-**This section is incomplete by construction.** Two Concerts are known. The rest
+**This section is incomplete by construction.** Five Concerts are known. The rest
 of Seasons 29 to 32 is undocumented here — absent from `Wikipedia BSO Archive.xlsx`,
 absent from `bso-graph.json`, and represented by no program in `docs/archive/`.
-Do not read the two entries below as the whole of what Alex played at this
+Do not read the five entries below as the whole of what Alex played at this
 orchestra. Add Concerts as sources appear.
 
-A Program is listed only where a source has been transcribed. 1993-07-26 has
-been, under AWK-59; 1992-06-14 has not.
+A Program is listed only where a source has been transcribed. Four have been —
+1993-07-26 under AWK-59, and the three Tilles Center dates under AWK-64. Only
+1992-06-14 has not, and it is the one with no source in this repository.
 
 ## Season 29 — 1991–1992
 
@@ -902,6 +905,32 @@ been, under AWK-59; 1992-06-14 has not.
     own record.*
 
 ## Season 30 — 1992–1993
+
+### 1992-12-13 · Sun · Tilles Center, Brookville · Martin Dreiwitz (LIYO)
+- [ ] missed whole concert
+  - [ ] 1. Dvorak — Carneval Overture
+  - [ ] 2. Vaughan Williams — Norfolk Rhapsody #1
+  - [ ] 3. Piston — Suite from the ballet "The Incredible Flutist"
+  - [ ] 4. Franck — Symphony in D minor
+  - *Transcribed from `docs/archive/program-19921213-liyo-tilles-center.pdf`
+    under AWK-64. The 30th Anniversary season's first concert. **Susan Deaver
+    conducted item 1** as Associate Conductor and Martin Dreiwitz the rest, which
+    is `programItem.conductor`'s second use. Titles are the program's own
+    wording: it prints "Carneval", and the Work it links has been "Carnival
+    Overture" since the import. The Piston suite's nine movements and the
+    Franck's three are recorded on the Works.*
+
+### 1993-05-02 · Sun · Tilles Center, Brookville · Martin Dreiwitz (LIYO)
+- [ ] missed whole concert
+  - [ ] 1. van Beethoven — Leonore Overture # 3, opus 72a
+  - [ ] 2. Debussy — Marche Ecossaise
+  - [ ] 3. Hindemith — Symphonic Metamorphosis on Themes of Carl Maria von Weber
+  - [ ] 4. Gershwin — Rhapsody in Blue
+  - [ ] 5. Tchaikovsky — Overture - Fantasy "Romeo and Juliet"
+  - *Transcribed from `docs/archive/program-19930502-liyo-tilles-center.pdf`
+    under AWK-64. The same season's third program. Dreiwitz conducted
+    throughout. **Thomas Jennings, piano**, soloed in the Rhapsody in Blue. The
+    Hindemith's four movements are recorded on the Work.*
 
 ### 1993-07-26 · Mon · Dallas Brooks Hall, Melbourne · Martin Dreiwitz (LIYO)
 - [ ] missed whole concert
@@ -929,3 +958,25 @@ been, under AWK-59; 1992-06-14 has not.
     choirs and orchestra; Bruce Worland conducted 15 and 16, Martin Dreiwitz the
     rest of the orchestra's program. Keith Glover compered; the content model has
     nowhere to record that.*
+
+## Season 32 — 1994–1995
+
+### 1995-06-11 · Sun · Tilles Center, Brookville · Martin Dreiwitz (LIYO)
+- [ ] missed whole concert
+  - [ ] 1. Nicolai — Overture to "The Merry Wives of Windsor"
+  - [ ] 2. Mozart — Violin Concerto #5 (first movement)
+  - [ ] 3. von Weber — Bassoon Concerto #1 (first movement)
+  - [ ] 4. Tchaikovsky — Theme and variations from Suite #3
+  - [ ] 5. Liszt — Hungarian Rhapsody #1
+  - [ ] 6. Griffes — Poem for Flute and Orchestra
+  - [ ] 7. David — Concertino, for trombone and orchestra
+  - [ ] 8. Chabrier — "Espana" Rhapsody
+  - *Transcribed from `docs/archive/program-19950611-liyo-tilles-center.pdf`
+    under AWK-64. The 32nd Season's fourth concert. **Scott Stickley conducted
+    item 5** as Associate Conductor and Martin Dreiwitz the rest —
+    `programItem.conductor`'s third use. Four student soloists: Seth Abrams
+    (violin, 2), Dickran Kazanjian (bassoon, 3), Jessica Hull (flute, 6) and
+    Terrence Fay (trombone, 7). Items 2 and 3 were first movements only, which is
+    recorded on the Program items rather than as separate Works — the complete
+    Works are linked and the qualification sits on the performance. Item 4 is the
+    same Work as 1993-07-26's item 13, reused rather than duplicated.*
