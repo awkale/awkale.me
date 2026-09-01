@@ -11,10 +11,10 @@
   ],
   "harvestedAt": "2026-09-01",
   "counts": {
-    "worksInScope": 351,
-    "composersInScope": 157,
-    "composersMatched": 116,
-    "composersWithOneEra": 111,
+    "worksInScope": 358,
+    "composersInScope": 158,
+    "composersMatched": 117,
+    "composersWithOneEra": 112,
     "composersWithSeveralEras": [
       "Hindemith, Paul",
       "Schubert, Franz",
@@ -23,8 +23,8 @@
       "Strauss, Richard"
     ],
     "composersUnmatched": 1,
-    "worksMatched": 120,
-    "worksWithHarvestedForms": 32
+    "worksMatched": 121,
+    "worksWithHarvestedForms": 34
   },
   "composers": {
     "1fMmco9iSJOaiQpUxfUqG8": {
@@ -139,12 +139,6 @@
       "sortName": "Bach, Johann Sebastian",
       "imslpPage": "Bach, Johann Sebastian",
       "eras": ["Baroque"],
-      "canonicalName": null
-    },
-    "cmp-bach-johann-sebastian-arr-by-stokowski": {
-      "sortName": "Bach, Johann Sebastian (arr. by Stokowski)",
-      "imslpPage": null,
-      "eras": [],
       "canonicalName": null
     },
     "cmp-barber-samuel": {
@@ -351,6 +345,12 @@
       "eras": ["Early 20th century"],
       "canonicalName": null
     },
+    "cmp-diamond-david": {
+      "sortName": "Diamond, David",
+      "imslpPage": null,
+      "eras": [],
+      "canonicalName": null
+    },
     "cmp-donizetti-gaetano": {
       "sortName": "Donizetti, Gaetano",
       "imslpPage": "Donizetti, Gaetano",
@@ -481,6 +481,12 @@
       "sortName": "Gurria-Cardenas, Jose",
       "imslpPage": null,
       "eras": [],
+      "canonicalName": null
+    },
+    "cmp-handel-george-frideric": {
+      "sortName": "Handel, George Frideric",
+      "imslpPage": "Handel, George Frideric",
+      "eras": ["Baroque"],
       "canonicalName": null
     },
     "cmp-hause-evan": {
@@ -1193,6 +1199,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-ancient-airs-and-dances-suite-no-3": {
+      "title": "Ancient Airs and Dances, Suite No. 3",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "wrk-andalucia-suite-07c4b3": {
       "title": "Andalucia Suite",
       "imslpPage": null,
@@ -1286,6 +1298,12 @@
     "wrk-brandenburg-concerto-no-1-in-f-c174aa": {
       "title": "Brandenburg Concerto No. 1 in F Major",
       "imslpPage": "Brandenburg Concerto No.1 in F major, BWV 1046 (Bach, Johann Sebastian)",
+      "styles": [],
+      "forms": []
+    },
+    "wrk-brook-green-suite": {
+      "title": "Brook Green Suite",
+      "imslpPage": null,
       "styles": [],
       "forms": []
     },
@@ -1556,8 +1574,8 @@
     "wrk-double-concerto-in-e-minor-8b1a97": {
       "title": "Double Concerto in E Minor",
       "imslpPage": "Double Concerto in E minor, Op.88 (Bruch, Max)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-el-salon-mexico-cc2afd": {
       "title": "El Salon Mexico",
@@ -1598,8 +1616,8 @@
     "wrk-fantasia-on-a-theme-by-thomas-4d47a6": {
       "title": "Fantasia on a Theme by Thomas Tallis",
       "imslpPage": "Fantasia on a Theme by Thomas Tallis (Vaughan Williams, Ralph)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Fantasia"]
     },
     "wrk-fantasy-overture-romeo-and-jul-d3629b": {
       "title": "Fantasy Overture, Romeo and Juliet",
@@ -1616,6 +1634,12 @@
     "wrk-festive-overture-814ca6": {
       "title": "Festive Overture",
       "imslpPage": "Festive Overture, Op.96 (Shostakovich, Dmitry)",
+      "styles": [],
+      "forms": []
+    },
+    "wrk-fiddle-faddle": {
+      "title": "Fiddle Faddle",
+      "imslpPage": "Fiddle Faddle (Anderson, Leroy)",
       "styles": [],
       "forms": []
     },
@@ -1682,8 +1706,8 @@
     "wrk-horn-concerto-no-1-in-e-flat-m-b1037f": {
       "title": "Horn Concerto No. 1 in E-flat Major",
       "imslpPage": "Horn Concerto No.1, Op.11 (Strauss, Richard)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-horse-power-ballet-symphony-9cb7e8": {
       "title": "Horse-Power: Ballet Symphony",
@@ -1749,7 +1773,7 @@
       "title": "Kammersymphonie No. 1 in E Major",
       "imslpPage": "Kammersymphonie No.1, Op.9 (Schoenberg, Arnold)",
       "styles": ["Early 20th century"],
-      "forms": []
+      "forms": ["Symphony"]
     },
     "wrk-kindertotenlieder-59801d": {
       "title": "Kindertotenlieder",
@@ -2057,6 +2081,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-overture-to-the-messiah": {
+      "title": "Overture to The Messiah",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "wrk-overture-to-the-song-of-hiawat-aca48a": {
       "title": "Overture to The Song of Hiawatha",
       "imslpPage": null,
@@ -2114,14 +2144,14 @@
     "wrk-piano-concerto-in-a-minor-99b742": {
       "title": "Piano Concerto in A Minor",
       "imslpPage": "Piano Concerto, Op.54 (Schumann, Robert)",
-      "styles": ["Romantic"],
-      "forms": ["Concerto"]
+      "styles": [],
+      "forms": []
     },
     "wrk-piano-concerto-in-a-minor-ca2d07": {
       "title": "Piano Concerto in A Minor",
       "imslpPage": "Piano Concerto, Op.16 (Grieg, Edvard)",
-      "styles": ["Romantic"],
-      "forms": ["Concerto"]
+      "styles": [],
+      "forms": []
     },
     "wrk-piano-concerto-no-1-in-b-flat-d48783": {
       "title": "Piano Concerto No. 1 in B-flat Minor",
@@ -2291,6 +2321,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-rounds-for-string-orchestra": {
+      "title": "Rounds for String Orchestra",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "wrk-russian-easter-overture-947fb9": {
       "title": "Russian Easter Overture",
       "imslpPage": null,
@@ -2341,6 +2377,18 @@
     },
     "wrk-sensemaya-the-snake-killing-ri-4096c8": {
       "title": "Sensemaya (\"The Snake Killing Ritual\")",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
+    "wrk-serenade-eine-kleine-nachtmusik": {
+      "title": "Serenade (\"Eine Kleine Nachtmusik\")",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
+    "wrk-serenade-for-strings": {
+      "title": "Serenade for Strings",
       "imslpPage": null,
       "styles": [],
       "forms": []
@@ -2624,14 +2672,14 @@
     "wrk-symphony-no-3-in-e-flat-major-4dabf8": {
       "title": "Symphony No. 3 in E-flat Major (\"Eroica\")",
       "imslpPage": "Symphony No.3, Op.55 (Beethoven, Ludwig van)",
-      "styles": [],
+      "styles": ["Classical"],
       "forms": []
     },
     "wrk-symphony-no-3-in-f-major-4ab5f4": {
       "title": "Symphony No. 3 in F Major",
       "imslpPage": "Symphony No.3, Op.90 (Brahms, Johannes)",
       "styles": ["Romantic"],
-      "forms": []
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-36-in-c-major-linz-e203dd": {
       "title": "Symphony No. 36 in C Major (\"Linz\")",
@@ -2739,12 +2787,12 @@
       "title": "Symphony No. 6 in F Major (\"Pastoral\")",
       "imslpPage": "Symphony No.6, Op.68 (Beethoven, Ludwig van)",
       "styles": ["Classical"],
-      "forms": ["Symphony"]
+      "forms": []
     },
     "wrk-symphony-no-7-in-a-major-75ecbc": {
       "title": "Symphony No. 7 in A Major",
       "imslpPage": "Symphony No.7, Op.92 (Beethoven, Ludwig van)",
-      "styles": ["Classical"],
+      "styles": [],
       "forms": []
     },
     "wrk-symphony-no-7-in-d-minor-1ae1d1": {
@@ -3080,7 +3128,7 @@
   },
   "unmatched": [
     {
-      "sortName": "Bach, Johann Sebastian (arr. by Stokowski)",
+      "sortName": "Diamond, David",
       "candidates": []
     }
   ]
