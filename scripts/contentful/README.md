@@ -114,13 +114,31 @@ ADR-0007's last step, and the only gated step whose precondition this script can
 verify. The other four name a test or a backfill it cannot see, so their prompt
 is the operator's word; this one is a live count.
 
-**The gate is: no Work may hold a `genre` without holding `forms`.** The script
-reads every Work over the CMA and refuses above zero, because a field is the only
-record of its own data and a deleted one cannot be re-derived — ADR-0007 says so
-in as many words. It was not zero by default: AWK-37's seed is scoped to the
-played Works, so measured live on 2026-09-01, 203 of the 430 Works carrying a
-`genre` were out of scope and held no `forms` at all. Closing that gap is
-`seed_period_and_forms.py --all-works`, below.
+**The gate is: no Work may hold a `genre` without holding a PUBLISHED `forms`.**
+The script reads every Work over the CMA and refuses above zero, because a field
+is the only record of its own data and a deleted one cannot be re-derived —
+ADR-0007 says so in as many words. It was not zero by default: AWK-37's seed is
+scoped to the played Works, so measured live on 2026-09-01, 203 of the 430 Works
+carrying a `genre` were out of scope and held no `forms` at all. Closing that gap
+is `seed_period_and_forms.py --all-works`, below.
+
+Three things make that check trustworthy rather than decorative, and each closes
+a way it could have passed on nothing:
+
+* **The CMA returns the DRAFT.** A Work whose `forms` sits in an unpublished
+  draft is *not* migrated — delete the field and the published version carries
+  neither. That is the exact state the seed leaves when a publish is refused, so
+  those rows are counted separately and also refuse. They need publishing, not
+  rewriting; the seed republishes them on its next run.
+* **Every field value is keyed by locale**, so a `CONTENTFUL_LOCALE` the space
+  does not use makes every field read as absent — the count reads 0 and the
+  script deletes the field it exists to protect. It now asserts `LOCALE` against
+  `/locales` first.
+* **A valid but unused locale defeats that assertion**, and `master` has one:
+  it carries `en-US` *and* `fr-FR`, so `CONTENTFUL_LOCALE=fr-FR` names a real
+  locale and still reads every field as empty. So the script also refuses when
+  **no** Work appears to hold a `genre` at all — 430 do, and a zero read is a
+  failed look rather than a migrated space.
 
 **Deleting a field is two phases and it can strand between them.** Contentful
 requires `omitted: true` activated first — which hides the field from the
@@ -556,7 +574,7 @@ python3 scripts/contentful/seed_period_and_forms.py --apply
 python3 scripts/contentful/seed_period_and_forms.py --all-works --apply   # AWK-66
 ```
 
-Six things are worth knowing before running it.
+Seven things are worth knowing before running it.
 
 **Only an exact folded name match is accepted automatically.** Every looser rule
 was tried and produced confident nonsense — surname-only gives `Gustavson, Mark`
@@ -579,12 +597,13 @@ loop written against current MediaWiki docs stops at the first page and reports 
 complete result — it silently capped Bach at 500 of 1,431 work pages. A short
 list looks exactly like a small composer.
 
-**The form harvest yields seven works, and that is not a bug to fix.** Of the 114
-played works carrying no genre, 24 match an IMSLP page and 7 carry a whitelisted
-category. The cause is structural: the archive names excerpts (`Act II, Carmen`)
+**The form harvest yields seven works, and that is not a bug to fix.** Of the 124
+played works carrying no genre, 25 match an IMSLP page and 7 carry a whitelisted
+category. (Those counts moved with AWK-66's re-baseline, from 114 and 24 — they
+are live-derived and will move again. Read them off the pass, not off this line.) The cause is structural: the archive names excerpts (`Act II, Carmen`)
 where IMSLP names works, and Barber, Bernstein, Britten, Khachaturian, Glass,
 Tippett, Rota, Piazzolla and John Williams have **no IMSLP work pages at all**,
-being in copyright. The remaining 107 are `docs/archive/form-curation.md` — a
+being in copyright. The remaining 113 are `docs/archive/form-curation.md` — a
 worksheet, not an input. ADR-0007 permits `forms` to stay incomplete.
 
 **`work.genre` is not cleared and the field is not deleted**, by either mode.
@@ -600,6 +619,14 @@ the 203 out-of-scope rows the retired field was the only record of their form.
 Composers keep their own scope, so **period and diacritics keep theirs**: an
 out-of-scope Work receives `forms` and never a `period`, because period is what
 the site renders and forms is what deletion would destroy.
+
+**It does not widen the PUBLISH set either**, and that took a fix. `--apply`
+republishes a row holding unpublished edits, which is how the pass resumes after
+a refused publish — but out in the unplayed archive an unpublished draft is far
+likelier to be a person mid-edit, and republishing it would *choose* a
+publication state rather than preserve it. So a pending row is republished only
+where it already holds exactly what was computed, which is the refused-publish
+signature: values present, change set empty.
 
 Three details carry decisions. The mode **suppresses period explicitly** rather
 than letting it fall out — out there `inherited` is also null, and the override

@@ -77,6 +77,14 @@ Safety properties:
     that has quietly stopped being scoped.
   * IDEMPOTENT. A second run reports nothing to do. A run interrupted halfway
     resumes.
+  * PUBLICATION STATE IS PRESERVED, NEVER CHOSEN -- the rule backfill_seasons.py
+    follows. A row holding unpublished edits is republished ONLY where it already
+    holds exactly what this pass computed, which is the refused-publish
+    signature: values present, change set empty. `--all-works` is why that
+    distinction had to be made sharp: out in the unplayed archive an unpublished
+    draft is far likelier to be a person mid-edit than a publish this pass
+    failed, and republishing it would decide something that is not ours to
+    decide.
   * Read-modify-write against X-Contentful-Version, so a concurrent edit in the
     web app loses the race loudly (409) rather than being silently overwritten.
 
@@ -87,7 +95,7 @@ NOT IN SCOPE, deliberately:
     the same pass that migrates it destroys the only thing a re-run could read.
     The delete itself is migrate_schema.py --delete-work-genre, which counts the
     Works this pass has not reached and refuses above zero.
-  * The 109 works carrying no genre. ADR-0007 is explicit that assigning them is
+  * The 113 works carrying no genre. ADR-0007 is explicit that assigning them is
     taste rather than data entry, and that nothing in the spec is blocked on it.
     They are listed in docs/archive/form-curation.md. The 5 of them IMSLP can
     answer for are seeded here; the rest wait for a human.
@@ -505,6 +513,17 @@ def main(argv):
     for work_id, expected, actual in mismatches:
         problems.append(f"{work_id}: declaration says {expected!r}, space says {actual!r}")
 
+    # EVERY DECLARED ID MUST EXIST, planned or not. plan_works only compares
+    # titles for ids it plans, so a curated row naming a work the space no longer
+    # holds was silently ignored -- and AWK-66's four `outOfScope` rows are
+    # exactly the ones the harvest check in period-and-forms.test.ts cannot cover
+    # either, so nothing at all would have caught an orphan. This closes that.
+    declared = {k for k in declaration["workForms"] if k != "note"} | {
+        k for k in declaration["workPeriods"] if k != "note"
+    }
+    for work_id in sorted(declared - set(works)):
+        problems.append(f"{work_id}: declared in period-and-forms.json, absent from the space")
+
     # ---- what would change -------------------------------------------------
     #
     # A CONFLICT IS PER FIELD, NOT PER ENTRY. Skipping the whole row would
@@ -542,7 +561,19 @@ def main(argv):
                 work_conflicts.append((row, "period"))
             else:
                 changes["period"] = row["period"]
-        if changes or row["pending"]:
+        # A PENDING ROW IS REPUBLISHED ONLY IF THIS PASS PUT THOSE VALUES THERE.
+        # `pending` alone is not enough, and widening the work set is what makes
+        # that dangerous: out in the unplayed archive an unpublished draft is far
+        # more likely to be a person mid-edit than a publish this pass failed,
+        # and republishing it would CHOOSE a publication state instead of
+        # preserving it -- which is the rule backfill_seasons.py follows and the
+        # one AWK-66 was told to follow. So resume only where the row already
+        # holds exactly what was computed, which is the refused-publish
+        # signature: values present, change set empty.
+        ours = (row["forms"] and sorted(row["currentForms"]) == row["forms"]) or (
+            row["period"] and row["currentPeriod"] == row["period"]
+        )
+        if changes or (row["pending"] and ours):
             work_writes.append((row, changes))
 
     if len(composer_writes) > guards["maxComposerWrites"]:
@@ -586,6 +617,17 @@ def main(argv):
     # over the whole space either way -- a count restricted to the planned set
     # would read zero in the in-scope mode while 203 unplayed Works still held
     # nothing, which is exactly the false reassurance that would lose the data.
+    # A link to an ARCHIVED genre entry resolves to nothing: `genre_names` comes
+    # from fetch_entries, which excludes archived rows. Such a work receives no
+    # form from the mapping and holds the gate open, and only a hand-written
+    # workForms row can close it -- so name it rather than leaving whoever reads
+    # a stuck gate to work out why one row will not move.
+    unresolvable = [
+        w
+        for w in works.values()
+        if link_id(field(w, "genre")) and link_id(field(w, "genre")) not in genre_names
+    ]
+
     holding_genre = [w for w in works.values() if link_id(field(w, "genre"))]
     stranded = [w for w in holding_genre if not (field(w, "forms") or [])]
     planned = {r["id"]: r for r in work_rows}
@@ -600,6 +642,10 @@ def main(argv):
         print(f"        {row['sys']['id']:44s} {(field(row, 'title') or '')[:44]}")
     if len(would_remain) > 10:
         print(f"        … and {len(would_remain) - 10} more; --all-works is what reaches them")
+    if unresolvable:
+        print(f"  {len(unresolvable):4d}  …because their genre link resolves to nothing (archived or deleted)")
+        for row in unresolvable[:10]:
+            print(f"        {row['sys']['id']:44s} {(field(row, 'title') or '')[:44]}")
     if not would_remain:
         print("  migrate_schema.py --delete-work-genre is unblocked once this pass is applied.")
 

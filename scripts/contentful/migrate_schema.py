@@ -249,25 +249,65 @@ def fetch_entries(content_type):
     return items
 
 
+def assert_locale():
+    """Make sure LOCALE names a locale this space actually has.
+
+    EVERY field value in a CMA entry is keyed by locale, so a LOCALE the space
+    does not use makes every field read as ABSENT. On the delete gate that fails
+    OPEN in the worst possible direction: no entry appears to hold the doomed
+    field, the count reads 0, and the script deletes the field it exists to
+    protect. This is an assertion rather than a comment because it was
+    reproduced — `CONTENTFUL_LOCALE=de-DE` passed the gate over a Work plainly
+    holding a genre and no forms."""
+    codes = [item["code"] for item in http("GET", "/locales")["items"]]
+    if LOCALE not in codes:
+        sys.exit(
+            f"  CONTENTFUL_LOCALE is {LOCALE!r} but {SPACE}/{ENV} has {', '.join(codes)}.\n"
+            f"  REFUSING: every field would read as empty and the gate would pass on nothing."
+        )
+
+
+def _entry_has_pending_changes(entry):
+    """True when the entry holds edits the Delivery API is not serving.
+
+    The CMA returns the DRAFT, so the replacement field can be present here and
+    absent from what the CDA serves. That is exactly the state
+    seed_period_and_forms.py leaves behind when a publish is refused — it says
+    so and exits 1 — and a row in it is NOT migrated: delete the old field and
+    the PUBLISHED version carries neither."""
+    published = entry["sys"].get("publishedVersion")
+    return published is None or entry["sys"]["version"] > published + 1
+
+
 def unmigrated(content_type, field_id, replacement):
-    """Entries holding `field_id` and nothing in `replacement`.
+    """Entries holding `field_id`, split by whether `replacement` really covers them.
 
     THE COUNT THAT GATES THE DELETE, and the reason this gate is a check rather
     than a prompt: a field is the only record of its own data, and a deleted one
     cannot be re-derived. ADR-0007 says so in as many words — "Deleting it
     earlier discards 218 assignments with nothing to migrate from."
 
-    An empty array and an absent field are the same state here, so `or []`
-    rather than a presence test: `forms: []` is a Work that was written and
-    carries nothing, which is exactly as lost as one never written to."""
-    stranded = []
+    Returns (holders, stranded, draft_only). `holders` exists so the caller can
+    refuse on an EMPTY read: a gate that has to see 430 rows and sees none has
+    not been satisfied, it has failed to look.
+
+    An empty array and an absent field are the same state, so `or []` rather
+    than a presence test: `forms: []` is an entry that was written and carries
+    nothing, which is exactly as lost as one never written to."""
+    holders, stranded, draft_only = [], [], []
     for entry in fetch_entries(content_type):
         fields = entry.get("fields", {})
         held = fields.get(field_id, {}).get(LOCALE)
+        if not held:
+            continue
+        row = (entry["sys"]["id"], fields.get("title", {}).get(LOCALE) or "?")
+        holders.append(row)
         carried = fields.get(replacement, {}).get(LOCALE) or []
-        if held and not carried:
-            stranded.append((entry["sys"]["id"], fields.get("title", {}).get(LOCALE) or "?"))
-    return stranded
+        if not carried:
+            stranded.append(row)
+        elif _entry_has_pending_changes(entry):
+            draft_only.append(row)
+    return holders, stranded, draft_only
 
 
 # ------------------------------------------------------------------ applying
@@ -494,63 +534,114 @@ def delete_field(gate_id):
     `omitted: true` activated FIRST — which hides the field from the Delivery API
     while leaving the data in place — and only then is `deleted: true` accepted.
     Each phase is its own PUT plus activate, so this is four calls and it can
-    strand in three places.
+    strand in three places. All three are detected, and the detection order is
+    load-bearing:
 
-    THE STRAND HERE IS WORSE THAN add_fields(). An omitted field reads back as
-    PRESENT from the management API, because the CMA returns the draft. So a
-    re-run after a failed activate would find `omitted` already true, skip phase
-    1, and send `deleted` against an omission the CDA has never seen — which
-    Contentful refuses. Hence the activation check before either phase, which is
-    the same guarantee add_fields() gives by re-activating a stranded type.
+      * THE FIELD READS AS ABSENT WHEN PHASE 2 STRANDS. Contentful removes it
+        from the DRAFT on the PUT, so a re-run that tested presence first would
+        print "does not exist; nothing to do" while the CDA still serves the
+        field forever. So the unactivated-type check comes BEFORE that test.
+      * AN OMITTED FIELD READS AS PRESENT when phase 1 strands, because the CMA
+        returns the draft. A re-run must not take that as phase 1 being done and
+        send `deleted` against an omission the CDA has never seen.
+      * ACTIVATION HAPPENS AFTER THE PROMPT, never before it. Activating a
+        stranded `omitted: true` is itself the destructive half — it is what
+        takes the field off the CDA — so doing it before asking would let an
+        operator answer `n` and still lose the field, under a summary line
+        reading `0 change(s) applied`.
 
-    A MISSING FIELD IS SUCCESS, not an error, which is where this differs from
-    every other gated step. The others exit when their field is absent because
-    for them absence means the wrong space or a typo; here absence is the goal,
-    so a second run reports nothing to do and returns 0."""
+    A MISSING FIELD ON AN ACTIVATED TYPE IS SUCCESS, not an error, which is where
+    this differs from every other gated step. The others exit when their field is
+    absent because for them absence means the wrong space or a typo; here absence
+    is the goal, so a second run reports nothing to do and returns 0."""
     schema = json.loads(SCHEMA.read_text())
     gate_preview = next(g for g in schema["gated"] if g["id"] == gate_id)
     print(f"\n{gate_preview['contentType']}.{gate_preview['field']} — deleting the field")
     gate = _gate(gate_id, enforced=True)
 
-    cid, fid = gate["contentType"], gate["field"]
+    cid, fid, replacement = gate["contentType"], gate["field"], gate["replacedBy"]
     ct = http("GET", f"/content_types/{cid}")
-    if not any(f["id"] == fid for f in ct["fields"]):
+    present = any(f["id"] == fid for f in ct["fields"])
+    stranded_type = needs_activation(ct)
+
+    if not present and not stranded_type:
         print(f"  = {cid}.{fid} does not exist; nothing to do")
         return 0
 
-    # The gate, checked rather than promised.
-    stranded = unmigrated(cid, fid, gate["replacedBy"])
-    print(f"  {len(stranded)} {cid}(s) hold a {fid} and no {gate['replacedBy']}")
-    if stranded:
-        for entry_id, title in stranded[:10]:
-            print(f"    {entry_id:44s} {title[:44]}")
-        if len(stranded) > 10:
-            print(f"    … and {len(stranded) - 10} more")
+    # ---- the gate, checked rather than promised ---------------------------
+    assert_locale()
+    holders, stranded, draft_only = unmigrated(cid, fid, replacement)
+    print(f"  {len(holders):5d} {cid}(s) hold a {fid}")
+    print(f"  {len(stranded):5d} …and no {replacement} at all")
+    print(f"  {len(draft_only):5d} …and a {replacement} the Delivery API does not serve yet")
+
+    if not holders:
+        # Not "migrated" — unlooked-at. 430 Works held this field when the gate
+        # was written, so a zero read is a misconfiguration, and the one thing
+        # this gate must never do is pass because it saw nothing.
+        #
+        # assert_locale() above does NOT make this redundant, and the space
+        # proves it: `master` carries en-US AND fr-FR, so
+        # `CONTENTFUL_LOCALE=fr-FR` names a real locale, passes that assertion,
+        # and then reads every field as empty because nothing is translated.
+        # The locale check catches a typo; this catches a valid wrong answer.
         sys.exit(
-            f"  REFUSING to delete {cid}.{fid}: it is still the only record of "
-            f"{len(stranded)} {cid}(s)' {fid}.\n"
-            f"  Run the migration first — {gate['blockedBy']}"
+            f"  REFUSING: no {cid} appears to hold a {fid} at all.\n"
+            f"  That is not a migrated space, it is a failed read — check "
+            f"CONTENTFUL_SPACE_ID, CONTENTFUL_ENVIRONMENT_ID and the token's scope."
         )
 
-    if needs_activation(ct):
-        # A previous run wrote a phase and failed before activating it. Left
-        # alone, `omitted` reads true from the draft while the CDA still serves
-        # the field, and phase 2 would be refused.
-        print("  ! this type has unactivated changes — activating before continuing")
-        if not DRY:
-            activate(cid, ct["sys"]["version"])
-            ct = http("GET", f"/content_types/{cid}")
+    for label, rows in ((f"holding no {replacement}", stranded), (f"holding an unpublished {replacement}", draft_only)):
+        if not rows:
+            continue
+        print(f"  {label}:")
+        for entry_id, title in rows[:10]:
+            print(f"    {entry_id:44s} {title[:44]}")
+        if len(rows) > 10:
+            print(f"    … and {len(rows) - 10} more")
 
-    field = next(f for f in ct["fields"] if f["id"] == fid)
-    omitted = field.get("omitted", False)
-    print(f"  {'=' if omitted else '-'} omitted       "
-          f"{'already true, phase 1 is done' if omitted else 'phase 1 — hide it from the Delivery API'}")
-    print(f"  - deleted       phase 2 — remove it from {cid}")
+    if stranded or draft_only:
+        sys.exit(
+            f"  REFUSING to delete {cid}.{fid}: it is still the only record "
+            f"{'the Delivery API has ' if not stranded else ''}"
+            f"of {len(stranded) + len(draft_only)} {cid}(s)' {fid}.\n"
+            f"  Run the migration first — {gate['blockedBy']}\n"
+            f"  A row whose {replacement} sits in an unpublished draft needs "
+            f"publishing, not rewriting; the seed republishes it on the next run."
+        )
+
+    # ---- the plan ---------------------------------------------------------
+    field = next((f for f in ct["fields"] if f["id"] == fid), None)
+    omitted = bool(field and field.get("omitted"))
+    if stranded_type:
+        print(f"  ! {cid} has unactivated changes — the CDA is not serving them")
+        if not present:
+            print(f"  - activate      phase 2 already wrote; activating removes {fid} from the CDA")
+        else:
+            print(f"  - activate      before either phase, so `omitted` is live before `deleted`")
+    if present:
+        print(
+            f"  {'=' if omitted else '-'} omitted       "
+            f"{'already true, phase 1 is done' if omitted else 'phase 1 — hide it from the Delivery API'}"
+        )
+        print(f"  - deleted       phase 2 — remove it from {cid}")
 
     if DRY:
         return 1
     if not _confirm(gate, f"  Delete {cid}.{fid}? It cannot be re-derived. [y/N] "):
         return 0
+
+    # ---- apply -----------------------------------------------------------
+    if stranded_type:
+        # AFTER the prompt. This publish is destructive in its own right.
+        activate(cid, ct["sys"]["version"])
+        print(f"  -> re-activated {cid}")
+        ct = http("GET", f"/content_types/{cid}")
+        field = next((f for f in ct["fields"] if f["id"] == fid), None)
+        if field is None:
+            print(f"  -> {cid}.{fid} is gone; phase 2 was already written")
+            return 1
+        omitted = bool(field.get("omitted"))
 
     if not omitted:
         field["omitted"] = True

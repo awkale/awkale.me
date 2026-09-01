@@ -328,6 +328,9 @@ AWK-37; wiring the CDA is AWK-39.
 > are listed in `docs/archive/form-curation.md`, which is a worksheet nothing
 > reads.
 >
+> > **113** as of AWK-66, not 104 — the scope has moved four times since. Count
+> > it with the pass, do not read it here.
+>
 > **Seeding the data was not enough to render it.** `loadArchive()` read
 > `work.fields.period ?? null` with no composer fallback, so 333 of 338 work pages
 > showed an em dash with the answer sitting on the composer record. The
