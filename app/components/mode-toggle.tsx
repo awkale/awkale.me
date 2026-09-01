@@ -52,7 +52,16 @@ export function ModeToggle() {
            [data-selected] and validity — so all styling keys off the button.
            The field is display:contents so the segment stays a flex child. */
         <RadioField key={m} value={m} className="mode-toggle-field">
-          <RadioButton className="mode-toggle-segment">{m}</RadioButton>
+          {/* The per-value class is what lets the control show its own state in the
+              FIRST PAINT, before this component has run at all: the blocking theme
+              script stamps data-mode on <html>, and mode-toggle.css pairs the two.
+              Constant at build time and identical for every visitor, so it costs no
+              hydration mismatch — which reading the stored mode here would.
+
+              A class rather than a data-* prop because React Aria's filterDOMProps
+              is not guaranteed to forward arbitrary data attributes through
+              RadioButton, while className is a documented prop. */}
+          <RadioButton className={`mode-toggle-segment mode-toggle-${m}`}>{m}</RadioButton>
         </RadioField>
       ))}
     </RadioGroup>

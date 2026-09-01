@@ -54,6 +54,30 @@
   --seg-text: var(--foreground);
 }
 
+/* THE FIRST-PAINT HIGHLIGHT, and the reason it is a plain attribute pair rather
+   than anything React drives: this component renders `value={null}` at build time
+   (see its comment, and mode.ts consequence 2), so the prerendered HTML of all
+   ~641 pages carries no [data-selected] at all. Before this rule the control
+   painted three identical unfilled segments and only grew a highlight once
+   `useEffect` ran — the active mode had no indicator whatsoever in the interim.
+
+   <html data-mode> comes from the blocking theme script; the per-value class comes
+   from the component. Neither is per-visitor at build time, so neither can
+   mismatch.
+
+   POSITION IS LOAD-BEARING. At (0,2,0) this must sit AFTER [data-hovered] (also
+   (0,2,0)) so the first-paint fill survives the pointer crossing it, and BEFORE
+   [data-selected][data-hovered] ((0,3,0)) so hover still wins once hydrated.
+   Moving it above [data-hovered] or below the hover restatement breaks one of
+   those. The values match [data-selected] exactly, so the handoff on hydration is
+   invisible. */
+[data-mode='light'] .mode-toggle-light,
+[data-mode='dark'] .mode-toggle-dark,
+[data-mode='system'] .mode-toggle-system {
+  --seg-bg: var(--primary-strong);
+  --seg-text: var(--primary-strong-foreground);
+}
+
 /* --primary-strong, NOT --primary. The segment's label is 0.74rem — 11.8px, well
    inside WCAG's normal-text bar of 4.5:1 — and white on --primary (step 9) is
    3.76:1. Dark text on it is no better at 4.34, so the fill itself had to move;
