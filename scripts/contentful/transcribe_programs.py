@@ -58,8 +58,19 @@ Safety properties, in the order they matter:
 
   * Publishing is opt-in and last. An entry created and left as a draft is
     inert; an entry published while the Work it links is still a draft renders a
-    Concert with a hole in its program. So --publish runs as a second pass over
-    everything, in the same order, after every write has landed.
+    Concert with a hole in its program. So --publish runs as a second pass in
+    the same order, after every write has landed.
+
+  * PUBLISH ONLY WHAT THIS RUN WROTE, plus entries that have never been
+    published at all. AWK-83. Until then the pass published every row in the
+    plan, which meant a row reported `unchanged` -- one the space ALREADY agreed
+    with -- was published anyway, and the only thing that can do is push
+    someone's in-progress editing live while the run reports success. Both
+    declarations are re-run to check themselves and a re-run writes nothing, so
+    the hazardous path was the ordinary one. `seed_period_and_forms.py` has had
+    this rule from the start and is deliberately NOT changed by that ticket: it
+    plans a row only where it has something to do, and its docstring states the
+    principle -- publication state is preserved, never chosen.
 
 WHAT THIS SCRIPT DOES NOT DO: period and form. ADR-0007 puts every form
 judgement in period-and-forms.json, and work.period inherits from the composer
@@ -209,6 +220,21 @@ def live_value(entry, name):
 
 def is_empty(v):
     return v is None or v == "" or v == [] or v == {}
+
+
+def has_unpublished_changes(sys_block):
+    """True when the entry is published AND carries edits nobody published.
+
+    AWK-83. The arithmetic is the part worth stating: Contentful bumps `version`
+    on every save, and a publish IS a save -- so `publishedVersion` is the
+    version the publish captured and a freshly published entry sits at
+    `publishedVersion + 1`, not at `publishedVersion`. Anything above that is a
+    draft change stacked on a published entry.
+
+    A never-published entry is NOT this. It has no `publishedVersion` at all,
+    and it is the case the publish pass exists to serve."""
+    published = sys_block.get("publishedVersion")
+    return published is not None and sys_block["version"] > published + 1
 
 
 def entries(record):
@@ -456,7 +482,12 @@ def write(ctype, eid, fields):
     if live is None:
         body = {"fields": {k: loc(v) for k, v in fields.items()}}
         http("PUT", f"/entries/{eid}", body, {"X-Contentful-Content-Type": ctype})
-        return "created", []
+        return "created", [], False
+
+    # AWK-83. Read BEFORE the merge, because our own write is about to make this
+    # true of every row we touch. What it means afterwards is: this entry already
+    # held someone's unpublished editing when we arrived.
+    foreign_draft = has_unpublished_changes(live["sys"])
 
     # Merge, three outcomes per field. There is deliberately no override flag --
     # see the note on merge semantics in the module docstring.
@@ -488,16 +519,39 @@ def write(ctype, eid, fields):
         else:
             differs.append(name)
     if not wrote:
-        return "unchanged", differs
+        return "unchanged", differs, foreign_draft
     http("PUT", f"/entries/{eid}", {"fields": merged},
          {"X-Contentful-Version": str(live["sys"]["version"])})
-    return "merged", differs
+    return "merged", differs, foreign_draft
 
 
-def publish(eid):
+def publish(eid, wrote_it):
+    """Publish an entry this run WROTE, or one that has never been published.
+    Leave anything else exactly as it was found.
+
+    AWK-83. The first version of this published every row in the plan, declining
+    only where there was nothing unpublished to publish -- which inverted the
+    intent. A row reported `unchanged` is one the space already agreed with, so
+    the only thing a publish can do to it is push somebody's in-progress editing
+    live, and the run would then report success. `seed_period_and_forms.py` had
+    the rule right from the start: publication state is preserved, never chosen.
+
+    THE NEVER-PUBLISHED CLAUSE IS NOT A LOOPHOLE, it is the two-step flow.
+    `--apply` alone leaves drafts and says so; a later `--publish` has to be able
+    to publish them, and by then it writes nothing, so "wrote it" is false for
+    every row. Those drafts are the declaration's own -- it created them -- which
+    is what makes publishing them a resumption rather than a decision.
+
+    A draft edit sitting on an entry we DO write is not separable from our own:
+    Contentful publishes an entry, not a field. Those go live with ours, so the
+    caller warns about them by name instead of letting the run pass quietly."""
     live = http("GET", f"/entries/{eid}")
     sys_ = live["sys"]
-    if sys_.get("publishedVersion") and sys_["version"] == sys_["publishedVersion"] + 1:
+    never_published = sys_.get("publishedVersion") is None
+
+    if not wrote_it and not never_published:
+        return "left alone" if has_unpublished_changes(sys_) else "already"
+    if not never_published and sys_["version"] == sys_["publishedVersion"] + 1:
         return "already"
     http("PUT", f"/entries/{eid}/published", None, {"X-Contentful-Version": str(sys_["version"])})
     return "published"
@@ -562,29 +616,47 @@ def main():
 
     print("\napplying:")
     actions, disagreements = {}, []
+    written, swept = set(), []
     for ctype, eid, fields in plan:
-        action, differs = write(ctype, eid, fields)
+        action, differs, foreign_draft = write(ctype, eid, fields)
         actions[action] = actions.get(action, 0) + 1
         tail = f"   DIFFERS, left alone: {', '.join(differs)}" if differs else ""
         if differs:
             disagreements.append(f"  {ctype} {eid}: {', '.join(differs)}")
+        # AWK-83. `written` is what the publish pass is allowed to publish.
+        if action in ("created", "merged"):
+            written.add(eid)
+            if foreign_draft:
+                swept.append(f"  {ctype} {eid}")
         print(f"  {action:<10} {ctype:<12} {eid}{tail}")
     print("  " + "  ".join(f"{k}={v}" for k, v in sorted(actions.items())))
     if disagreements:
         print("\nThe space holds a different value for these, and they were NOT overwritten.\n"
               "Reconcile in the web app or correct the declaration:")
         print("\n".join(disagreements))
+    if swept:
+        print("\nWARNING — these already held unpublished edits when this run wrote to them.\n"
+              "Contentful publishes an entry, not a field, so anything unpublished on them\n"
+              "goes live with this run's values. Check them in the web app:")
+        print("\n".join(swept))
 
     if DO_PUBLISH:
-        print("\npublishing, in the same order:")
-        states = {}
+        print("\npublishing what this run wrote, in the same order:")
+        states, left = {}, []
         for ctype, eid, _ in plan:
-            state = publish(eid)
+            state = publish(eid, eid in written)
             states[state] = states.get(state, 0) + 1
-            print(f"  {state:<10} {ctype:<12} {eid}")
+            if state == "left alone":
+                left.append(f"  {ctype} {eid}")
+            print(f"  {state:<11} {ctype:<12} {eid}")
         print("  " + "  ".join(f"{k}={v}" for k, v in sorted(states.items())))
+        if left:
+            print("\nLEFT ALONE — published already, holding unpublished edits this run did not\n"
+                  "make. Someone is mid-edit, or a publish was refused. Either way it is not\n"
+                  "this script's to decide; publish them in the web app when they are ready:")
+            print("\n".join(left))
     else:
-        print("\nEntries are DRAFTS. Nothing renders until --publish runs.")
+        print("\nEntries this run created are DRAFTS. Nothing renders until --publish runs.")
 
     print(f"\n{http.calls} API calls.")
     # --refresh, not a plain re-run: the harvest caches the Delivery read in
