@@ -54,16 +54,24 @@
   --seg-text: var(--foreground);
 }
 
+/* --primary-strong, NOT --primary. The segment's label is 0.74rem — 11.8px, well
+   inside WCAG's normal-text bar of 4.5:1 — and white on --primary (step 9) is
+   3.76:1. Dark text on it is no better at 4.34, so the fill itself had to move;
+   see the token's comment for the ramp arithmetic. 5.37:1 light, 7.81:1 dark. */
 .mode-toggle-segment[data-selected] {
-  --seg-bg: var(--primary);
-  --seg-text: var(--primary-foreground);
+  --seg-bg: var(--primary-strong);
+  --seg-text: var(--primary-strong-foreground);
 }
 
 /* Selected wins over hovered, so restate it after. Without this the active
-   segment loses its fill the moment the pointer crosses it. */
+   segment loses its fill the moment the pointer crosses it.
+
+   Step 12 rather than the -hover of --primary: it continues the same direction the
+   ramp is already going in each mode — darker in light, lighter in dark — so hover
+   deepens the fill instead of undoing it, and the label still clears 12:1 both ways. */
 .mode-toggle-segment[data-selected][data-hovered] {
-  --seg-bg: var(--primary-hover);
-  --seg-text: var(--primary-foreground);
+  --seg-bg: var(--primary-strong-hover);
+  --seg-text: var(--primary-strong-foreground);
 }
 
 .mode-toggle-segment[data-focus-visible] {

@@ -98,6 +98,7 @@
   --n-4: var(--sand-4);
   --n-6: var(--sand-6);
   --n-7: var(--sand-7);
+  --n-8: var(--sand-8);
   --n-11: var(--sand-11);
   --n-12: var(--sand-12);
 }
@@ -111,10 +112,31 @@
   --muted-hover: var(--n-4);
   --border-subtle: var(--n-6);
   --border: var(--n-7);
+  /* One step DARKER than --border, for a hovered field. Sibling of
+     --border-subtle above: neither is shadcn's, which has only --border, and both
+     are here rather than in the extensions block because a border weight is the
+     same kind of thing as the border itself. Step 8 is Radix's hover-border role,
+     so this is the role's own value rather than a nudge. */
+  --border-strong: var(--n-8);
   --ring: var(--accent-8);
   --primary: var(--accent-9);
   --primary-hover: var(--accent-10);
   --primary-foreground: #fff;
+
+  /* A SOLID FILL THAT CARRIES SMALL TEXT ACCESSIBLY, which --primary does not:
+     white on step 9 is 3.76:1, and no text colour clears 4.5:1 against it (dark
+     text reaches only 4.34). Step 11 is nominally the low-contrast TEXT role, and
+     using it as a fill is deliberately off-role — it is simply the step on this
+     ramp where a filled control's label passes. Step 12 continues in the same
+     direction for hover, in BOTH modes.
+
+     Reach for these on any filled control whose label is below ~14px, which today
+     is all of them: the mode toggle's segments, and facet-select's selected rows,
+     tags and count badge. --primary stays correct for a large fill, and for one
+     genuinely carrying no text. */
+  --primary-strong: var(--accent-11);
+  --primary-strong-hover: var(--accent-12);
+  --primary-strong-foreground: #fff;
   --muted-foreground: var(--n-11);
   --foreground: var(--n-12);
 
@@ -203,6 +225,34 @@
   --eyebrow-tracking: 0.09em;
   --kicker-size: 0.72rem;
   --kicker-tracking: 0.14em;
+}
+
+/* --- the ONE exception to "layer 2 is authored once" ----------------------- */
+/* Everything above works in both modes because layer 1 self-swaps. This does not,
+   and the reason is structural rather than a value someone got wrong.
+
+   The accent ramp INVERTS: --accent-11 is a deep rust (#c03d00) under :root and a
+   bright peach (#ff9973) under .dark. As a fill that is the correct colour in both
+   modes — but the text that sits on it cannot be. White reads 5.37:1 on the rust
+   and 2.09:1 on the peach. So the polarity of text-on-solid has to flip when the
+   ramp does, which no amount of self-swapping in layer 1 can express: the ramp has
+   no step that is "dark in light mode and light in dark mode".
+
+   Radix solves this by shipping a separate `--<scale>-contrast` per scale. This is
+   that, for the one fill we use it on. If a second such fill appears, it belongs
+   here beside this one rather than as a literal in a component.
+
+   NOT a licence to put ordinary colour decisions in a .dark block. The test is
+   whether the token's ROLE inverts with the ramp, not whether dark mode wants
+   something prettier. */
+/* --n-1, not --n-12. The NEUTRAL ramp self-swaps too, so --n-12 (which is
+   --foreground) is the light end here and lands at 1.80:1 on the peach. What is
+   wanted is the dark end of the neutral ramp, which under .dark is step 1. It is
+   nominally the app-background role, and reading it as text is the same kind of
+   off-role use as the fill above — an inverted pill's label is the page's own
+   ground colour. 9.05:1, and 14.12:1 on the hover step. */
+.dark {
+  --primary-strong-foreground: var(--n-1);
 }
 
 /* --- typeset presets ------------------------------------------------------ */

@@ -77,8 +77,11 @@
   height: 1.1rem;
   padding: 0 0.25rem;
   border-radius: 999px;
-  background: var(--primary);
-  color: var(--primary-foreground);
+  /* --primary-strong: the count is 0.68rem, and white on --primary is 3.76:1.
+     Being duplicated into the trigger's aria-label does NOT make it decorative —
+     a sighted reader with low vision reads this glyph, not the label. */
+  background: var(--primary-strong);
+  color: var(--primary-strong-foreground);
   font-size: 0.68rem;
 }
 
@@ -199,14 +202,20 @@
 }
 
 .facet-select-input[data-hovered] {
-  --field-border: var(--muted-hover);
+  /* --border-strong, not --muted-hover: the -hover pair of a SURFACE token is a
+     lighter step, so remapping a border to it made the edge fainter under the
+     pointer — the opposite of an affordance. Step 8 is Radix's hover-border. */
+  --field-border: var(--border-strong);
 }
 
+/* Border stays NEUTRAL and the ring sits OUTSIDE it, which is what the trigger,
+   the clear button and the disclosure above all do. Recolouring the border to
+   --ring and then insetting the outline over it (offset -1px) collapsed the two
+   into a single 3px accent band, so the field lost its edge exactly when focus
+   should have made it clearest. */
 .facet-select-input[data-focused] {
-  --field-border: var(--ring);
-
   outline: 2px solid var(--ring);
-  outline-offset: -1px;
+  outline-offset: 1px;
 }
 
 /* The disclosure. Drawn in CSS rather than shipped as an icon — the site has no
@@ -295,16 +304,18 @@
   --row-bg: var(--muted);
 }
 
+/* --primary-strong for the same reason the mode toggle uses it: the row is
+   0.82rem and white on --primary is 3.76:1. */
 .facet-select-option[data-selected] {
-  --row-bg: var(--primary);
-  --row-text: var(--primary-foreground);
+  --row-bg: var(--primary-strong);
+  --row-text: var(--primary-strong-foreground);
   /* The count sits inside the filled row, so it has to follow or it vanishes. */
-  --row-count: var(--primary-foreground);
+  --row-count: var(--primary-strong-foreground);
 }
 
 .facet-select-option[data-selected][data-hovered],
 .facet-select-option[data-selected][data-focused] {
-  --row-bg: var(--primary-hover);
+  --row-bg: var(--primary-strong-hover);
 }
 
 .facet-select-option[data-focus-visible] {
@@ -335,8 +346,8 @@
    With no children it occupies no height anyway, so hiding it bought nothing. */
 
 .facet-select-tag {
-  --tag-bg: var(--primary);
-  --tag-text: var(--primary-foreground);
+  --tag-bg: var(--primary-strong);
+  --tag-text: var(--primary-strong-foreground);
 
   display: inline-flex;
   align-items: center;
@@ -350,7 +361,7 @@
 }
 
 .facet-select-tag[data-hovered] {
-  --tag-bg: var(--primary-hover);
+  --tag-bg: var(--primary-strong-hover);
 }
 
 .facet-select-tag[data-focus-visible] {
@@ -375,8 +386,12 @@
   outline: none;
 }
 
+/* Mixed from currentColor rather than a literal white. --primary-strong-foreground
+   FLIPS with the mode — white on the rust fill in light, near-black on the peach
+   fill in dark — so a hardcoded white wash reads correctly in one mode and
+   disappears in the other. Following the text colour is right in both. */
 .facet-select-tag-remove[data-hovered] {
-  background: rgb(255 255 255 / 25%);
+  background: color-mix(in srgb, currentColor 22%, transparent);
 }
 
 .facet-select-tag-remove[data-focus-visible] {
