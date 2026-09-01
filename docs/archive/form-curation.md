@@ -1,4 +1,4 @@
-# Form curation — the 109 works nothing can answer for
+# Form curation — the 115 works nothing can answer for
 
 Generated under AWK-37 from the live space, and regenerated under AWK-64, which
 added five: the new Works of the three Tilles Center LIYO programs that no
@@ -8,6 +8,18 @@ title — which is the rule doing its job, not a form judgement anyone made.
 Regenerating found no row that had gone stale; all 104 of AWK-37's still carry
 zero forms.
 
+Regenerated again under AWK-82, which added **six** of the three LISFA festival
+programs' seven new Works. IMSLP holds a page for only one of the seven, *Fiddle
+Faddle*, and that page carries no form category — so six arrive here by the
+ordinary route, with nothing automatic left to try. The seventh, Mozart's
+*Serenade No. 13 in G major, K. 525*, is absent for a reason no earlier row has:
+**it was curated by hand in the web app** rather than by any route this file
+describes, minutes after the transcription published, and it carries `Serenade`.
+That makes it the one case where `worksLeftToCurate` in
+`scripts/contentful/period-and-forms.json` counts a work this worksheet does not
+list — the guard's decomposition has no term for a hand-set form, and 7 is the
+number that keeps its arithmetic true.
+
 **A worksheet, not an input** —
 nothing reads this file, and the seed does not consult it. Fill a row in by
 adding the work to a bucket in `workForms` in
@@ -16,7 +28,7 @@ adding the work to a bucket in `workForms` in
 These are the works that end up with **zero** forms after every automatic route
 has run: the retired `genre` mapping, the IMSLP harvest, and the derived
 `Excerpt` rule. ADR-0007 is explicit that assigning them is taste rather than
-data entry — doing it is "inventing a category for *Boléro*", 109 times — and
+data entry — doing it is "inventing a category for *Boléro*", 115 times — and
 equally explicit that **nothing in the spec is blocked on them**. Period carries
 the browse load and Form is permitted to stay incomplete, so an empty row here
 is a decided state, not a defect.
@@ -36,6 +48,7 @@ rather than dropped.
 | --- | --- | --- |
 | Adams, John | The Chairman Dances | `wrk-the-chairman-dances-d90614` |
 | Anderson, Douglas | Spirit Guide (World Premiere) | `wrk-spirit-guide-world-premiere-da26d7` |
+| Anderson, Leroy | Fiddle Faddle | `wrk-fiddle-faddle` |
 | Anderson, Leroy | Sleigh Ride | `wrk-sleigh-ride-9d083f` |
 | Barber, Samuel | Adagio for Strings | `wrk-adagio-for-strings-cc12ae` |
 | Barber, Samuel | First Essay | `wrk-first-essay-5f6ea3` |
@@ -65,6 +78,7 @@ rather than dropped.
 | Del Borgo, Elliot | Petite Overture | `5YEj92lOrzdwen2auHp0JP` |
 | Delius, Frederick | Sleigh Ride | `wrk-sleigh-ride-2805ce` |
 | Delius, Frederick | The Walk to the Paradise Garden | `wrk-the-walk-to-the-paradise-garde-a5cc9d` |
+| Diamond, David | Rounds for String Orchestra | `wrk-rounds-for-string-orchestra` |
 | Donizetti, Gaetano | Act II Finale, Lucia di Lammermoor | `wrk-act-ii-finale-lucia-di-lammerm-dae3fb` |
 | Dukas, Paul | The Sorcerer's Apprentice | `wrk-the-sorcerer-s-apprentice-f55d91` |
 | Earnest, John David | Southern Exposure | `wrk-southern-exposure-c49a53` |
@@ -82,9 +96,11 @@ rather than dropped.
 | Griffes, Charles | Poem for Flute and Orchestra | `wrk-poem-for-flute-and-orchestra-62bdc2` |
 | Gurria-Cardenas, Jose | Malintzin | `wrk-malintzin-bf7724` |
 | Gustavson, Mark | Hymn to the Vanished | `542oxPwDnDOCKEQ7pDIXJr` |
+| Handel, George Frideric | Overture to The Messiah | `wrk-overture-to-the-messiah` |
 | Haydn, Franz Joseph | The Creation | `wrk-the-creation-fd7c46` |
 | Hindemith, Paul | Nobilissima Visione | `wrk-nobilissima-visione-b3313c` |
 | Hindemith, Paul | Symphonic Metamorphosis on Themes of Carl Maria von Weber | `wrk-symphonic-metamorphosis-on-themes-of-carl-maria-von-weber` |
+| Holst, Gustav | Brook Green Suite | `wrk-brook-green-suite` |
 | Holst, Gustav | The Planets, 5 mvts | `wrk-the-planets-5-mvts-ce17cb` |
 | Honegger, Arthur | Mouvement Symphonique No. 1: Pacific 231 | `wrk-mouvement-symphonique-no-1-pac-1e3fdb` |
 | Kempton, Jeremy Niles | Ricercar for Sonorous Instruments | `wrk-ricercar-for-sonorous-instrume-ed9460` |
@@ -113,6 +129,7 @@ rather than dropped.
 | Ravel, Maurice | Le Tombeau de Couperin | `wrk-le-tombeau-de-couperin-4a9a87` |
 | Ravel, Maurice | Rapsodie Espagnole | `wrk-rapsodie-espagnole-584920` |
 | Ravel, Maurice | Valses Nobles et Sentimentales | `wrk-valses-nobles-et-sentimentales-51832b` |
+| Respighi, Ottorino | Ancient Airs and Dances, Suite No. 3 | `wrk-ancient-airs-and-dances-suite-no-3` |
 | Respighi, Ottorino | Fountains of Rome | `wrk-fountains-of-rome-1afa0e` |
 | Respighi, Ottorino | Pines of Rome | `wrk-pines-of-rome-262724` |
 | Revueltas, Silvestre | Sensemaya ("The Snake Killing Ritual") | `wrk-sensemaya-the-snake-killing-ri-4096c8` |
@@ -133,6 +150,7 @@ rather than dropped.
 | Strauss, Richard | Four Last Songs | `wrk-four-last-songs-5c975a` |
 | Stravinsky, Igor | Petroushka - A Burlesque in Four Parts (rev. 1947) | `wrk-petroushka-a-burlesque-in-four-37cd26` |
 | Tchaikovsky, Pyotr Ilyich | Capriccio Italien | `wrk-capriccio-italien-1b9d75` |
+| Tchaikovsky, Pyotr Ilyich | Serenade for Strings | `wrk-serenade-for-strings` |
 | Tippett, Michael | A Child of Our Time | `wrk-a-child-of-our-time-189af2` |
 | Vaughan Williams, Ralph | The Lark Ascending | `wrk-the-lark-ascending-cd5f4e` |
 | Verdi, Giuseppe | Act III, Rigoletto | `wrk-act-iii-rigoletto-b1491b` |

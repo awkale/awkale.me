@@ -2,17 +2,23 @@
 
 **Default is "I played it." Only mark exceptions.**
 
-This file covers **two institutions**, under two `#` headings, and the split is
-load-bearing rather than cosmetic. `seed_participation.py` and
+This file covers **three institutions**, under three `#` headings, and the split
+is load-bearing rather than cosmetic. `seed_participation.py` and
 `participation.test.ts` both read only the Brooklyn section: every concert there
 is resolved against `bso-graph.json`, which holds the Brooklyn lineage alone, so
 a date from any other institution stops the run. Both parsers carry a comment
-saying so. **Adding a third institution means giving both the same boundary.**
+saying so.
 
-The two sections are not the same kind of record. Brooklyn is Seed data — loaded
-in bulk, most of it predating Alex, which is why every box needs review. The Long
-Island Youth Orchestra section is entered by hand, one source at a time, and Alex
-played all of it.
+**The third institution needed no parser change**, which is worth recording
+because AWK-59's version of this paragraph predicted it would. Both parsers gate
+on the section heading starting with `Brooklyn lineage` and skip every other `#`
+section, so the boundary was already general rather than a list of two — AWK-82
+added LISFA and both parsers still see exactly the 128 Brooklyn dates.
+
+The three sections are not the same kind of record. Brooklyn is Seed data —
+loaded in bulk, most of it predating Alex, which is why every box needs review.
+The Long Island Youth Orchestra and Long Island String Festival Association
+sections are entered by hand, one source at a time, and Alex played all of both.
 
 # Brooklyn lineage — in-scope concerts (2001-05-24 →)
 
@@ -980,3 +986,91 @@ A Program is listed only where a source has been transcribed. Four have been —
     recorded on the Program items rather than as separate Works — the complete
     Works are linked and the qualification sits on the performance. Item 4 is the
     same Work as 1993-07-26's item 13, reused rather than duplicated.*
+
+# Long Island String Festival Association — Nassau County, 1992 to 1994
+
+**Not read by `seed_participation.py`.** See the note at the top of this file.
+Participation for these Concerts is set by hand in Contentful. Both parsers gate
+on the `# Brooklyn lineage` heading and skip every other `#` section, so this
+third institution needed no change to either of them — the boundary AWK-59 asked
+for was already general.
+
+**LISFA is not the All-County festival.** The space also holds three
+`All-Nassau …` Orchestras, abbreviated `All-County …`, and one Concert that uses
+one of them — `1989-01-08 — All County`, which is not in this file at all. That
+is a different festival, and the two were nearly conflated when AWK-82 began:
+two of those Orchestra records had been created and left unused, which made them
+look exactly like the records a Nassau junior high and high school division
+needed. Alex corrected it on 2026-09-01.
+
+**A festival, not an orchestra, and that is why each Concert is short.** Three
+divisions — Elementary, Junior High, Senior High — rehearsed and performed
+separately on one afternoon, each under its own conductor. Alex played in one
+division per year: **Junior High in 1992, Senior High in 1993 and 1994**, stated
+2026-09-01. Each Concert below holds **only his division's block**, so a program
+of one or two works is complete rather than truncated. The other divisions'
+blocks are not `satOut` — they were never his to sit out — and are recorded in
+`scripts/contentful/lisfa-festival-programs.json` under each Concert's
+`alsoOnThePage`, together with the Suffolk County concert each program also
+covers and never transcribed.
+
+**No Season on any of the three.** ADR-0006's rule for a festival date, which
+`1989-01-08` already follows. The festival's own ordinal — 36th, 37th and 38th
+Annual Concert — is in the declaration's `sourceNote`.
+
+**Alex played every Concert of these three years.** No `missed whole concert` box
+is ticked and none is expected to be; no item box is ticked either, because a
+sat-out work would have to be one of his own division's.
+
+**This section is complete for what it covers and no more.** Three festivals,
+three Concerts, one per year, each from a program in `docs/archive/`. Whether
+Alex played the festival in any other year is not recorded here, and no source in
+this repository answers it.
+
+## 1992 — 36th Annual Concert
+
+### 1992-02-09 · Sun · Uniondale High School · Ming-Feng Hsin (LISFA Jr. High)
+- [ ] missed whole concert
+  - [ ] 1. Handel — Overture to The Messiah
+  - [ ] 2. Mozart — Serenade (Eine Kleine Nachmusik)
+  - [ ] 3. Holst — Brook Green Suite
+  - [ ] 4. Anderson — Fiddle Faddle
+  - *Transcribed from
+    `docs/archive/program-19920209-lisfa-uniondale-high-school.pdf` under
+    AWK-82, the Junior High School Orchestra's block. Krista Weis chaired the
+    division. Item 2 was the **Romanze only**, one movement of four, recorded on
+    the Program item rather than as a separate Work — AWK-64's precedent. Its
+    label keeps the program's spelling, `Nachmusik`; the Work it links was
+    created as `Serenade ("Eine Kleine Nachtmusik")` and Alex re-titled it to
+    the catalogue form, `Serenade No. 13 in G major, K. 525`, in the web app
+    the same day.*
+
+## 1993 — 37th Annual Concert
+
+### 1993-02-07 · Sun · Oceanside Senior High School · Louis Bergonzi (LISFA Senior High)
+- [ ] missed whole concert
+  - [ ] 1. Tchaikovsky — Serenade
+  - *Transcribed from
+    `docs/archive/program-19930207-lisfa-oceanside-senior-high-school.pdf` under
+    AWK-82, the Senior High School Orchestra's block. Lisa Ramos chaired the
+    division. **One work, and the page is not truncated** — the block is the
+    Serenade's four movements and the program page ends there, which makes this
+    the shortest Concert in the archive. The Work is titled `Serenade for
+    Strings`, matching Barber's and Elgar's; the program prints a bare
+    `Serenade` and that is what the item's label says.*
+
+## 1994 — 38th Annual Concert
+
+### 1994-02-06 · Sun · A.G. Berner Junior High School · David Holland (LISFA Senior High)
+- [ ] missed whole concert
+  - [ ] 1. Diamond — Rounds for String Orchestra
+  - [ ] 2. Respighi — Ancient Airs and Dances, Suite #3
+  - *Transcribed from
+    `docs/archive/program-19940206-lisfa-a-g-berner-junior-high-school.pdf` under
+    AWK-82, the Senior High School Orchestra's block — held in a junior high
+    school's auditorium, which is a coincidence of the venue and not a division.
+    Catherine Fairweather chaired. **David Diamond is the archive's 158th
+    Composer** and IMSLP holds no page for him, so his Period is hand-assigned:
+    `Modern`, with Barber and Bernstein rather than Copland and Piston. Item 2's
+    printed `Suite #3` is normalised to `No. 3` on the Work and kept on the
+    label.*
