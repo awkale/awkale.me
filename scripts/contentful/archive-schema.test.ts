@@ -237,15 +237,18 @@ describe('archive-schema.json', () => {
         why: string[]
         removeValidation?: string
         setRequired?: boolean
+        deleteField?: boolean
+        replacedBy?: string
       }[]
     }
 
-    it('holds the four gated steps, and nothing else', () => {
+    it('holds the five gated steps, and nothing else', () => {
       // This is the only mechanism in the repo that takes a guarantee AWAY from
       // a production space, or adds one that can invalidate an entry. A gate
       // appearing here that nobody expected means the mechanism was widened
       // past what it was built for.
       expect(gated.map((g) => g.id).sort()).toEqual([
+        'delete-work-genre',
         'drop-season-number-unique',
         'drop-work-slug-unique',
         'require-composer-slug',
@@ -254,11 +257,35 @@ describe('archive-schema.json', () => {
     })
 
     it('gives every gate exactly one operation', () => {
-      // `removeValidation` loosens, `setRequired` tightens. A gate declaring
-      // both, or neither, is one the applier cannot dispatch.
+      // `removeValidation` loosens, `setRequired` tightens, `deleteField` is the
+      // only one that destroys. A gate declaring two, or none, is one the applier
+      // cannot dispatch.
       for (const gate of gated) {
-        const ops = [gate.removeValidation, gate.setRequired].filter((o) => o !== undefined)
+        const ops = [gate.removeValidation, gate.setRequired, gate.deleteField].filter((o) => o !== undefined)
         expect(ops, `${gate.id} needs one operation`).toHaveLength(1)
+      }
+    })
+
+    it('names what replaces a field it deletes', () => {
+      // AWK-66. `deleteField` is the one operation whose damage cannot be undone
+      // — a validation comes back, a required flag comes off, a deleted field's
+      // data is gone. So it is also the one gate migrate_schema.py CHECKS rather
+      // than confirms, and `replacedBy` is what it counts: no entry may hold the
+      // doomed field without holding its replacement.
+      for (const gate of gated.filter((g) => g.deleteField)) {
+        expect(gate.replacedBy, `${gate.id} must name the field that replaces it`).toBeTruthy()
+        const type = schema.types.find((t) => t.id === gate.contentType)
+        const replacement = type?.addFields.find((f) => f.id === gate.replacedBy)
+        expect(replacement, `${gate.replacedBy} must be a field this file adds`).toBeDefined()
+      }
+    })
+
+    it('does not delete a field the spec still adds', () => {
+      // A gate deleting something in `addFields` would make the two halves of
+      // this file argue: a default run would add it back on the next pass.
+      for (const gate of gated.filter((g) => g.deleteField)) {
+        const type = schema.types.find((t) => t.id === gate.contentType)
+        expect(type?.addFields.map((f) => f.id)).not.toContain(gate.field)
       }
     })
 

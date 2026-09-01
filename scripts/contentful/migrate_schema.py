@@ -4,6 +4,7 @@
     python3 scripts/contentful/migrate_schema.py --dry-run   # report, write nothing
     python3 scripts/contentful/migrate_schema.py             # add the fields
     python3 scripts/contentful/migrate_schema.py --drop-work-slug-unique
+    python3 scripts/contentful/migrate_schema.py --delete-work-genre
 
 AWK-30. Schema only — this writes no entry data, so it is safe to run before the
 re-import (AWK-20) and before any seeding pass.
@@ -15,11 +16,16 @@ Safety properties:
   * Every field it adds is OPTIONAL, which is what makes adding one to a type
     with published entries safe: no existing entry becomes invalid.
   * Contentful cannot change a field's type in place, so nothing here tries.
-    `work.genre` (a Link) is left alone entirely — ADR-0007 retires it, but only
-    after the genre -> forms migration in AWK-37.
-  * The one destructive change the spec calls for — removing `unique: true` from
-    `work.slug` — is behind its own flag and does nothing on a default run. See
-    `gated` in archive-schema.json for why the ordering is not negotiable.
+    `work.genre` (a Link) is never touched by a default run — ADR-0007 retires
+    it, and the delete is behind `--delete-work-genre` (AWK-66).
+  * The destructive changes the spec calls for — removing `unique: true` from
+    `work.slug`, and deleting `work.genre` — are each behind their own flag and
+    do nothing on a default run. See `gated` in archive-schema.json for why the
+    ordering is not negotiable.
+  * ONE GATE IS ENFORCED RATHER THAN CONFIRMED. `--delete-work-genre` counts the
+    Works still holding a `genre` and no `forms` and refuses above zero. The
+    other four name a test or a backfill this script cannot see, so their prompt
+    is the operator's word; this one is a live check.
   * Read-modify-write against X-Contentful-Version, so a concurrent edit in the
     web app loses the race loudly (409) rather than being silently overwritten.
 
@@ -27,16 +33,18 @@ Credentials are resolved exactly as import_to_contentful.py resolves them:
 CONTENTFUL_CMA_TOKEN, else --token-file PATH, else ~/.contentful-cma-token.
 That token must never enter CI (ADR-0002).
 """
-import json, os, sys, time, urllib.request, urllib.error
+import json, os, sys, time, urllib.parse, urllib.request, urllib.error
 from pathlib import Path
 
 SPACE = os.environ.get("CONTENTFUL_SPACE_ID", "3iiyvj5u5c9h")
 ENV = os.environ.get("CONTENTFUL_ENVIRONMENT_ID", "master")
 BASE = f"https://api.contentful.com/spaces/{SPACE}/environments/{ENV}"
 SCHEMA = Path(__file__).parent / "archive-schema.json"
+LOCALE = os.environ.get("CONTENTFUL_LOCALE", "en-US")
 
 FLAGS = {"--dry-run", "--drop-work-slug-unique", "--drop-season-number-unique",
-         "--require-work-slug", "--require-composer-slug", "--yes"}
+         "--require-work-slug", "--require-composer-slug", "--delete-work-genre",
+         "--yes"}
 TAKES_VALUE = {"--token-file"}
 
 
@@ -63,6 +71,7 @@ def _parse_argv(argv):
                 f"                         [--drop-season-number-unique [--yes]]\n"
                 f"                         [--require-work-slug [--yes]]\n"
                 f"                         [--require-composer-slug [--yes]]\n"
+                f"                         [--delete-work-genre [--yes]]\n"
                 f"                         [--token-file PATH]"
             )
         seen.add(arg)
@@ -76,6 +85,7 @@ DROP_WORK_SLUG = "--drop-work-slug-unique" in ARGS
 DROP_SEASON_NUMBER = "--drop-season-number-unique" in ARGS
 REQUIRE_WORK_SLUG = "--require-work-slug" in ARGS
 REQUIRE_COMPOSER_SLUG = "--require-composer-slug" in ARGS
+DELETE_WORK_GENRE = "--delete-work-genre" in ARGS
 ASSUME_YES = "--yes" in ARGS
 
 
@@ -210,6 +220,56 @@ def _link_targets(validations):
     return "any"
 
 
+def fetch_entries(content_type):
+    """Every entry of a type, archived ones excluded.
+
+    The only place this schema script reads ENTRY data, and it is here because
+    delete-work-genre's precondition is a fact about entries rather than about
+    the type.
+
+    `sys.archivedAt[exists]=false` is not optional tidying. AGENTS.md records
+    that the management API counts archived entries while the Delivery API hides
+    them — AWK-20 archived 16 superseded programItems — so counting them would
+    let a row nothing serves block a delete, or worse, be counted as migrated."""
+    items, skip = [], 0
+    while True:
+        query = urllib.parse.urlencode(
+            {
+                "content_type": content_type,
+                "limit": 1000,
+                "skip": skip,
+                "sys.archivedAt[exists]": "false",
+            }
+        )
+        payload = http("GET", f"/entries?{query}")
+        items += payload["items"]
+        skip += len(payload["items"])
+        if skip >= payload["total"] or not payload["items"]:
+            break
+    return items
+
+
+def unmigrated(content_type, field_id, replacement):
+    """Entries holding `field_id` and nothing in `replacement`.
+
+    THE COUNT THAT GATES THE DELETE, and the reason this gate is a check rather
+    than a prompt: a field is the only record of its own data, and a deleted one
+    cannot be re-derived. ADR-0007 says so in as many words — "Deleting it
+    earlier discards 218 assignments with nothing to migrate from."
+
+    An empty array and an absent field are the same state here, so `or []`
+    rather than a presence test: `forms: []` is a Work that was written and
+    carries nothing, which is exactly as lost as one never written to."""
+    stranded = []
+    for entry in fetch_entries(content_type):
+        fields = entry.get("fields", {})
+        held = fields.get(field_id, {}).get(LOCALE)
+        carried = fields.get(replacement, {}).get(LOCALE) or []
+        if held and not carried:
+            stranded.append((entry["sys"]["id"], fields.get("title", {}).get(LOCALE) or "?"))
+    return stranded
+
+
 # ------------------------------------------------------------------ applying
 
 
@@ -313,15 +373,26 @@ def add_fields():
     return total_added + total_stranded, total_drift
 
 
-def _gate(gate_id):
+def _gate(gate_id, enforced=False):
     """The gate's declaration, and the confirmation it demands.
 
     Shared by every gated step rather than copied, because the WARNING is the
     load-bearing part. Each of these removes a guarantee from a production
     space on the operator's word, and a prompt that drifts between them is a
-    prompt someone stops reading."""
+    prompt someone stops reading.
+
+    `enforced` says the caller checks `blockedBy` itself against the live space,
+    which is true of exactly one gate — delete-work-genre, whose precondition is
+    a countable property of the data rather than a test that has landed. Printing
+    the CANNOT-verify warning there would be a lie, and a warning that is
+    sometimes false is the fastest way to teach someone to skip it."""
     schema = json.loads(SCHEMA.read_text())
     gate = next(g for g in schema["gated"] if g["id"] == gate_id)
+
+    if enforced:
+        print(f"  blocked by: {gate['blockedBy']}")
+        print("  This script CHECKS that below, against the live space.")
+        return gate
 
     # NOT a gate this script can enforce. It cannot see whether the replacement
     # is in place, so `blockedBy` is a note to a human, and running the flag to
@@ -332,13 +403,18 @@ def _gate(gate_id):
     return gate
 
 
-def _confirm(gate):
-    """False when the operator declines. `--yes` is the unattended answer."""
+def _confirm(gate, question=None):
+    """False when the operator declines. `--yes` is the unattended answer.
+
+    `question` overrides the default for a gate whose `blockedBy` this script has
+    already checked. Asking "is the migration landed and green?" after verifying
+    it live would be asking the operator to confirm something already known; the
+    thing still worth confirming there is the one-way door itself."""
     if ASSUME_YES:
         return True
     if not sys.stdin.isatty():
         sys.exit("  refusing to run unattended; pass --yes if that is intended")
-    answer = input(f"  Is {gate['blockedBy']} landed and green? [y/N] ").strip()
+    answer = input(question or f"  Is {gate['blockedBy']} landed and green? [y/N] ").strip()
     if answer.lower() in ("y", "yes"):
         return True
     print("  aborted; nothing written")
@@ -412,6 +488,82 @@ def drop_unique(gate_id):
     return 1
 
 
+def delete_field(gate_id):
+    """Delete a field outright. TWO phases, and the order is Contentful's.
+
+    `omitted: true` activated FIRST — which hides the field from the Delivery API
+    while leaving the data in place — and only then is `deleted: true` accepted.
+    Each phase is its own PUT plus activate, so this is four calls and it can
+    strand in three places.
+
+    THE STRAND HERE IS WORSE THAN add_fields(). An omitted field reads back as
+    PRESENT from the management API, because the CMA returns the draft. So a
+    re-run after a failed activate would find `omitted` already true, skip phase
+    1, and send `deleted` against an omission the CDA has never seen — which
+    Contentful refuses. Hence the activation check before either phase, which is
+    the same guarantee add_fields() gives by re-activating a stranded type.
+
+    A MISSING FIELD IS SUCCESS, not an error, which is where this differs from
+    every other gated step. The others exit when their field is absent because
+    for them absence means the wrong space or a typo; here absence is the goal,
+    so a second run reports nothing to do and returns 0."""
+    schema = json.loads(SCHEMA.read_text())
+    gate_preview = next(g for g in schema["gated"] if g["id"] == gate_id)
+    print(f"\n{gate_preview['contentType']}.{gate_preview['field']} — deleting the field")
+    gate = _gate(gate_id, enforced=True)
+
+    cid, fid = gate["contentType"], gate["field"]
+    ct = http("GET", f"/content_types/{cid}")
+    if not any(f["id"] == fid for f in ct["fields"]):
+        print(f"  = {cid}.{fid} does not exist; nothing to do")
+        return 0
+
+    # The gate, checked rather than promised.
+    stranded = unmigrated(cid, fid, gate["replacedBy"])
+    print(f"  {len(stranded)} {cid}(s) hold a {fid} and no {gate['replacedBy']}")
+    if stranded:
+        for entry_id, title in stranded[:10]:
+            print(f"    {entry_id:44s} {title[:44]}")
+        if len(stranded) > 10:
+            print(f"    … and {len(stranded) - 10} more")
+        sys.exit(
+            f"  REFUSING to delete {cid}.{fid}: it is still the only record of "
+            f"{len(stranded)} {cid}(s)' {fid}.\n"
+            f"  Run the migration first — {gate['blockedBy']}"
+        )
+
+    if needs_activation(ct):
+        # A previous run wrote a phase and failed before activating it. Left
+        # alone, `omitted` reads true from the draft while the CDA still serves
+        # the field, and phase 2 would be refused.
+        print("  ! this type has unactivated changes — activating before continuing")
+        if not DRY:
+            activate(cid, ct["sys"]["version"])
+            ct = http("GET", f"/content_types/{cid}")
+
+    field = next(f for f in ct["fields"] if f["id"] == fid)
+    omitted = field.get("omitted", False)
+    print(f"  {'=' if omitted else '-'} omitted       "
+          f"{'already true, phase 1 is done' if omitted else 'phase 1 — hide it from the Delivery API'}")
+    print(f"  - deleted       phase 2 — remove it from {cid}")
+
+    if DRY:
+        return 1
+    if not _confirm(gate, f"  Delete {cid}.{fid}? It cannot be re-derived. [y/N] "):
+        return 0
+
+    if not omitted:
+        field["omitted"] = True
+        save(ct, f"-> phase 1: omitted {cid}.{fid} and re-activated {cid}")
+        # Re-read: save() bumped the version twice and the local copy is stale.
+        ct = http("GET", f"/content_types/{cid}")
+        field = next(f for f in ct["fields"] if f["id"] == fid)
+
+    field["deleted"] = True
+    save(ct, f"-> phase 2: deleted {cid}.{fid} and re-activated {cid}")
+    return 1
+
+
 # ------------------------------------------------------------------ main
 
 
@@ -426,6 +578,7 @@ def main():
         "--drop-season-number-unique": (drop_unique, "drop-season-number-unique"),
         "--require-work-slug": (require_field, "require-work-slug"),
         "--require-composer-slug": (require_field, "require-composer-slug"),
+        "--delete-work-genre": (delete_field, "delete-work-genre"),
     }
     asked = [flag for flag in gates if flag in ARGS]
 

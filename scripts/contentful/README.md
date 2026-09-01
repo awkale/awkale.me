@@ -70,13 +70,13 @@ holding published entries safe — no existing entry becomes invalid. `attended`
 in particular *must* stay optional, because unset is one of its three meaningful
 states (ADR-0006): the 119 pre-tenure concerts rely on it.
 
-### Two things it deliberately does not do
+### Two things it deliberately does not do on a default run
 
 **It does not delete `work.genre`.** [ADR-0007](../../docs/adr/0007-period-and-form-taxonomy.md)
-retires the field, but only after the `genre` → `forms` data migration. Deleting
-it here would drop 218 assignments with nothing left to migrate from. Contentful
-also deletes a field in two phases (`omitted`, then `deleted`), which is a second
-reason it does not belong in a schema-only pass.
+retires the field, but only after the `genre` → `forms` data migration, and
+deleting it any earlier drops assignments with nothing left to migrate from.
+That is behind `--delete-work-genre` (AWK-66), documented below — and it is the
+one gate here the script **checks** rather than confirms.
 
 **It does not remove `unique: true` from `work.slug` on a default run.** That is
 behind its own flag:
@@ -102,6 +102,49 @@ a default run cannot satisfy the ordering and does not try.
 **Run the flag only once AWK-39's `(composer, slug)` assertion is in the build and
 passing.** Until then `unique: true` is the only thing standing between the space
 and 20 work slugs colliding across 9 title families.
+
+### Deleting `work.genre` — AWK-66
+
+```bash
+python3 scripts/contentful/migrate_schema.py --dry-run --delete-work-genre
+python3 scripts/contentful/migrate_schema.py --delete-work-genre
+```
+
+ADR-0007's last step, and the only gated step whose precondition this script can
+verify. The other four name a test or a backfill it cannot see, so their prompt
+is the operator's word; this one is a live count.
+
+**The gate is: no Work may hold a `genre` without holding `forms`.** The script
+reads every Work over the CMA and refuses above zero, because a field is the only
+record of its own data and a deleted one cannot be re-derived — ADR-0007 says so
+in as many words. It was not zero by default: AWK-37's seed is scoped to the
+played Works, so measured live on 2026-09-01, 203 of the 430 Works carrying a
+`genre` were out of scope and held no `forms` at all. Closing that gap is
+`seed_period_and_forms.py --all-works`, below.
+
+**Deleting a field is two phases and it can strand between them.** Contentful
+requires `omitted: true` activated first — which hides the field from the
+Delivery API while leaving the data in place — and only then accepts
+`deleted: true`. That is four calls. The trap is worse than the one adding a
+field has: an omitted field reads back as **present** from the management API,
+because the CMA returns the draft, so a re-run after a failed activate would skip
+phase 1 and send `deleted` against an omission the CDA has never seen. The script
+detects each phase and finishes it.
+
+A **missing** field is success here, not an error, which is where this differs
+from every other gated step: they exit when their field is absent because for
+them absence means the wrong space or a typo. A second run reports nothing to do.
+
+**Not in scope: the `genre` content type and its 17 entries.** ADR-0007 observes
+the type has no remaining reader once this runs, but does not say to delete it,
+and the 25-value vocabulary lives in `archive-schema.json` now. Deleting a type
+and 17 entries is a bigger one-way door and buys nothing but tidiness.
+
+**`import_to_contentful.py` still writes `work.genre`**, and `parse_archive.py`
+still derives one per Work. Once the field is gone a re-import PUTs an unknown
+field and fails. Neither runs routinely — the last import was AWK-20 on
+2026-08-14 — so this is recorded rather than repaired, and it is the first thing
+to fix before any future re-import.
 
 ### What guards the file
 
@@ -510,9 +553,10 @@ review costs:
 python3 scripts/contentful/imslp_harvest.py            # cached under .imslp-cache/
 python3 scripts/contentful/seed_period_and_forms.py    # report, writes nothing
 python3 scripts/contentful/seed_period_and_forms.py --apply
+python3 scripts/contentful/seed_period_and_forms.py --all-works --apply   # AWK-66
 ```
 
-Five things are worth knowing before running it.
+Six things are worth knowing before running it.
 
 **Only an exact folded name match is accepted automatically.** Every looser rule
 was tried and produced confident nonsense — surname-only gives `Gustavson, Mark`
@@ -543,10 +587,46 @@ Tippett, Rota, Piazzolla and John Williams have **no IMSLP work pages at all**,
 being in copyright. The remaining 107 are `docs/archive/form-curation.md` — a
 worksheet, not an input. ADR-0007 permits `forms` to stay incomplete.
 
-**`work.genre` is not cleared and the field is not deleted.** ADR-0007 sequences
-this as three separately-owned steps: AWK-30 added `forms`, this migrates the
-data, and only then can `genre` go. Deleting it in the pass that migrates it
-destroys the only thing a re-run could read.
+**`work.genre` is not cleared and the field is not deleted**, by either mode.
+ADR-0007 sequences this as three separately-owned steps: AWK-30 added `forms`,
+this migrates the data, and only then can `genre` go. Deleting it in the pass
+that migrates it destroys the only thing a re-run could read. The delete is
+`migrate_schema.py --delete-work-genre`.
+
+**`--all-works` widens the WORK set and nothing else (AWK-66).** It runs the
+`genre` → `forms` mapping over the played Works *plus* every Work holding a
+`genre` — 554 of 659 on 2026-09-01, not all 659 — and it is what makes the delete safe: for
+the 203 out-of-scope rows the retired field was the only record of their form.
+Composers keep their own scope, so **period and diacritics keep theirs**: an
+out-of-scope Work receives `forms` and never a `period`, because period is what
+the site renders and forms is what deletion would destroy.
+
+Three details carry decisions. The mode **suppresses period explicitly** rather
+than letting it fall out — out there `inherited` is also null, and the override
+rule is *write a harvested style unless it agrees with the inherited period*, so
+a style with nothing to agree with reads as a disagreement and the day the
+harvest widens this pass would start writing redundant periods. It has **its own
+ceiling**, `maxWorkWritesAllWorks`, rather than a raised `maxWorkWrites`, because
+a single raised ceiling would stop catching the one thing a ceiling is for. And
+the set is **554, not 659**: 7 out-of-scope Works hold no `genre` and would still
+receive a form from the derived Excerpt rule matching their titles — the film
+music, `Selections from "Star Wars"` and its neighbours. Nothing migrates off
+them, so they stay in AWK-65's backlog, which the ticket is explicit does not
+block the delete.
+
+The mapping carried **199 of the 203** out-of-scope rows with no judgement at
+all. The residue is exactly **4**, all from the `Aria` bucket `genreForms` maps
+to nothing, and all four fall outside the Excerpt pattern — `Excerpt from …` and
+`from The Magic Flute` have no comma before `from` and no quoted title after, the
+same gap `Scenes from I Pagliacci` fell through. Three are excerpts the rule
+missed; the fourth, `Tales from the Vienna Woods Waltzes`, is a waltz misfiled as
+an aria — a clean specimen of the ~6% ADR-0007 measured as actively wrong. They
+are named in `workForms` and flagged `outOfScope`, which is what exempts them
+from the test's harvest check and nothing else.
+
+Both modes report **the gate**: how many Works hold a `genre`, how many of those
+hold no `forms`, and how many would still hold none afterwards. That last number
+reaching zero is what unblocks `--delete-work-genre`.
 
 Dry run is the default, `--apply` publishes, and **a disagreeing value is never
 overwritten** — the contested FIELD is reported as a CONFLICT and skipped while

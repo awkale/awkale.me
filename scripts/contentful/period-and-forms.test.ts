@@ -41,7 +41,7 @@ interface Decisions {
   workPeriods: Record<string, { title: string; period: string; why: string }>
   genreForms: Record<string, string[]>
   excerptRule: { pattern: string; form: string }
-  workForms: Record<string, { title: string; forms: string[] }>
+  workForms: Record<string, { title: string; forms: string[]; outOfScope?: boolean }>
   formCategories: Record<string, string>
   guards: Record<string, number>
 }
@@ -142,8 +142,9 @@ describe('the retired genre vocabulary survives the migration', () => {
     // name over would migrate the error rather than the data, so the genuine
     // ones are named individually in workForms instead.
     expect(decisions.genreForms.Aria).toEqual([])
+    // Six in scope, plus Papageno's from AWK-66's out-of-scope four.
     const arias = entries(decisions.workForms).filter(([, row]) => row.forms.includes('Aria'))
-    expect(arias).toHaveLength(6)
+    expect(arias).toHaveLength(7)
   })
 })
 
@@ -200,10 +201,48 @@ describe('the composer decisions do not restate what the fold already settles', 
 
 describe('the work curations address real rows', () => {
   it('names only works the harvest also saw, with the titles they were written against', () => {
-    for (const [id, row] of entries(decisions.workForms)) {
-      expect(harvest.works, `${id} is not an in-scope work`).toHaveProperty(id)
+    // Scoped rows only. The harvest covers the played works and nothing else, so
+    // an out-of-scope curation CANNOT be checked against it — and must say so
+    // rather than be quietly exempted, which is what `outOfScope` is for. The
+    // title redundancy is not lost either way: the applier re-reads every title
+    // from the space and aborts on a mismatch, which is the check that actually
+    // catches a renamed or deleted row.
+    const scoped = entries(decisions.workForms).filter(([, row]) => !row.outOfScope)
+    for (const [id, row] of scoped) {
+      expect(harvest.works, `${id} is not an in-scope work; flag it outOfScope if that is deliberate`).toHaveProperty(
+        id
+      )
       expect(harvest.works[id].title, `${id} was written against a different title`).toBe(row.title)
     }
+  })
+
+  it('flags an out-of-scope curation as out of scope, and never the reverse', () => {
+    // The claim `outOfScope` makes is checkable in the other direction: a row
+    // carrying the flag must genuinely be absent from the harvest. Otherwise the
+    // flag becomes a way to opt any row out of the drift guard above.
+    for (const [id] of entries(decisions.workForms).filter(([, row]) => row.outOfScope)) {
+      expect(harvest.works, `${id} IS in scope; drop its outOfScope flag`).not.toHaveProperty(id)
+    }
+  })
+
+  it('carries AWK-66s four out-of-scope rows, which are the whole residue of the widened mapping', () => {
+    // The widened genre -> forms pass carries 199 of the 203 out-of-scope works
+    // holding a genre with no judgement at all. These four are what is left, and
+    // the count is asserted so a change here has to move the guard with it.
+    const outOfScope = entries(decisions.workForms).filter(([, row]) => row.outOfScope)
+
+    expect(outOfScope).toHaveLength(decisions.guards.worksOutOfScopeCurated)
+    // All four are from the `Aria` bucket, which genreForms maps to nothing, and
+    // ALL FOUR fall outside the Excerpt pattern — `Excerpt from …` and `from The
+    // Magic Flute` have no comma before `from` and no quoted title after, the
+    // same gap `Scenes from I Pagliacci` fell through. That is why they need
+    // naming: every other row in the bucket the derived rule reaches on its own.
+    const pattern = new RegExp(decisions.excerptRule.pattern)
+    expect(outOfScope.filter(([, row]) => !pattern.test(row.title))).toHaveLength(4)
+    // Three of the four are excerpts the rule missed; the fourth is not an
+    // excerpt at all, but a waltz misfiled as an aria — ADR-0007's ~6% wrong.
+    expect(outOfScope.filter(([, row]) => row.forms.includes('Excerpt'))).toHaveLength(3)
+    expect(outOfScope.find(([, row]) => row.title.includes('Vienna Woods'))?.[1].forms).toEqual(['Waltz'])
   })
 
   it('assigns only forms in the vocabulary, and never an empty set', () => {
@@ -216,9 +255,10 @@ describe('the work curations address real rows', () => {
     }
   })
 
-  it('holds the 28 migration repairs, and no rows with duplicate forms', () => {
+  it('holds the 32 migration repairs, and no rows with duplicate forms', () => {
+    // 28 in-scope from AWK-37, plus AWK-66's 4 out-of-scope.
     const rows = entries(decisions.workForms)
-    expect(rows).toHaveLength(28)
+    expect(rows).toHaveLength(32)
     for (const [id, row] of rows) {
       expect(new Set(row.forms).size, `${id} repeats a form`).toBe(row.forms.length)
     }
@@ -234,6 +274,15 @@ describe('the work curations address real rows', () => {
     // was listed twice, in `ballets` and in `filmMusic`.
     const strada = entries(decisions.workForms).find(([, row]) => row.title.includes('La Strada'))
     expect(strada?.[1].forms).toEqual(['Ballet', 'Film music'])
+  })
+
+  it('never declares a period for an out-of-scope work', () => {
+    // AWK-66 widened FORMS and nothing else. A period on an unplayed work would
+    // be a value the site never renders, written by a pass that suppresses
+    // period out there on purpose — see plan_works' forms_only.
+    for (const [id] of entries(decisions.workPeriods)) {
+      expect(harvest.works, `${id} is out of scope and cannot take a period`).toHaveProperty(id)
+    }
   })
 
   it('names work period overrides that are in scope, with the right titles', () => {
@@ -290,6 +339,32 @@ describe('the guards match what the harvest measured', () => {
     expect(decisions.guards.maxComposerWrites).toBeGreaterThan(decisions.guards.composersInScope)
     expect(decisions.guards.maxWorkWrites).toBeLessThan(decisions.guards.worksInScope * 2)
     expect(decisions.guards.maxComposerWrites).toBeLessThan(decisions.guards.composersInScope * 2)
+  })
+
+  it('gives the widened mapping its own ceiling, and keeps the in-scope one tight', () => {
+    // AWK-66. A single ceiling raised to cover `--all-works` would stop catching
+    // the one thing a ceiling is for — a pass that has quietly stopped being
+    // scoped — so the in-scope ceiling must stay below the widened set.
+    const widened = decisions.guards.worksInScope + decisions.guards.worksOutOfScopeWithGenre
+
+    expect(decisions.guards.maxWorkWritesAllWorks).toBe(widened + 7)
+    expect(decisions.guards.maxWorkWrites).toBeLessThan(widened)
+  })
+
+  it('accounts for every out-of-scope work holding a genre', () => {
+    // The gate AWK-66 has to reach zero: every work holding a `genre` also
+    // holding `forms`, or the delete loses data that cannot be re-derived. The
+    // decomposition is the argument — 199 carried by genreForms and the derived
+    // Excerpt rule, 4 named by hand — and the sum failing means the mapping
+    // stopped reaching rows it used to reach.
+    expect(decisions.guards.worksOutOfScopeCarriedByMapping + decisions.guards.worksOutOfScopeCurated).toBe(
+      decisions.guards.worksOutOfScopeWithGenre
+    )
+    // The widened set is not the whole space, and the gap is deliberate: works
+    // out of scope that never held a genre have nothing to migrate.
+    expect(decisions.guards.worksOutOfScopeWithGenre).toBeLessThan(
+      decisions.guards.worksInSpace - decisions.guards.worksInScope
+    )
   })
 
   it('accounts for every uncategorised work', () => {

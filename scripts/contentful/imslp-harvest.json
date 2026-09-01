@@ -9,10 +9,10 @@
     "transitional composers under both, and `composer.period` is a single",
     "Symbol, so those are settled by hand in `composerPeriods`."
   ],
-  "harvestedAt": "2026-08-31",
+  "harvestedAt": "2026-09-01",
   "counts": {
-    "worksInScope": 346,
-    "composersInScope": 156,
+    "worksInScope": 351,
+    "composersInScope": 157,
     "composersMatched": 116,
     "composersWithOneEra": 111,
     "composersWithSeveralEras": [
@@ -22,7 +22,7 @@
       "Sibelius, Jean",
       "Strauss, Richard"
     ],
-    "composersUnmatched": 0,
+    "composersUnmatched": 1,
     "worksMatched": 120,
     "worksWithHarvestedForms": 32
   },
@@ -139,6 +139,12 @@
       "sortName": "Bach, Johann Sebastian",
       "imslpPage": "Bach, Johann Sebastian",
       "eras": ["Baroque"],
+      "canonicalName": null
+    },
+    "cmp-bach-johann-sebastian-arr-by-stokowski": {
+      "sortName": "Bach, Johann Sebastian (arr. by Stokowski)",
+      "imslpPage": null,
+      "eras": [],
       "canonicalName": null
     },
     "cmp-barber-samuel": {
@@ -394,7 +400,7 @@
       "canonicalName": null
     },
     "cmp-franck-cesar": {
-      "sortName": "Franck, Cesar",
+      "sortName": "Franck, César",
       "imslpPage": "Franck, César",
       "eras": ["Romantic"],
       "canonicalName": "Franck, César"
@@ -1007,6 +1013,12 @@
       "styles": [],
       "forms": []
     },
+    "4OLhwyPUNjEoVgIdkgQa7D": {
+      "title": "Lieutenant Kijé",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "4hNjkaXhqp8kuH3fbco2XQ": {
       "title": "Brandenburg Concerto No. 5",
       "imslpPage": null,
@@ -1053,6 +1065,18 @@
       "title": "Tzigane",
       "imslpPage": "Tzigane, M.76 (Ravel, Maurice)",
       "styles": ["Early 20th century"],
+      "forms": []
+    },
+    "7LcFfaOQJpSeO8OvHw7sCm": {
+      "title": "Piano Concerto No. 10",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
+    "7oI6lMxXM4R4waehZiLjEL": {
+      "title": "Marche Troyenne",
+      "imslpPage": null,
+      "styles": [],
       "forms": []
     },
     "ThS0y701SHY16ofNcPmEW": {
@@ -1583,6 +1607,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-festival-overture-c2f89e": {
+      "title": "Festival Overture",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "wrk-festive-overture-814ca6": {
       "title": "Festive Overture",
       "imslpPage": "Festive Overture, Op.96 (Shostakovich, Dmitry)",
@@ -1869,7 +1899,7 @@
       "title": "Night on Bald Mountain",
       "imslpPage": "Night on Bald Mountain (Mussorgsky, Modest)",
       "styles": ["Romantic"],
-      "forms": ["Tone Poem"]
+      "forms": ["Fantasia", "Tone Poem"]
     },
     "wrk-night-soliloquy-507f8a": {
       "title": "Night Soliloquy",
@@ -2915,6 +2945,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-toccata-and-fugue-in-d-minor-b09645": {
+      "title": "Toccata and Fugue in D Minor",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "wrk-totenfeier-ea23a3": {
       "title": "Totenfeier",
       "imslpPage": null,
@@ -3042,5 +3078,10 @@
       "forms": []
     }
   },
-  "unmatched": []
+  "unmatched": [
+    {
+      "sortName": "Bach, Johann Sebastian (arr. by Stokowski)",
+      "candidates": []
+    }
+  ]
 }
