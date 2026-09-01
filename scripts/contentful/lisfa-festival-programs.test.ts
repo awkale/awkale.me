@@ -482,21 +482,28 @@ describe('the Works', () => {
   })
 
   /**
-   * The printed typo never reaches an address, and the item never loses it.
-   * Alex chose the archive's convention over verbatim transcription, then went
-   * further and re-titled the Work to the catalogue form in the web app; the
-   * slug is from the original decision and stays, because it is a published URL.
+   * The printed typo survives nowhere, which is NOT where this declaration
+   * started. It created the Work as `Serenade ("Eine Kleine Nachtmusik")` with
+   * the printed `Nachmusik` on the item label — a label being the place a
+   * per-performance misspelling belongs, the way 1992-12-13 reads "Carneval
+   * Overture". Alex then corrected both in the web app: the Work to the
+   * catalogue title, and later the label too. The declaration follows the space.
+   *
+   * Asserted as an absence across BOTH fields, because the reason to keep this
+   * test is the thing that would quietly undo it: someone re-reading the scan,
+   * seeing `Nachmusik`, and restoring it as a faithful transcription.
    */
-  it('keeps the printed typo off the Work and on the item', () => {
+  it('carries the printed typo nowhere', () => {
     const mozart = newWorks.find(([id]) => id === 'wrk-serenade-eine-kleine-nachtmusik')!
     expect(mozart[1].title).toContain('K. 525')
-    expect(mozart[1].title).not.toContain('Nachmusik')
     expect(mozart[1].nickname).toBe('Eine Kleine Nachtmusik')
     expect(mozart[1].slug).toContain('nachtmusik')
 
     const item = allItems.find((i) => i.work === 'wrk-serenade-eine-kleine-nachtmusik')!
-    expect(item.label).toContain('Nachmusik')
-    expect(item.label).not.toContain('Nachtmusik')
+    expect(item.label).toBe('Serenade (Eine Kleine Nachtmusik)')
+
+    for (const [id, w] of newWorks) expect(w.title, id).not.toContain('Nachmusik)')
+    for (const item of allItems) expect(item.label, item.id).not.toContain('Nachmusik)')
   })
 
   it('normalises the printed #3 on the Work and keeps it on the item', () => {

@@ -1032,18 +1032,23 @@ this repository answers it.
 ### 1992-02-09 · Sun · Uniondale High School · Ming-Feng Hsin (LISFA Jr. High)
 - [ ] missed whole concert
   - [ ] 1. Handel — Overture to The Messiah
-  - [ ] 2. Mozart — Serenade (Eine Kleine Nachmusik)
+  - [ ] 2. Mozart — Serenade (Eine Kleine Nachtmusik)
   - [ ] 3. Holst — Brook Green Suite
   - [ ] 4. Anderson — Fiddle Faddle
   - *Transcribed from
     `docs/archive/program-19920209-lisfa-uniondale-high-school.pdf` under
     AWK-82, the Junior High School Orchestra's block. Krista Weis chaired the
     division. Item 2 was the **Romanze only**, one movement of four, recorded on
-    the Program item rather than as a separate Work — AWK-64's precedent. Its
-    label keeps the program's spelling, `Nachmusik`; the Work it links was
-    created as `Serenade ("Eine Kleine Nachtmusik")` and Alex re-titled it to
-    the catalogue form, `Serenade No. 13 in G major, K. 525`, in the web app
-    the same day.*
+    the Program item rather than as a separate Work — AWK-64's precedent.*
+  - ***The program's spelling of item 2 survives nowhere in the archive.** The
+    page prints `Serenade (Eine Kleine Nachmusik)`, without the `t`. The
+    transcription created the Work as `Serenade ("Eine Kleine Nachtmusik")` and
+    kept the printed form on the item label, which is where a per-performance
+    misspelling belongs — the arrangement that lets 1992-12-13 read "Carneval
+    Overture". Alex overruled both in the web app on 2026-09-01: the Work is now
+    `Serenade No. 13 in G major, K. 525` with all four movements from the
+    catalogue, and the label reads `Nachtmusik` too. The scan is the only record
+    of what the page says.*
 
 ## 1993 — 37th Annual Concert
 

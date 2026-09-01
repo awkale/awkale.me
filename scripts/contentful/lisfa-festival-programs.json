@@ -44,8 +44,15 @@
     "app/lib/archive.ts resolves an item's display string as",
     "`item.fields.label ?? work.fields.title`, so `label` is the per-performance",
     "string and the place the printed wording goes. Two Works here are titled",
-    "against their printed line on purpose -- see `works` -- and both printed",
-    "forms survive on the label.",
+    "against their printed line on purpose -- see `works`.",
+    "",
+    "ONE OF THE TWO PRINTED FORMS NO LONGER SURVIVES ANYWHERE IN THE SPACE. The",
+    "Mozart's label was created as the page prints it, `Nachmusik`, and Alex",
+    "corrected the label as well as the Work title in the web app on 2026-09-01 --",
+    "so the Respighi `Suite #3` is the only printed wording still carried on a",
+    "label here. That is a curator overruling the convention rather than the",
+    "convention failing, and it is recorded because the rule above still reads as",
+    "though both cases hold.",
     "",
     "PERIOD AND FORM ARE DELIBERATELY ABSENT from the new Composer and the seven",
     "new Works, for the reason tilles-center-programs.json gives: ADR-0007 puts",
@@ -422,11 +429,11 @@
         {
           "id": "pi-19920209-2",
           "order": 2,
-          "label": "Serenade (Eine Kleine Nachmusik)",
+          "label": "Serenade (Eine Kleine Nachtmusik)",
           "work": "wrk-serenade-eine-kleine-nachtmusik",
           "composer": "cmp-mozart-wolfgang-amadeus",
           "note": "Second movement (Romanze) only.",
-          "why": "The label keeps the page's spelling, `Nachmusik`, while the Work it links is titled `Nachtmusik`. Same relationship as 1992-12-13's `Carneval Overture`, running the other way: there the archive held the correct spelling already, here this transcription supplies it."
+          "why": "THE PRINTED TYPO SURVIVES NOWHERE, and this line is the second correction Alex made in the web app on 2026-09-01. The transcription created the label as the page prints it, `Serenade (Eine Kleine Nachmusik)`, on the reasoning that a label is the per-performance string and the place a printed misspelling belongs -- the same relationship 1992-12-13's `Carneval Overture` has with its Work. He corrected the label too, hours after correcting the Work title, and this file follows the space rather than arguing with it. What the scan actually prints is in `sources` and in the scan itself; the archive's own copy of it ends here. Note the consequence for the general rule: the Respighi `#3` is now the only printed wording on any label in this declaration."
         },
         {
           "id": "pi-19920209-3",
