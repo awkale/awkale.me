@@ -313,8 +313,14 @@ AWK-37; wiring the CDA is AWK-39.
 > > `migrate_schema.py --delete-work-genre` then **counts** the gap and refuses
 > > above zero rather than taking an operator's word for it.
 > >
-> > The gate is the number to read, and both modes of the seed print it. Count it,
-> > do not read it here.
+> > **Both ran on 2026-09-01 and `work.genre` is GONE.** 3 entries from the
+> > in-scope pass and 203 from `--all-works`, then the field. The gate read 0
+> > first, `work` holds 11 fields, and `bun run build` answered **642 paths
+> > before and after** — the page count did not move, exactly as ADR-0007
+> > predicted, because Period and Form are filters and neither is routed.
+> >
+> > The gate is still the number to read on any future field delete, and both
+> > modes of the seed print it. Count it, do not read it here.
 > >
 > > Two other things AWK-66 turned up. A **sixth LIYO concert**, 1992-07-17, was
 > > entered by hand in the web app, bringing 5 Works and 1 Composer into scope and

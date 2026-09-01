@@ -478,6 +478,11 @@
       "replacedBy": "forms",
       "blockedBy": "AWK-66's widened genre -> forms migration -- seed_period_and_forms.py --all-works --apply",
       "why": [
+        "RAN 2026-09-01. `work.genre` no longer exists and this flag is a no-op --",
+        "it reports `does not exist; nothing to do`. Kept as the record of how a",
+        "field gets deleted here, because the next one will hit the same two-phase",
+        "shape and the same fail-open traps.",
+        "",
         "AWK-66, and it is ADR-0007's last step. The record retires `genre` for two",
         "axes and sequences the change in three separately-owned parts: AWK-30 added",
         "`forms`, AWK-37 migrated the played works, and only then can `genre` go.",

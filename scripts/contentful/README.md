@@ -72,11 +72,13 @@ states (ADR-0006): the 119 pre-tenure concerts rely on it.
 
 ### Two things it deliberately does not do on a default run
 
-**It does not delete `work.genre`.** [ADR-0007](../../docs/adr/0007-period-and-form-taxonomy.md)
-retires the field, but only after the `genre` → `forms` data migration, and
-deleting it any earlier drops assignments with nothing left to migrate from.
-That is behind `--delete-work-genre` (AWK-66), documented below — and it is the
-one gate here the script **checks** rather than confirms.
+**It did not delete `work.genre`, and still would not.** [ADR-0007](../../docs/adr/0007-period-and-form-taxonomy.md)
+retired the field, but only after the `genre` → `forms` data migration, and
+deleting it any earlier would have dropped assignments with nothing left to
+migrate from. That was behind `--delete-work-genre` (AWK-66), documented below —
+the one gate here the script **checks** rather than confirms. It ran on
+2026-09-01; the flag is now a no-op and the section is kept as the record of how
+a field gets deleted here.
 
 **It does not remove `unique: true` from `work.slug` on a default run.** That is
 behind its own flag:
@@ -104,6 +106,14 @@ passing.** Until then `unique: true` is the only thing standing between the spac
 and 20 work slugs colliding across 9 title families.
 
 ### Deleting `work.genre` — AWK-66
+
+**Ran 2026-09-01, and `work.genre` no longer exists.** The `work` type holds 11
+fields. The migration ran first — 3 entries from the in-scope pass, then 203 from
+`--all-works` — and the gate read 0 before the delete. `bun run build` answered
+**642 paths** before and after, so the page count did not move, which is what
+ADR-0007 predicted: Period and Form are filters and neither is routed.
+
+A re-run reports `= work.genre does not exist; nothing to do`.
 
 ```bash
 python3 scripts/contentful/migrate_schema.py --dry-run --delete-work-genre
