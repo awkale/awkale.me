@@ -1,0 +1,589 @@
+{
+  "note": [
+    "AWK-82's transcription of the three scanned Long Island String Festival",
+    "Association programs, separated from the script that applies it. Read by",
+    "transcribe_programs.py --plan, asserted by lisfa-festival-programs.test.ts.",
+    "",
+    "DECIDED AND NEVER REGENERATED, in the sense period-and-forms.json uses and",
+    "tilles-center-programs.json repeats. The sources are three image-only scans",
+    "in docs/archive/ and nothing derives this file -- there is no parser to",
+    "re-run, because the programs are in no spreadsheet and no graph. Re-reading",
+    "them means rendering them by eye. So a correction here is the only record of",
+    "the correction, and a re-run of the applier must not overwrite one.",
+    "",
+    "LISFA IS A THIRD INSTITUTION, after the Brooklyn lineage and the Long Island",
+    "Youth Orchestra. It is also the first FESTIVAL: three divisions -- Elementary,",
+    "Junior High, Senior High -- rehearse and perform separately on one afternoon,",
+    "each with its own conductor, and Alex played in one division per year.",
+    "",
+    "LISFA IS NOT THE ALL-COUNTY FESTIVAL, and this is the correction worth",
+    "reading before anything else here. The space holds three `All-Nassau ...`",
+    "Orchestras, abbreviated `All-County ...`, and one Concert that uses one of",
+    "them: `1989-01-08 -- All County`. Two of those three Orchestra records were",
+    "created and left unused, which makes them look exactly like the records this",
+    "transcription wants -- a junior high and a high school division of a Nassau",
+    "County festival, sitting empty. They are a DIFFERENT festival's, and the",
+    "first pass at this ticket proposed reusing them. Alex corrected it on",
+    "2026-09-01. Nothing here touches them, and the two Orchestras below are new.",
+    "",
+    "ONLY THE NASSAU DATE AND ONLY ALEX'S DIVISION BECOME DATA. Each printed",
+    "program covers two concerts a week apart -- a Suffolk County one and a Nassau",
+    "County one -- and each carries all three divisions' blocks. Alex grew up in",
+    "Nassau and never played the Suffolk festival, stated 2026-09-01. What is not",
+    "transcribed is recorded per Concert under `alsoOnThePage`, so the scan's full",
+    "contents survive in the repository even though seven program lines become",
+    "entries: see that key's note for why it is here rather than in Contentful.",
+    "",
+    "NOTHING RESOLVES TO AN EXISTING WORK, which is the opposite of AWK-64 and",
+    "worth stating because that ticket's headline surprise was the reverse. All",
+    "seven program lines were checked by title against the 659 live Works and all",
+    "seven are new; `reuse` therefore holds composers alone -- no hall, no",
+    "orchestra, no conductor, no work, no season.",
+    "",
+    "PROGRAM WORDING LIVES ON THE ITEM, NOT ON THE WORK, as in AWK-64.",
+    "app/lib/archive.ts resolves an item's display string as",
+    "`item.fields.label ?? work.fields.title`, so `label` is the per-performance",
+    "string and the place the printed wording goes. Two Works here are titled",
+    "against their printed line on purpose -- see `works` -- and both printed",
+    "forms survive on the label.",
+    "",
+    "PERIOD AND FORM ARE DELIBERATELY ABSENT from the new Composer and the seven",
+    "new Works, for the reason tilles-center-programs.json gives: ADR-0007 puts",
+    "every form judgement in period-and-forms.json and lets Form stay incomplete,",
+    "so assigning forms here would open a second home for a decided thing. Period",
+    "arrives on its own -- work.period inherits from the composer in the AWK-37",
+    "sweep. Run imslp_harvest.py --refresh, then seed_period_and_forms.py, after",
+    "applying this. The plain harvest re-run is a no-op; it caches the Delivery",
+    "read, which cost AWK-64 a wasted pass.",
+    "",
+    "CONDUCTOR SLUGS ARE NULL, following AWK-64 rather than the checklist. All 46",
+    "live conductors have conductor.slug unset, no route reads it, and slugging",
+    "three of forty-nine would leave a partial state for someone to explain later."
+  ],
+
+  "sources": {
+    "1992-02-09": "docs/archive/program-19920209-lisfa-uniondale-high-school.pdf",
+    "1993-02-07": "docs/archive/program-19930207-lisfa-oceanside-senior-high-school.pdf",
+    "1994-02-06": "docs/archive/program-19940206-lisfa-a-g-berner-junior-high-school.pdf",
+    "note": [
+      "Two pages each, image-only, no text layer. Page 1 is the title page -- the",
+      "festival, the annual ordinal, and both concerts' halls, dates and times.",
+      "Page 2 is the Nassau County program: the three officers, then the three",
+      "divisions in order with their conductors, chairpersons and works.",
+      "",
+      "Added 2026-09-01 as lisfa-92.pdf, lisfa-93.pdf and lisfa-94.pdf, then",
+      "recompressed and renamed to the convention above under AWK-82. The scanner",
+      "emitted them as lossless RGB bitmaps at 8-10 MB each, the same way it did",
+      "the Tilles Center scans; re-encoding each page as JPEG at 2200px brought",
+      "them to ~750 KB, a thirteenth, with the typewritten text still sharp --",
+      "verified by rendering the junior high block and reading it back, not",
+      "assumed from the file size. Do the same to any scan added here.",
+      "",
+      "This machine has no pdftoppm, so rendering means PDFKit -- unlike the",
+      "Tilles scans, these pages are not single embedded JPEGs, so there is no",
+      "stream to extract. The originals are not in the repository."
+    ]
+  },
+
+  "reuse": {
+    "note": [
+      "Live entry ids this transcription links but does not create. Every one was",
+      "verified present on 2026-09-01 before the ids were written down.",
+      "",
+      "COMPOSERS ONLY, and that is not an oversight -- see the top note. Three",
+      "Halls, two Orchestras and three Conductors are all absent from the space,",
+      "so they are created below rather than reused, and no Season is involved at",
+      "all.",
+      "",
+      "THE SORT NAMES BESIDE THE IDS ARE A CHECK, NOT A LABEL.",
+      "transcribe_programs.py re-reads each entry and aborts if the id has gone",
+      "missing, if it now resolves to a different content type, or if its live",
+      "name no longer matches what is recorded here. So correcting a name here is",
+      "not tidying; it is the thing that keeps the check honest. The test can only",
+      "assert these are non-empty and well-formed, because it has no network.",
+      "",
+      "TWO OF THE SIX ARE AMBIGUOUS BY NAME and the ids resolve the ambiguity:",
+      "the space holds two Andersons and three Handels."
+    ],
+    "composers": {
+      "handel": {
+        "id": "cmp-handel-george-frideric",
+        "sortName": "Handel, George Frideric",
+        "why": "The plain record, not `Handel, George Frideric (orch. by Mozart)` or `(arr. by Harty)`. The program prints an unqualified `Handel`, and ADR-0005 makes an arranger part of the Work rather than the Composer's identity -- but these two live records predate that and still exist, so the id matters."
+      },
+      "mozart": { "id": "cmp-mozart-wolfgang-amadeus", "sortName": "Mozart, Wolfgang Amadeus" },
+      "holst": { "id": "cmp-holst-gustav", "sortName": "Holst, Gustav" },
+      "anderson": {
+        "id": "cmp-anderson-leroy",
+        "sortName": "Anderson, Leroy",
+        "why": "Not `Anderson, Douglas`, the other live Anderson, who is a Modern composer with a world premiere in the Brooklyn archive. Fiddle Faddle is Leroy's."
+      },
+      "tchaikovsky": { "id": "cmp-tchaikovsky-pyotr-ilyich", "sortName": "Tchaikovsky, Pyotr Ilyich" },
+      "respighi": { "id": "cmp-respighi-ottorino", "sortName": "Respighi, Ottorino" }
+    }
+  },
+
+  "orchestras": {
+    "note": [
+      "Both absent from the space's seven Orchestras, confirmed 2026-09-01. See",
+      "the top note for why the two empty `All-Nassau` records are not these.",
+      "",
+      "THE SENIOR HIGH RECORD SERVES TWO CONCERTS, 1993 and 1994. One ensemble,",
+      "two years -- the division is the ensemble here, not the roster.",
+      "",
+      "BOTH REGISTERS ARE LOAD-BEARING and they were chosen by Alex on",
+      "2026-09-01. `abbreviation` is what the concerts table and a work page",
+      "render (AWK-70, AWK-72) AND what an invariant message names instead of an",
+      "id, so it has to be short and it has to be distinct: two divisions",
+      "abbreviated `LISFA` alike would make the identity app/lib/archive.ts reads",
+      "it as useless. `name` is what the concert page renders, so it spells the",
+      "festival out and never asks the reader to expand an acronym.",
+      "",
+      "NO COUNTY IN EITHER REGISTER. LISFA ran Nassau and Suffolk divisions and",
+      "each program covers both, so `LISFA Nassau ...` was the first proposal.",
+      "Alex settled it on 2026-09-01: he grew up in Nassau, never played Suffolk,",
+      "and a qualifier guarding against a record that will never exist is",
+      "clutter. A Suffolk program would need new records under this decision, and",
+      "that is the accepted cost."
+    ],
+    "orc-lisfa-junior-high": {
+      "name": "Long Island String Festival Association Junior High School Orchestra",
+      "abbreviation": "LISFA Jr. High"
+    },
+    "orc-lisfa-senior-high": {
+      "name": "Long Island String Festival Association Senior High School Orchestra",
+      "abbreviation": "LISFA Senior High"
+    }
+  },
+
+  "halls": {
+    "note": [
+      "Three school auditoria, none of them live -- of the 15 Halls in the space",
+      "only Tilles Center is on Long Island. These are the first Halls any",
+      "committed declaration has created; AWK-64 reused Tilles Center and AWK-59",
+      "created Dallas Brooks Hall by hand.",
+      "",
+      "`location` follows the space's format, which is `Town, NY` for the eight",
+      "Brooklyn and New York halls and `Institution, Town, NY` where the hall",
+      "sits inside a larger campus. A school auditorium named after its school",
+      "needs no institution clause, so all three take the short form.",
+      "",
+      "SLUGS ARE HAND-WRITTEN and folded the way ADR-0008 folds a filing name:",
+      "`A.G.` loses its periods to `a-g`, the way `Church of St. Ann & the Holy",
+      "Trinity` files as `church-of-st-ann-the-holy-trinity`. hall.slug is read by",
+      "no route today, and is still swept by AWK-61's whitespace invariant."
+    ],
+    "hal-uniondale-high-school": {
+      "name": "Uniondale High School",
+      "location": "Uniondale, NY",
+      "slug": "uniondale-high-school"
+    },
+    "hal-oceanside-senior-high-school": {
+      "name": "Oceanside Senior High School",
+      "location": "Oceanside, NY",
+      "slug": "oceanside-senior-high-school",
+      "why": "The 1993 title page prints the town as `1Oceanside, New York` -- a stray character, not a name. Recorded as `Oceanside, NY` per the space's format; the scan is the record of the typo."
+    },
+    "hal-a-g-berner-junior-high-school": {
+      "name": "A.G. Berner Junior High School",
+      "location": "Massapequa, NY",
+      "slug": "a-g-berner-junior-high-school",
+      "why": "A junior high school hosting the 1994 concert, at which Alex played in the SENIOR high division. The hall's name and the division's are unrelated, and the coincidence is worth one line here rather than a second look later."
+    }
+  },
+
+  "conductors": {
+    "note": [
+      "One per Concert, each conducting their own division's whole block. None is",
+      "live -- these are the space's 47th, 48th and 49th.",
+      "",
+      "NO ITEM CARRIES `programItem.conductor` HERE, and that is the field",
+      "working as designed rather than going unused: it exists for a Concert",
+      "whose blocks had different conductors, and each of these Concerts holds one",
+      "division's block under one conductor. The three divisions' conductors on a",
+      "single afternoon are three Concerts' worth, not one Concert's.",
+      "",
+      "`slug` is deliberately absent; see the top note."
+    ],
+    "cnd-ming-feng-hsin": { "firstName": "Ming-Feng", "lastName": "Hsin" },
+    "cnd-louis-bergonzi": { "firstName": "Louis", "lastName": "Bergonzi" },
+    "cnd-david-holland": { "firstName": "David", "lastName": "Holland" }
+  },
+
+  "soloists": {
+    "note": [
+      "None. No line on any of the three Nassau programs names a featured",
+      "performer, and CONTEXT.md is explicit that section players are recorded",
+      "nowhere. The key is present and empty rather than absent so that the",
+      "absence is a stated finding rather than a gap in the file."
+    ]
+  },
+
+  "composers": {
+    "note": [
+      "One, absent from all 263 live Composers on 2026-09-01.",
+      "",
+      "No dates, following AWK-64: the programs print none, and this file records",
+      "what the scans say. `period` is absent on purpose -- see the top note. He",
+      "has an IMSLP page, so imslp_harvest.py should reach him."
+    ],
+    "cmp-diamond-david": {
+      "firstName": "David",
+      "lastName": "Diamond",
+      "sortName": "Diamond, David",
+      "slug": "diamond-david",
+      "why": "The 1994 program prints composers as `Firstname Lastname` in this block -- `David Diamond`, `Ottorino Respighi` -- rather than the `P. Tchaikovsky` initial form the other blocks use. The forename is the program's, not an inference."
+    }
+  },
+
+  "works": {
+    "note": [
+      "Seven, all genuinely new. Slugs are hand-written per ADR-0008 -- the",
+      "importer's hashed form is not an address anyone should ship -- and each was",
+      "checked against its composer's live slugs and against both patterns",
+      "app/lib/invariants.ts rejects: `--` anywhere, and `-[0-9a-f]{6}` at the",
+      "end. All seven are free and none matches either shape.",
+      "",
+      "`fiddle-faddle` IS THE NEAR MISS THAT SHAPE IS FOR. Its last segment is",
+      "six characters long and five of them are hex; `l` is the only thing",
+      "keeping it out of the hashed-slug pattern. Worth knowing before anyone",
+      "renames it.",
+      "",
+      "TWO TITLES ARE DECIDED RATHER THAN TRANSCRIBED. AWK-64's rule is that a",
+      "new Work keeps the program's wording, and Alex chose the archive's",
+      "convention over it in both cases on 2026-09-01. Each `why` says what the",
+      "page prints; both printed forms survive on the item label.",
+      "",
+      "`period` and `forms` are absent on purpose. See the top note."
+    ],
+    "wrk-overture-to-the-messiah": {
+      "title": "Overture to The Messiah",
+      "slug": "overture-to-the-messiah",
+      "composer": "cmp-handel-george-frideric",
+      "why": "Printed as it stands. This is a THIRD Handel record for one oratorio, beside `Messiah` (under the orch.-by-Mozart composer) and `Messiah, Part III` -- which is the archive's existing convention for excerpts, not a duplicate. Nothing here merges them."
+    },
+    "wrk-serenade-eine-kleine-nachtmusik": {
+      "title": "Serenade No. 13 in G major, K. 525",
+      "nickname": "Eine Kleine Nachtmusik",
+      "slug": "serenade-eine-kleine-nachtmusik",
+      "composer": "cmp-mozart-wolfgang-amadeus",
+      "movement": ["Allegro", "Romance: Andante", "Menuetto: Allegretto", "Rondo: Allegro"],
+      "why": "The page prints `Serenade (Eine Kleine Nachmusik)`, missing the `t` in Nachtmusik. This transcription created the Work as `Serenade (\"Eine Kleine Nachtmusik\")` -- the typo corrected, the space's `Title (\"Nickname\")` shape kept -- and ALEX RE-TITLED IT TO THE CATALOGUE FORM IN THE WEB APP within minutes of it publishing, on 2026-09-01. The catalogue form is what stands, and this file is corrected to match it rather than the reverse: the applier merges and never clobbers, so a declaration left disagreeing would report `DIFFERS, left alone: title` on every future run and slowly read as a bug. The printed form is still on the item label, which is the whole point of the label existing.",
+      "movementsNote": "THE FOUR MOVEMENTS ARE THE CURATOR'S, NOT THE SCAN'S, and the distinction is the only reason this key still exists. The page prints one line under the title -- `2. Romanze` -- so this file originally carried no movement list at all, on the grounds that the other three would be invented. Alex added all four from the catalogue in the same web-app edit as the title. That is a legitimate source this transcription does not have, and recording them here keeps the declaration diffable against the space; what it must not do is imply the scan said so. The item's `note` remains the record of what was actually played."
+    },
+    "wrk-brook-green-suite": {
+      "title": "Brook Green Suite",
+      "slug": "brook-green-suite",
+      "composer": "cmp-holst-gustav",
+      "movement": ["Prelude", "Air", "Dance"],
+      "why": "Holst's sixth work in the archive, beside St Paul's Suite -- its companion piece, and already filed under its own name rather than as a variant."
+    },
+    "wrk-fiddle-faddle": {
+      "title": "Fiddle Faddle",
+      "slug": "fiddle-faddle",
+      "composer": "cmp-anderson-leroy",
+      "why": "Leroy Anderson's third work in the archive, after Sleigh Ride and A Christmas Festival. See this object's note on the slug."
+    },
+    "wrk-serenade-for-strings": {
+      "title": "Serenade for Strings",
+      "slug": "serenade-for-strings",
+      "composer": "cmp-tchaikovsky-pyotr-ilyich",
+      "movement": ["Pezzo in forma di Sonatina", "Walzer", "Elegie", "Finale"],
+      "why": "The page prints a bare `Serenade`. Titled `Serenade for Strings` here, matching Barber's and Elgar's live records -- a Tchaikovsky Work addressed as `serenade` alone says nothing, and the four printed movements identify it beyond doubt. Alex chose this over verbatim on 2026-09-01. The label stays `Serenade`.",
+      "slugNote": "The slug `serenade-for-strings` is ALSO Barber's. That is legal and intended: ADR-0008 scopes a work slug to its composer, and the entry ids differ -- Barber's is `wrk-serenade-for-strings-eb7ac3`. The build's `work-slug-unique-per-composer` groups by composer for exactly this reason."
+    },
+    "wrk-rounds-for-string-orchestra": {
+      "title": "Rounds for String Orchestra",
+      "slug": "rounds-for-string-orchestra",
+      "composer": "cmp-diamond-david"
+    },
+    "wrk-ancient-airs-and-dances-suite-no-3": {
+      "title": "Ancient Airs and Dances, Suite No. 3",
+      "slug": "ancient-airs-and-dances-suite-no-3",
+      "composer": "cmp-respighi-ottorino",
+      "why": "Printed `Ancient Airs and Dances, Suite #3`; normalised to `No.` per AWK-64's rule, which is settled in the space rather than invented here -- Respighi's Suite No. 2 is already live under `ancient-airs-and-dances-suite-no-2`. The printed `#3` survives on the item label."
+    }
+  },
+
+  "workMovements": {
+    "note": [
+      "None. No program line here names movements for a Work the archive already",
+      "holds -- all seven Works are new, so every movement list this transcription",
+      "supplies arrives with its Work under `works`. Present and empty for the",
+      "same reason `soloists` is."
+    ]
+  },
+
+  "concerts": {
+    "note": [
+      "Ids, titles and item ids follow AWK-59 and AWK-64: cnc-YYYYMMDD, a title of",
+      "'YYYY-MM-DD — <institution>' with an em dash, and pi-YYYYMMDD-N ordered",
+      "from 1. Program items are created fresh per Concert and never shared --",
+      "app/lib/invariants.ts fails a build where one item sits on two Concerts",
+      "more than 14 days apart, because a program item is one performance.",
+      "",
+      "THE TITLES SAY `LISFA`, NOT `All County`. Chosen by Alex on 2026-09-01,",
+      "over matching the live `1989-01-08 -- All County`. That concert is a",
+      "different festival's and stays as it is; the two are not meant to line up.",
+      "",
+      "NO SEASON ON ANY OF THE THREE, and none is created. ADR-0006 records that",
+      "the space's one festival Concert 'carries no season at all and keeps none",
+      "-- a one-off guest appearance has no numbered calendar to belong to', and",
+      "CONTEXT.md scopes a Season to an institution's numbered concert year. The",
+      "festival's own ordinal -- 36th, 37th, 38th Annual Concert -- counts",
+      "concerts, not years Alex belonged to, so `sea-lisfa-36` would be a calendar",
+      "nothing else uses. The ordinals are in `sourceNote` instead. This is the",
+      "first declaration where concert.season is legitimately absent, which is why",
+      "the applier had to stop requiring it.",
+      "",
+      "attended is true on all three and satOut is empty on all three: Alex played",
+      "every item of his division's block, stated 2026-09-01.",
+      "",
+      "EACH PROGRAM HOLDS ALEX'S DIVISION'S BLOCK ONLY, and this was the choice",
+      "with two precedents pulling opposite ways. AWK-59's 1993-07-26 puts the",
+      "whole printed program on the Concert and marks the visiting choirs' ten",
+      "blocks satOut; the live 1989-01-08 All County Concert holds one division's",
+      "five items and nothing else. Alex chose the second on 2026-09-01. The",
+      "reason is what satOut means: CONTEXT.md defines it as a Program item Alex",
+      "did not play AT A CONCERT HE OTHERWISE PLAYED, and the Elementary and",
+      "Senior High blocks are not works he declined -- they are not his program.",
+      "participation-checklist.md already flags the 1993-07-26 reading as that",
+      "concert's exception, and this keeps it exceptional.",
+      "",
+      "`sourceNote` AND `alsoOnThePage` ARE NOT WRITTEN TO CONTENTFUL, and that is",
+      "not an oversight. The content model has nowhere to put a start time, a",
+      "festival ordinal, an officer, a chairperson or another division's",
+      "repertoire; concert.dateNote exists but qualifies a DATE, and filling it",
+      "with a start time would be a misuse that then renders. So the facts are",
+      "kept here, in the committed record, and nowhere else -- exactly what AWK-59",
+      "did with Keith Glover compering on 1993-07-26.",
+      "",
+      "`alsoOnThePage` IS THE POINT OF DOING IT THIS WAY. Seven of nineteen",
+      "printed program lines become entries; the other twelve, three officers,",
+      "six conductors, six chairpersons and three Suffolk concerts would otherwise",
+      "exist only in a 750 KB image. Recording them costs nothing at build time",
+      "and answers the question a later reader will actually have -- what else was",
+      "on the page -- without another render. The test asserts all three carry",
+      "one, so the key cannot quietly rot into dead weight.",
+      "",
+      "NO ITEM CARRIES `character`. The field holds a non-instrument role -- the",
+      "space's honest examples are `Isolde`, `Dancer` and `Filmmaker` -- and AWK-69",
+      "cleared the last instruments out of it. Nothing here has a performer at",
+      "all. The test asserts no item carries the field."
+    ],
+    "cnc-19920209": {
+      "title": "1992-02-09 — LISFA",
+      "date": "1992-02-09",
+      "hall": "hal-uniondale-high-school",
+      "orchestra": ["orc-lisfa-junior-high"],
+      "conductor": "cnd-ming-feng-hsin",
+      "attended": true,
+      "satOut": [],
+      "sourceNote": "36th Annual Concert, Nassau County. Sunday 3:00 PM. Junior High School Orchestra, Krista Weis chairperson.",
+      "alsoOnThePage": {
+        "otherConcert": "Half Hollow Hills High School East, Dix Hills, NY — Sunday 1992-02-02, 3:00 PM. The Suffolk County concert of the same festival; not Alex's, and its program is not on the scanned pages.",
+        "officers": [
+          "Introduction: Susan Weber, President, LISFA",
+          "Welcome: Alan G. Hernandez, Superintendent of Schools, Uniondale Public Schools",
+          "Master of Ceremonies: Vicky Miro, Vice-President, LISFA"
+        ],
+        "divisions": [
+          {
+            "division": "Elementary School Orchestra",
+            "conductor": "Marilyn K. Smith",
+            "chairperson": "Catherine Fairweather",
+            "program": [
+              "Country Dance — Weber/Gordon",
+              "Suite in C — Pleyel/Halen (Allegro moderato; Menuetto & Trio)",
+              "The Happy Hobo — Bowles",
+              "Can-Can from \"Orpheus\" — Offenbach/Isaac"
+            ]
+          },
+          {
+            "division": "Senior High School Orchestra",
+            "conductor": "Constantine Kitsopoulos",
+            "chairperson": "Lisa Ramos",
+            "program": [
+              "Adagio and Fugue KV 546 — Mozart",
+              "Little Suite Op. 1 — Nielsen (1. Praludium; 2. Intermezzo; 3. Finale)",
+              "Molly On The Shore — Grainger"
+            ]
+          }
+        ]
+      },
+      "program": [
+        {
+          "id": "pi-19920209-1",
+          "order": 1,
+          "label": "Overture to The Messiah",
+          "work": "wrk-overture-to-the-messiah",
+          "composer": "cmp-handel-george-frideric"
+        },
+        {
+          "id": "pi-19920209-2",
+          "order": 2,
+          "label": "Serenade (Eine Kleine Nachmusik)",
+          "work": "wrk-serenade-eine-kleine-nachtmusik",
+          "composer": "cmp-mozart-wolfgang-amadeus",
+          "note": "Second movement (Romanze) only.",
+          "why": "The label keeps the page's spelling, `Nachmusik`, while the Work it links is titled `Nachtmusik`. Same relationship as 1992-12-13's `Carneval Overture`, running the other way: there the archive held the correct spelling already, here this transcription supplies it."
+        },
+        {
+          "id": "pi-19920209-3",
+          "order": 3,
+          "label": "Brook Green Suite",
+          "work": "wrk-brook-green-suite",
+          "composer": "cmp-holst-gustav"
+        },
+        {
+          "id": "pi-19920209-4",
+          "order": 4,
+          "label": "Fiddle Faddle",
+          "work": "wrk-fiddle-faddle",
+          "composer": "cmp-anderson-leroy"
+        }
+      ]
+    },
+    "cnc-19930207": {
+      "title": "1993-02-07 — LISFA",
+      "date": "1993-02-07",
+      "hall": "hal-oceanside-senior-high-school",
+      "orchestra": ["orc-lisfa-senior-high"],
+      "conductor": "cnd-louis-bergonzi",
+      "attended": true,
+      "satOut": [],
+      "sourceNote": "37th Annual Concert, Nassau County. Sunday 3:00 PM. Senior High School Orchestra, Lisa Ramos chairperson.",
+      "alsoOnThePage": {
+        "otherConcert": "Half Hollow Hills High School East, Dix Hills, NY — Sunday 1993-01-31, 3:00 PM. The Suffolk County concert of the same festival; not Alex's, and its program is not on the scanned pages.",
+        "officers": [
+          "Introduction: Geraldine Lisanti-Levy, President, LISFA",
+          "Welcome: Robert E. Brace, Director of Fine and Performing Arts, Oceanside Public School District",
+          "Master of Ceremonies: Iris Michel, Vice-President, LISFA"
+        ],
+        "divisions": [
+          {
+            "division": "Elementary School Orchestra",
+            "conductor": "Steven Thomas",
+            "chairperson": "Ingrid DeMilo",
+            "program": [
+              "Country Wedding from the \"Moldau\" — B. Smetana/S. Dackow",
+              "Johnny Comes Marching Home — Trad./R. Stephan",
+              "Air and Cakewalk — A. Frackenpohl",
+              "Trepak — P. Tchaikovsky/S. Dackow"
+            ]
+          },
+          {
+            "division": "Junior High School Orchestra",
+            "conductor": "William L. Jones",
+            "chairperson": "Krista Weis",
+            "program": [
+              "Overture in C Minor — F. Schubert",
+              "Concerto Grosso in D Minor — G.F. Handel",
+              "Psalm and Fugue — A. Hovhaness",
+              "Short Overture for Strings — J. Berger"
+            ]
+          }
+        ]
+      },
+      "program": [
+        {
+          "id": "pi-19930207-1",
+          "order": 1,
+          "label": "Serenade",
+          "work": "wrk-serenade-for-strings",
+          "composer": "cmp-tchaikovsky-pyotr-ilyich",
+          "why": "A one-item Concert, and the page is not truncated -- the Senior High block ends with the Serenade's four movements and the page ends there. The shortest program in the archive, which is what a festival division's twenty minutes looks like."
+        }
+      ]
+    },
+    "cnc-19940206": {
+      "title": "1994-02-06 — LISFA",
+      "date": "1994-02-06",
+      "hall": "hal-a-g-berner-junior-high-school",
+      "orchestra": ["orc-lisfa-senior-high"],
+      "conductor": "cnd-david-holland",
+      "attended": true,
+      "satOut": [],
+      "sourceNote": "38th Annual Concert, Nassau County. Sunday 3:00 PM. Senior High School Orchestra, Catherine Fairweather chairperson.",
+      "alsoOnThePage": {
+        "otherConcert": "Ward Melville High School, Setauket, NY — Sunday 1994-01-30, 3:00 PM. The Suffolk County concert of the same festival; not Alex's, and its program is not on the scanned pages.",
+        "officers": [
+          "Introduction: Geraldine Lisanti-Levy, President, LISFA",
+          "Welcome: Dr. Janice R. Holdridge, Director of Fine Arts, Massapequa Schools",
+          "Master of Ceremonies: Iris Michel, Vice-President, LISFA"
+        ],
+        "divisions": [
+          {
+            "division": "Elementary School Orchestra",
+            "conductor": "Nina Karbacka",
+            "chairperson": "Ingrid DeMilo",
+            "program": [
+              "Rondo — J. Haydn/P. Gordon",
+              "Buttons — M. Isaac",
+              "Dance Suite for Strings — M. Whitney (Allemande; Sarabande; Gigue)"
+            ]
+          },
+          {
+            "division": "Junior High School Orchestra",
+            "conductor": "Jim Bates",
+            "chairperson": "Peter Katcher",
+            "program": [
+              "Concerto in D Minor, 1st Movement — A. Vivaldi/J. Franco",
+              "Air for Strings — N. Dello Joio",
+              "Sea Shantys — Elwin Wienandt",
+              "Medley of Waltzes from \"La Traviata\" — G. Verdi/R. McLeod"
+            ]
+          }
+        ]
+      },
+      "program": [
+        {
+          "id": "pi-19940206-1",
+          "order": 1,
+          "label": "Rounds for String Orchestra",
+          "work": "wrk-rounds-for-string-orchestra",
+          "composer": "cmp-diamond-david"
+        },
+        {
+          "id": "pi-19940206-2",
+          "order": 2,
+          "label": "Ancient Airs and Dances, Suite #3",
+          "work": "wrk-ancient-airs-and-dances-suite-no-3",
+          "composer": "cmp-respighi-ottorino"
+        }
+      ]
+    }
+  },
+
+  "guards": {
+    "note": [
+      "Counts the test asserts, so a hand edit that drops or doubles something",
+      "fails rather than applying quietly. AGENTS.md's standing instruction about",
+      "counts applies to these too: they are asserted here, so they cannot go",
+      "stale the way a number in prose does.",
+      "",
+      "`worksReused` is 0 and `workMovementsMerged` is 0 -- both real findings",
+      "rather than unfilled fields, and both the opposite of AWK-64, where 11 of",
+      "17 program lines resolved to existing Works.",
+      "",
+      "`entriesCreated` is the sum of every creation below: 2 orchestras, 3 halls,",
+      "3 conductors, 1 composer, 7 works, 7 program items and 3 concerts."
+    ],
+    "concerts": 3,
+    "programItems": 7,
+    "worksCreated": 7,
+    "worksReused": 0,
+    "workMovementsMerged": 0,
+    "composersCreated": 1,
+    "composersReused": 6,
+    "conductorsCreated": 3,
+    "hallsCreated": 3,
+    "orchestrasCreated": 2,
+    "soloistsCreated": 0,
+    "itemsWithOwnConductor": 0,
+    "itemsWithSoloists": 0,
+    "itemsWithMovementNote": 1,
+    "concertsWithSeason": 0,
+    "entriesCreated": 26
+  }
+}

@@ -1,15 +1,33 @@
 #!/usr/bin/env python3
-"""Apply tilles-center-programs.json to Contentful. Stdlib only.
+"""Apply a transcribed-program declaration to Contentful. Stdlib only.
 
-    python3 transcribe_programs.py                  # dry run: report, write nothing
-    python3 transcribe_programs.py --apply          # create/update drafts
-    python3 transcribe_programs.py --apply --publish
+    python3 transcribe_programs.py --plan PLAN.json                  # dry run
+    python3 transcribe_programs.py --plan PLAN.json --apply          # drafts
+    python3 transcribe_programs.py --plan PLAN.json --apply --publish
 
-AWK-64. Writes the three scanned Tilles Center LIYO programs into the space:
-two Composers, two Conductors, five Soloists, six Works, seventeen Program items
-and three Concerts, plus one movement list merged into a Work that already
-exists. Every id it links but does not create is declared under `reuse` in the
-JSON and verified to resolve before anything is written.
+AWK-64 built this for tilles-center-programs.json -- the three scanned Tilles
+Center LIYO programs: two Composers, two Conductors, five Soloists, six Works,
+seventeen Program items and three Concerts, plus one movement list merged into a
+Work that already exists. AWK-82 generalised it for
+lisfa-festival-programs.json, the three LISFA festival programs: two
+Orchestras, three Halls, three Conductors, one Composer, seven Works, seven
+Program items and three Concerts. Every id a declaration links but does not
+create is declared under `reuse` and verified to resolve before anything is
+written.
+
+`--plan` IS REQUIRED, and defaulting it would be the wrong kindness. Both
+declarations use deterministic ids, so running the wrong one is not destructive
+-- it is worse than that: it is a re-run of an already-applied transcription,
+which reports `unchanged` for every entry and succeeds. A run that does nothing
+and says so cheerfully is indistinguishable from a run that worked, and the
+person reading the output is the one who typed the wrong flag.
+
+WHAT A DECLARATION MAY LEAVE OUT. `composers`, `conductors`, `soloists`,
+`works`, `workMovements`, `halls` and `orchestras` are each optional and absent
+means none -- AWK-82 creates no Soloists and merges no movement lists, and
+AWK-64 creates neither a Hall nor an Orchestra. `concert.season` is optional
+too, because a festival Concert legitimately has none (ADR-0006); `hall`,
+`orchestra`, `conductor`, `date`, `title` and `attended` are not.
 
 DRY RUN IS THE DEFAULT, like seed_participation.py, backfill_slugs.py,
 merge_composers.py, backfill_seasons.py and seed_period_and_forms.py. The
@@ -57,10 +75,10 @@ ENV = os.environ.get("CONTENTFUL_ENVIRONMENT_ID", "master")
 LOCALE = os.environ.get("CONTENTFUL_LOCALE", "en-US")
 BASE = f"https://api.contentful.com/spaces/{SPACE}/environments/{ENV}"
 
-PLAN = Path(__file__).parent / "tilles-center-programs.json"
+DECLARATIONS = ("tilles-center-programs.json", "lisfa-festival-programs.json")
 
 FLAGS = {"--apply", "--publish"}
-TAKES_VALUE = {"--token-file"}
+TAKES_VALUE = {"--token-file", "--plan"}
 
 
 def _parse_argv(argv):
@@ -73,14 +91,17 @@ def _parse_argv(argv):
     round -- there, `--aply` reading as a report is harmless -- and the asymmetry
     is why both need the check rather than trusting the default to be safe.
     """
-    options = {"apply": False, "publish": False, "token_file": None}
+    options = {"apply": False, "publish": False, "token_file": None, "plan": None}
     index = 0
     while index < len(argv):
         argument = argv[index]
         if argument in TAKES_VALUE:
             if index + 1 >= len(argv):
                 sys.exit(f"{argument} needs a value")
-            options["token_file"] = argv[index + 1]
+            # Keyed off the flag, not hardcoded. The first version assigned every
+            # value-taking flag to token_file, which was correct while there was
+            # one of them and would have made `--plan X` set the token path.
+            options[argument.lstrip("-").replace("-", "_")] = argv[index + 1]
             index += 2
             continue
         if argument not in FLAGS:
@@ -96,6 +117,23 @@ def _parse_argv(argv):
 OPTIONS = _parse_argv(sys.argv[1:])
 APPLY = OPTIONS["apply"]
 DO_PUBLISH = OPTIONS["publish"]
+
+
+def resolve_plan(name):
+    """Required, and resolved relative to this directory as well as to the cwd,
+    so `--plan lisfa-festival-programs.json` works from anywhere."""
+    if not name:
+        sys.exit("--plan is required; see the module docstring for why.\n"
+                 "declarations in this directory:\n  " + "\n  ".join(DECLARATIONS))
+    path = Path(name)
+    if not path.exists():
+        path = Path(__file__).parent / name
+    if not path.exists():
+        sys.exit(f"--plan {name}: no such file")
+    return path
+
+
+PLAN = resolve_plan(OPTIONS["plan"])
 
 
 def read_token(token_file):
@@ -181,6 +219,14 @@ def entries(record):
 
 # ------------------------------------------------------------------ plan
 
+def section(decl, name):
+    """One optional top-level group. Absent means none -- see the docstring's
+    note on what a declaration may leave out. A group that is present but holds
+    only its `note` also means none, which is how AWK-82 states that it creates
+    no Soloists rather than staying silent about them."""
+    return entries(decl.get(name) or {})
+
+
 def build_plan(decl):
     """Flatten the declaration into an ordered list of writes.
 
@@ -188,32 +234,50 @@ def build_plan(decl):
     rather than the dict it came from."""
     plan = []
 
-    for cid, rec in entries(decl["composers"]).items():
+    # Halls and Orchestras first. Neither links anything, and both are linked BY
+    # a Concert -- so they cannot be created after one, and there is nothing to
+    # order them against each other.
+    for hid, rec in section(decl, "halls").items():
+        plan.append(("hall", hid, {
+            "name": rec["name"], "location": rec["location"], "slug": rec["slug"],
+        }))
+
+    for oid, rec in section(decl, "orchestras").items():
+        plan.append(("orchestra", oid, {
+            "name": rec["name"], "abbreviation": rec["abbreviation"],
+        }))
+
+    for cid, rec in section(decl, "composers").items():
         plan.append(("composer", cid, {
             "firstName": rec["firstName"], "lastName": rec["lastName"],
             "sortName": rec["sortName"], "slug": rec["slug"],
         }))
 
-    for cid, rec in entries(decl["conductors"]).items():
+    for cid, rec in section(decl, "conductors").items():
         # No slug. All 46 live conductors have it unset; see the JSON's note.
         plan.append(("conductor", cid, {
             "firstName": rec["firstName"], "lastName": rec["lastName"],
         }))
 
-    for sid, rec in entries(decl["soloists"]).items():
+    for sid, rec in section(decl, "soloists").items():
         plan.append(("soloist", sid, {
             "firstName": rec["firstName"], "lastName": rec["lastName"],
             "fullName": rec["fullName"], "instrument": rec["instrument"],
         }))
 
-    for wid, rec in entries(decl["works"]).items():
+    for wid, rec in section(decl, "works").items():
         fields = {"title": rec["title"], "slug": rec["slug"], "composer": link(rec["composer"])}
         if rec.get("movement"):
             fields["movement"] = rec["movement"]
+        # AWK-82. The space's `Title ("Nickname")` convention across 46 Works
+        # keeps the nickname in both places; the field is what a reader can
+        # search on, the parenthetical is what renders.
+        if rec.get("nickname"):
+            fields["nickname"] = rec["nickname"]
         plan.append(("work", wid, fields))
 
     # A Work that already exists, gaining only what the scan adds.
-    for wid, rec in entries(decl["workMovements"]).items():
+    for wid, rec in section(decl, "workMovements").items():
         plan.append(("work", wid, {"movement": rec["movement"]}))
 
     for cid, concert in entries(decl["concerts"]).items():
@@ -235,15 +299,24 @@ def build_plan(decl):
             plan.append(("programItem", item["id"], fields))
 
     for cid, concert in entries(decl["concerts"]).items():
-        plan.append(("concert", cid, {
+        fields = {
             "title": concert["title"], "date": concert["date"],
-            "season": link(concert["season"]), "hall": link(concert["hall"]),
+            "hall": link(concert["hall"]),
             "orchestra": links(concert["orchestra"]),
             "conductor": link(concert["conductor"]),
             "attended": concert["attended"],
             "program": links([i["id"] for i in concert["program"]]),
             "satOut": links(concert["satOut"]),
-        }))
+        }
+        # AWK-82. OPTIONAL, and absent is a decision rather than a gap: ADR-0006
+        # records that a festival Concert "carries no season at all and keeps
+        # none". Omitted rather than written as null, so that a Concert which
+        # somehow acquires one later is a merge into an empty field like any
+        # other -- writing null here would make the field a value this script
+        # then declines to change.
+        if concert.get("season"):
+            fields["season"] = link(concert["season"])
+        plan.append(("concert", cid, fields))
 
     return plan
 
@@ -275,16 +348,30 @@ def verify_reuse(decl):
     period seed restored his diacritic an hour after this declaration was
     written. A check that reports a true finding under the word `ok` is a check
     nobody will read twice."""
-    reuse = decl["reuse"]
+    reuse = decl.get("reuse") or {}
     targets = []
-    for key in ("hall", "orchestra", "conductor"):
-        targets.append((key, reuse[key]["id"], reuse[key]["name"], key))
-    for date, season in entries(reuse["seasons"]).items():
-        targets.append((f"season {date}", season["id"], season["label"], "season"))
-    for key, comp in entries(reuse["composers"]).items():
-        targets.append((f"composer {key}", comp["id"], comp["sortName"], "composer"))
-    for key, work in entries(reuse["works"]).items():
-        targets.append((f"work {key}", work["id"], work["title"], "work"))
+
+    # TWO SHAPES, ONE WALKER, and the branch is deliberate. AWK-64 reuses exactly
+    # one Hall, one Orchestra and one Conductor across its three Concerts, so it
+    # declares them singular: `reuse.hall` is an object. AWK-82 reuses none of
+    # the three and six Composers instead. Reading both costs the SINGULAR tuple
+    # below; the alternative was restructuring a declaration whose own note says
+    # a correction to it is the only record of that correction, which is a worse
+    # trade than four lines here.
+    #
+    # The expected name is read from whichever key that content type displays --
+    # the same field verify_reuse compares against the live entry.
+    SINGULAR = (("hall", "name"), ("orchestra", "name"), ("conductor", "name"))
+    PLURAL = (("halls", "name", "hall"), ("orchestras", "name", "orchestra"),
+              ("conductors", "name", "conductor"), ("seasons", "label", "season"),
+              ("composers", "sortName", "composer"), ("works", "title", "work"))
+
+    for key, name_field in SINGULAR:
+        if key in reuse:
+            targets.append((key, reuse[key]["id"], reuse[key][name_field], key))
+    for key, name_field, want_type in PLURAL:
+        for label, rec in entries(reuse.get(key) or {}).items():
+            targets.append((f"{want_type} {label}", rec["id"], rec[name_field], want_type))
 
     seen, bad = set(), []
     for what, eid, expected, want_type in targets:
@@ -328,7 +415,7 @@ def verify_new_work_slugs(decl):
     against both rejected shapes. It cannot see the space, which is the half
     this does."""
     by_composer = {}
-    for wid, rec in entries(decl["works"]).items():
+    for wid, rec in section(decl, "works").items():
         by_composer.setdefault(rec["composer"], []).append((wid, rec["slug"]))
 
     bad = []
@@ -430,11 +517,19 @@ def main():
     counts = {}
     for ctype, _, _ in plan:
         counts[ctype] = counts.get(ctype, 0) + 1
+    # `.get(..., 0)` on the creation counts, because a declaration that creates
+    # none of something says so by omitting the guard as well as the group --
+    # AWK-64 declares no `hallsCreated`. The two counts a declaration cannot
+    # omit are `programItems` and `concerts`: a transcription with neither is
+    # not a transcription, and a missing guard there should read as a broken
+    # file rather than as zero.
     expected = {
-        "composer": guards["composersCreated"],
-        "conductor": guards["conductorsCreated"],
-        "soloist": guards["soloistsCreated"],
-        "work": guards["worksCreated"] + guards["workMovementsMerged"],
+        "hall": guards.get("hallsCreated", 0),
+        "orchestra": guards.get("orchestrasCreated", 0),
+        "composer": guards.get("composersCreated", 0),
+        "conductor": guards.get("conductorsCreated", 0),
+        "soloist": guards.get("soloistsCreated", 0),
+        "work": guards.get("worksCreated", 0) + guards.get("workMovementsMerged", 0),
         "programItem": guards["programItems"],
         "concert": guards["concerts"],
     }
@@ -492,7 +587,11 @@ def main():
         print("\nEntries are DRAFTS. Nothing renders until --publish runs.")
 
     print(f"\n{http.calls} API calls.")
-    print("Next: imslp_harvest.py, then seed_period_and_forms.py --apply, then bun run build.")
+    # --refresh, not a plain re-run: the harvest caches the Delivery read in
+    # .imslp-cache/archive.json, so the first pass after a transcription reads
+    # yesterday's scope and reports nothing new. AWK-64 lost a pass to this.
+    print("Next: imslp_harvest.py --refresh, then seed_period_and_forms.py --apply, "
+          "then bun run build.")
 
 
 if __name__ == "__main__":
