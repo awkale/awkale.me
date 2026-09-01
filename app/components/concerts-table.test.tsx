@@ -27,6 +27,9 @@ const concert = (over: Partial<Concert> = {}): Concert => ({
   slug: '2012-03-15',
   date: '2012-03-15',
   hall: 'Walt Whitman Hall',
+  // Present so the fixture is a whole Concert; this table has no location column
+  // and never reads it — the concert page is the only surface that does.
+  hallLocation: 'Brooklyn College',
   conductor: 'Nicholas Armstrong',
   orchestras: [{ name: 'Brooklyn Symphony Orchestra', abbreviation: 'BSO' }],
   program: [

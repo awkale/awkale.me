@@ -46,7 +46,21 @@ export default function Concert({ loaderData }: Route.ComponentProps) {
         <p className="kicker">Concert</p>
         <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">{formatDate(concert.date)}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {[concert.hall, concert.conductor, ...concert.orchestras.map((o) => o.name)].filter(Boolean).join(' · ')}
+          {/* Hall and location join with a COMMA and count as one segment, so the
+              line reads as a place — `Walt Whitman Hall, Brooklyn College` — rather
+              than as two peer facts either side of a middot.
+
+              `|| null` is load-bearing: with no hall the inner join yields '', which
+              is truthy to nothing but survives no filter of its own, and the outer
+              line would open on a middot. Coercing to null lets the same
+              filter(Boolean) below drop it. */}
+          {[
+            [concert.hall, concert.hallLocation].filter(Boolean).join(', ') || null,
+            concert.conductor,
+            ...concert.orchestras.map((o) => o.name),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </p>
 
         <table className="mt-6 w-full border-collapse text-[0.8rem]">

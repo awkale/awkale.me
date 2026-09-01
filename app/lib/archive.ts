@@ -79,7 +79,10 @@ type WorkFields = {
   arrangementType: string
 }
 type ComposerFields = { firstName: string; lastName: string; sortName: string; slug: string; period: string }
-type HallFields = { name: string; slug: string }
+// `location` is `required: false` on the content type — verified against it
+// (AWK-72's habit), and genuinely absent on 3 of the 15 halls. Optional so every
+// reader has to say what it does about that.
+type HallFields = { name: string; slug: string; location?: string }
 type ConductorFields = { firstName: string; lastName: string; slug?: string }
 // `abbreviation` is `required: false` on the content type, verified against it
 // rather than assumed (AWK-72), so it is genuinely absent on an orchestra nobody
@@ -145,6 +148,19 @@ export type Concert = {
   slug: string
   date: string
   hall: string | null
+  /**
+   * The hall's city or campus, carried SEPARATELY rather than appended to `hall`.
+   *
+   * `hall` is a filter value, not just a label: facets.ts matches concerts on that
+   * exact string and it round-trips through the query string, so folding a location
+   * into it would break every saved filter URL and widen the table's Hall column.
+   * The concert page is the one surface with room to spell the place out, so it is
+   * the one surface that reads this.
+   *
+   * Null on the 3 halls with no location set, and the concert page omits it rather
+   * than leaving a dangling comma.
+   */
+  hallLocation: string | null
   conductor: string | null
   /**
    * BOTH REGISTERS OF THE NAME, because the two surfaces that read this want
@@ -585,7 +601,11 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
 
   for (const concert of attended) {
     const satOut = new Set(linkIds(concert.fields.satOut))
-    const hall = hallById.get(linkId(concert.fields.hall) ?? '')?.fields.name ?? null
+    // One lookup, both fields — resolving the entry twice would let a future edit
+    // point them at different halls.
+    const hallEntry = hallById.get(linkId(concert.fields.hall) ?? '')
+    const hall = hallEntry?.fields.name ?? null
+    const hallLocation = hallEntry?.fields.location ?? null
     // Resolved HERE, at concert level, not inside the item loop below: a
     // performance is one evening however many programme rows carry the work, and
     // the orchestra is a fact about the concert.
@@ -679,6 +699,7 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       slug: date,
       date,
       hall,
+      hallLocation,
       conductor,
       orchestras: linkIds(concert.fields.orchestra)
         .map((id) => orchestraById.get(id))
