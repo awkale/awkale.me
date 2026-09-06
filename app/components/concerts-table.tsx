@@ -12,6 +12,7 @@ import {
 import { Link } from 'react-router'
 
 import type { Concert } from '../lib/archive'
+import { type ConcertSort, isSortColumn, toConcertSort } from '../lib/sorting'
 
 /**
  * The Performance history's 127-row index, as a resizable React Aria table.
@@ -23,7 +24,15 @@ import type { Concert } from '../lib/archive'
  * the old markup stated it three times over (a `<Th>` row, a `<Td>` row, and a
  * hard-coded `colSpan={5}` the ticket flagged as the next thing to go silently
  * wrong). Resizing is what made the migration worth doing rather than a reorder in
- * place, and sorting lands on the same seam under AWK-71.
+ * place, and sorting landed on the same seam under AWK-71: `allowsSorting` on
+ * three of the five columns, with the Table CONTROLLED — `sortDescriptor` in,
+ * `onSortChange` out — because the query string is the state and nothing here
+ * mirrors it. Which columns sort is app/lib/sorting.ts's to say; this file only
+ * asks. Note the header is not a `<button>` inside the `<th>`: in React Aria's
+ * grid pattern the `<th>` itself is the pressable, focusable control, operated
+ * with Enter or Space, and it is the library that writes `aria-sort` — the
+ * direction on the sorted column, `none` on the other sortable ones, nothing on
+ * a column that cannot sort.
  *
  * WHAT IT COSTS, both accepted deliberately:
  *
@@ -128,7 +137,14 @@ const CELL: Record<ColumnId, (concert: Concert) => ReactNode> = {
   hall: (concert) => concert.hall ?? <Absent />,
 }
 
-export function ConcertsTable({ concerts }: { concerts: Concert[] }) {
+type Props = {
+  concerts: Concert[]
+  /** The sort the rows ARE in — the table does not reorder them, it reports them. */
+  sort: ConcertSort
+  onSortChange: (sort: ConcertSort) => void
+}
+
+export function ConcertsTable({ concerts, sort, onSortChange }: Props) {
   return (
     <ResizableTableContainer className="concerts-table">
       {/*
@@ -152,23 +168,51 @@ export function ConcertsTable({ concerts }: { concerts: Concert[] }) {
         widths reset when the table empties and refills; widths are not persisted
         anyway, and filtering to nothing and back is not the common path.
       */}
-      <Table key={concerts.length === 0 ? 'empty' : 'rows'} aria-label="Concerts" className="concerts-grid">
+      <Table
+        key={concerts.length === 0 ? 'empty' : 'rows'}
+        aria-label="Concerts"
+        className="concerts-grid"
+        sortDescriptor={sort}
+        // React Aria hands back a `Key`; the narrowing to the three sortable
+        // columns lives in sorting.ts. A press on a column without `allowsSorting`
+        // never reaches here at all, so the null branch is belt and braces.
+        onSortChange={(descriptor) => {
+          const next = toConcertSort(descriptor)
+          if (next) onSortChange(next)
+        }}
+      >
         <TableHeader columns={COLUMNS}>
           {(column) => (
             <Column
               isRowHeader={column.id === 'date'}
+              allowsSorting={isSortColumn(column.id)}
               defaultWidth={column.defaultWidth}
               minWidth={column.minWidth}
               className="eyebrow concerts-th"
             >
-              <span className="concerts-th-label">{column.label}</span>
-              {/* Rendering the resizer is what makes a column resizable — there is
-                  no `allowsResizing` prop on React Aria's own Column, only on the
-                  starter template's wrapper around it. None on the last column: with
-                  no scroll container above the breakpoint there is nothing to its
-                  right to give width back, so dragging it would widen the table past
-                  the page. */}
-              {column.id !== LAST && <ColumnResizer className="concerts-resizer" />}
+              {({ sortDirection }) => (
+                <>
+                  <span className="concerts-th-content">
+                    <span className="concerts-th-label">{column.label}</span>
+                    {/* Decorative: `aria-sort` on the th is what assistive tech
+                        reads, and the status line announces the change. Present
+                        on the sorted column only — an idle arrow on every sortable
+                        header is the busier reading this page keeps declining. */}
+                    {sortDirection && (
+                      <span className="concerts-sort-indicator" aria-hidden="true">
+                        {sortDirection === 'ascending' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </span>
+                  {/* Rendering the resizer is what makes a column resizable — there
+                      is no `allowsResizing` prop on React Aria's own Column, only on
+                      the starter template's wrapper around it. None on the last
+                      column: with no scroll container above the breakpoint there is
+                      nothing to its right to give width back, so dragging it would
+                      widen the table past the page. */}
+                  {column.id !== LAST && <ColumnResizer className="concerts-resizer" />}
+                </>
+              )}
             </Column>
           )}
         </TableHeader>

@@ -1,11 +1,12 @@
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useEffect, useState } from 'react'
 import { hydrateRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { Concert } from '../lib/archive'
+import { DEFAULT_SORT } from '../lib/sorting'
 import { ConcertsTable } from './concerts-table'
 
 /**
@@ -54,13 +55,21 @@ function blanks() {
   }
 }
 
-function renderTable(concerts: Concert[]) {
+function renderTable(concerts: Concert[], onSortChange = () => {}) {
   return render(
     <MemoryRouter>
-      <ConcertsTable concerts={concerts} />
+      <ConcertsTable concerts={concerts} sort={DEFAULT_SORT} onSortChange={onSortChange} />
     </MemoryRouter>
   )
 }
+
+/**
+ * A header by accessible NAME, anchored at the start rather than exact: the
+ * sorted column carries a decorative aria-hidden arrow (AWK-71), which the name
+ * excludes, but name-from-content also takes in the resizer's own label on the
+ * four columns that carry one.
+ */
+const columnHeader = (name: string) => screen.getByRole('columnheader', { name: new RegExp(`^${name}\\b`) })
 
 const cellText = () =>
   screen
@@ -75,13 +84,12 @@ describe('ConcertsTable', () => {
     // The order AWK-70 asked for, in the order they are read. Items is gone.
     renderTable([concert()])
 
-    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual([
-      'Date',
-      'Programme',
-      'Orchestra',
-      'Conductor',
-      'Hall',
-    ])
+    // By accessible NAME, not textContent — see columnHeader.
+    const headers = screen.getAllByRole('columnheader')
+    const position = (name: string) => headers.indexOf(columnHeader(name))
+
+    expect(headers).toHaveLength(5)
+    expect(['Date', 'Programme', 'Orchestra', 'Conductor', 'Hall'].map(position)).toEqual([0, 1, 2, 3, 4])
   })
 
   it('fills the cells in the same order as the headers', () => {
@@ -198,7 +206,7 @@ describe('ConcertsTable — filtering down to nothing', () => {
     const Page = () => {
       const [mounted, setMounted] = useState(false)
       useEffect(() => setMounted(true), [])
-      return <ConcertsTable concerts={mounted ? [] : [concert()]} />
+      return <ConcertsTable concerts={mounted ? [] : [concert()]} sort={DEFAULT_SORT} onSortChange={() => {}} />
     }
 
     const markup = renderToStaticMarkup(
@@ -239,17 +247,103 @@ describe('ConcertsTable — filtering down to nothing', () => {
     // goes 127 to 0 by re-render, never mounting empty.
     const { rerender } = render(
       <MemoryRouter>
-        <ConcertsTable concerts={[concert(), concert({ id: 'cnc-2', slug: '2018-04-22', date: '2018-04-22' })]} />
+        <ConcertsTable
+          concerts={[concert(), concert({ id: 'cnc-2', slug: '2018-04-22', date: '2018-04-22' })]}
+          sort={DEFAULT_SORT}
+          onSortChange={() => {}}
+        />
       </MemoryRouter>
     )
     expect(screen.getAllByRole('row')).toHaveLength(3)
 
     rerender(
       <MemoryRouter>
-        <ConcertsTable concerts={[]} />
+        <ConcertsTable concerts={[]} sort={DEFAULT_SORT} onSortChange={() => {}} />
       </MemoryRouter>
     )
 
     expect(screen.getByText('No concerts match these filters.')).toBeTruthy()
+  })
+})
+
+describe('ConcertsTable — sorting (AWK-71)', () => {
+  afterEach(cleanup)
+
+  it('marks the sorted column with aria-sort and the other sortable ones with none', () => {
+    // React Aria's own rule, asserted here because it is the whole accessible
+    // surface of the feature: the direction on the sorted column, `none` on a
+    // column that COULD sort, and nothing at all on one that cannot — so a
+    // screen reader is not told Programme is sortable when it is not.
+    renderTable([concert()])
+
+    expect(columnHeader('Date').getAttribute('aria-sort')).toBe('descending')
+    expect(columnHeader('Conductor').getAttribute('aria-sort')).toBe('none')
+    expect(columnHeader('Hall').getAttribute('aria-sort')).toBe('none')
+    expect(columnHeader('Programme').hasAttribute('aria-sort')).toBe(false)
+    expect(columnHeader('Orchestra').hasAttribute('aria-sort')).toBe(false)
+  })
+
+  it('reflects whichever sort it is given, rather than holding one of its own', () => {
+    // The query string is the state (AWK-55). The table is controlled; if it
+    // kept its own descriptor the header arrow and the row order could disagree.
+    render(
+      <MemoryRouter>
+        <ConcertsTable
+          concerts={[concert()]}
+          sort={{ column: 'hall', direction: 'ascending' }}
+          onSortChange={() => {}}
+        />
+      </MemoryRouter>
+    )
+
+    expect(columnHeader('Hall').getAttribute('aria-sort')).toBe('ascending')
+    expect(columnHeader('Date').getAttribute('aria-sort')).toBe('none')
+  })
+
+  it('asks for ascending when a column that was not sorted is pressed', () => {
+    const onSortChange = vi.fn()
+    renderTable([concert()], onSortChange)
+
+    fireEvent.click(columnHeader('Conductor'))
+
+    expect(onSortChange).toHaveBeenCalledWith({ column: 'conductor', direction: 'ascending' })
+  })
+
+  it('asks for the opposite direction when the sorted column is pressed again', () => {
+    // Date is descending by default, so the first press on it is the one way
+    // to reach oldest-first.
+    const onSortChange = vi.fn()
+    renderTable([concert()], onSortChange)
+
+    fireEvent.click(columnHeader('Date'))
+
+    expect(onSortChange).toHaveBeenCalledWith({ column: 'date', direction: 'ascending' })
+  })
+
+  it('does nothing when a column that does not sort is pressed', () => {
+    const onSortChange = vi.fn()
+    renderTable([concert()], onSortChange)
+
+    fireEvent.click(columnHeader('Programme'))
+    fireEvent.click(columnHeader('Orchestra'))
+
+    expect(onSortChange).not.toHaveBeenCalled()
+  })
+
+  it("does not reorder the rows itself — that is the route's job", () => {
+    // The table renders what it is given in the order it is given. Sorting is
+    // app/lib/sorting.ts's, applied in the route behind the hydration gate, so
+    // that the prerendered markup and the first client render agree.
+    render(
+      <MemoryRouter>
+        <ConcertsTable
+          concerts={[concert(), concert({ id: 'cnc-2', slug: '2018-04-22', date: '2018-04-22' })]}
+          sort={{ column: 'date', direction: 'ascending' }}
+          onSortChange={() => {}}
+        />
+      </MemoryRouter>
+    )
+
+    expect(screen.getAllByRole('rowheader').map((c) => c.textContent)).toEqual(['2012-03-15', '2018-04-22'])
   })
 })

@@ -6,6 +6,7 @@ import { ConcertsTable } from '../components/concerts-table'
 import { FacetSelect } from '../components/facet-select'
 import { loadArchive } from '../lib/archive'
 import { filterConcerts, readFacet } from '../lib/facets'
+import { type ConcertSort, DEFAULT_SORT, describeSort, readSort, sortConcerts, writeSort } from '../lib/sorting'
 import type { Route } from './+types/concerts'
 
 /**
@@ -18,7 +19,8 @@ import type { Route } from './+types/concerts'
  *
  * Filters live in the query string so a filtered view stays linkable, which is
  * why facets need no routes of their own — the decision that keeps this section
- * at ~590 pages instead of ~870.
+ * at ~590 pages instead of ~870. The sort lives there too (AWK-71,
+ * `?sort=conductor&dir=asc`), for the same reason and through the same gate.
  *
  * Every count here is COMPUTED from the published set rather than quoted. ADR-0006
  * replaced a fixed page count with a rule, and said so explicitly: the number moves
@@ -79,6 +81,13 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
     them: before mount the page renders exactly as it was prerendered, unfiltered
     and unselected. One tick later the URL takes over. ModeToggle starts at
     `null` and site-search starts with an empty index for the same reason.
+
+    THE SORT PASSES THROUGH THE SAME GATE (AWK-71). Before mount it is
+    DEFAULT_SORT — date descending, which is the order the sweep produced and the
+    order the markup was prerendered in — so the first client render matches. A
+    shared `?sort=` link therefore shows the default order for one frame, exactly
+    as a shared `?conductor=` link shows every row for one; the same cost, taken
+    for the same reason.
   */
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => setHydrated(true), [])
@@ -86,6 +95,7 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
   const selection = hydrated
     ? { conductors: readFacet(searchParams, CONDUCTOR), halls: readFacet(searchParams, HALL) }
     : { conductors: [], halls: [] }
+  const sort = hydrated ? readSort(searchParams) : DEFAULT_SORT
 
   /*
     How many values are applied, across both facets — the number on the trigger's
@@ -96,22 +106,37 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
   const isFiltered = appliedCount > 0
 
   /*
-    FILTERING HAPPENS HERE, IN THE BROWSER, AND CANNOT MOVE INTO THE LOADER.
+    FILTERING AND SORTING HAPPEN HERE, IN THE BROWSER, AND CANNOT MOVE INTO THE
+    LOADER.
     With `ssr: false` and prerendering (ADR-0009) the loader above runs at BUILD
     time and its output is baked into a per-path `.data` file, so a query string
     cannot vary it. A loader-based attempt does not fail loudly; it ignores the
-    filter. See app/lib/facets.ts, which holds the rule and the tests.
+    filter. See app/lib/facets.ts and app/lib/sorting.ts, which hold the rules
+    and the tests. Filter THEN sort — the order matters for nothing but clarity,
+    since a stable sort of a subset is the subset of the stable sort.
 
-    Before mount `selection` is empty, so this returns every row and the table
-    matches the markup it hydrates into. A shared filtered link therefore shows
-    all rows for one frame. That cost was accepted deliberately — holding the
-    table back would tax every visitor to serve that one case, and would cost the
-    page its correct no-JavaScript reading. What is NOT acceptable is paying it
-    through a hydration error: filtering during the first client render made
-    React 19 discard the server markup and log #418 on a page that otherwise
-    logs nothing at all.
+    Before mount `selection` is empty and `sort` is the default, so this returns
+    every row in the sweep's order and the table matches the markup it hydrates
+    into. A shared filtered or sorted link therefore shows the default view for
+    one frame. That cost was accepted deliberately — holding the table back would
+    tax every visitor to serve that one case, and would cost the page its correct
+    no-JavaScript reading. What is NOT acceptable is paying it through a
+    hydration error: filtering during the first client render made React 19
+    discard the server markup and log #418 on a page that otherwise logs nothing
+    at all.
   */
-  const visible = filterConcerts(concerts, selection)
+  const visible = sortConcerts(filterConcerts(concerts, selection), sort)
+
+  /*
+    What the live region says. Two clauses, either of which may be empty: the
+    filtered count, and the sort when it is not the default (AWK-71) — a sort
+    change reorders every row, and without this a screen reader would hear
+    nothing happen. Returning to the default sort goes quiet, as clearing the
+    filters already does; describeSort says why.
+  */
+  const status = [isFiltered ? `Showing ${visible.length} of ${counts.concerts} concerts` : '', describeSort(sort)]
+    .filter((clause) => clause !== '')
+    .join(' · ')
 
   /*
     REPLACE, never push: Back should leave `/concerts/` rather than unwind a
@@ -130,6 +155,15 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
     for (const value of values) next.append(key, value)
 
     setSearchParams(next, NAVIGATE)
+  }
+
+  /*
+    Same navigation as a facet, and it leaves the facets in place: writeSort
+    touches only its own two keys, and drops both when the sort is the default so
+    `/concerts/` stays the one address for the view everyone is prerendered.
+  */
+  function setSort(next: ConcertSort) {
+    setSearchParams(writeSort(searchParams, next), NAVIGATE)
   }
 
   function clearFacets() {
@@ -235,11 +269,11 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
             This is the repo's first live region.
           */}
           <p className="facet-status" role="status">
-            {isFiltered ? `Showing ${visible.length} of ${counts.concerts} concerts` : ''}
+            {status}
           </p>
         </div>
 
-        <ConcertsTable concerts={visible} />
+        <ConcertsTable concerts={visible} sort={sort} onSortChange={setSort} />
       </div>
     </main>
   )

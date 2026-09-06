@@ -11,7 +11,10 @@
    layer is for.
 
    Attributes React Aria sets, and what they mean here:
-     [data-hovered]           pointer over a row
+     [data-hovered]           pointer over a sortable column header or a resizer
+                              (NOT a row — see the row rule for why)
+     [data-allows-sorting]    the column sorts (AWK-71); the th is the control
+     [data-sort-direction]    ascending | descending, on the sorted column only
      [data-focus-visible]     keyboard focus, on a row, a cell or the resizer
      [data-resizing]          the resizer is being dragged
      [data-resizable-direction]  which way this resizer can still travel
@@ -115,12 +118,44 @@
 
 /* The label truncates rather than wrapping the header to two lines: a resized
    column narrower than its own title is the reader's decision, and a header that
-   changes height as they drag reads as breakage. */
+   changes height as they drag reads as breakage. Flex on an inner span rather
+   than on the th — a `th` that is `display: flex` leaves the table layout — so
+   the label gives way and the sort arrow never does. */
+.concerts-th-content {
+  align-items: baseline;
+  display: flex;
+  gap: 0.3rem;
+}
+
 .concerts-th-label {
-  display: block;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* --- sorting (AWK-71) ----------------------------------------------------- */
+/* The th IS the control in React Aria's grid pattern — pressable, focusable,
+   operated with Enter or Space — so it is the th that takes the pointer cursor
+   and the hover, on the three columns that sort and nowhere else. `[data-hovered]`
+   is reliable here, unlike on the row: a column with `allowsSorting` is pressable,
+   so React Aria tracks its hover. */
+.concerts-th[data-allows-sorting] {
+  cursor: pointer;
+  user-select: none;
+}
+
+.concerts-th[data-allows-sorting][data-hovered] .concerts-th-label,
+.concerts-th[data-sort-direction] .concerts-th-label {
+  color: var(--color-foreground);
+}
+
+/* Present only on the sorted column (see the .tsx). Not an eyebrow glyph: it
+   keeps the header's colour but not its tracking, which would space an arrow
+   away from its label. */
+.concerts-sort-indicator {
+  flex: none;
+  letter-spacing: 0;
 }
 
 /* --- the resizer ---------------------------------------------------------- */
