@@ -410,15 +410,15 @@ gate the script can enforce: it cannot see whether AWK-39 landed.
 > pairs, zero collisions.** The two works with no composer at all are AWK-38's.
 
 **`soloist.instrument` is the same publish-time trap, and it caught AWK-69.** The
-field is an **Array** whose `items` carry an `in` validation — 39 allowed values
-as of 2026-08-31 — and like `unique`, Contentful enforces `in` **at publish
+field is an **Array** whose `items` carry an `in` validation — 43 allowed values
+as of 2026-09-06 — and like `unique`, Contentful enforces `in` **at publish
 time, not at write time**. So a `PUT` of a value outside the list returns 200 and
 the follow-up publish returns 422, leaving the entry written-but-unpublished with
 the Delivery API still serving the old one. Exactly AWK-37's eleven works, in a
 different field.
 
 > That list is **mirrored by hand in `scripts/contentful/parse_archive.py`'s
-> `ENUM`** — same 39 values, same order, verified equal on 2026-08-31. Nothing
+> `ENUM`** — same 43 values, same order, verified equal on 2026-09-06. Nothing
 > asserts it, so change one and change the other. Reading the field's own
 > `validations` is not enough to see it: the array's field-level `validations` is
 > `[]` and the `in` lives under `items.validations`, which is how AWK-69 came to
@@ -440,7 +440,29 @@ different field.
 > the boundary between it and `character` is softer than either field's name
 > suggests. The archived `pi-20081213-2-2` still carries `Piccolo`; it is one of
 > AWK-20's 16 superseded items, hidden from the Delivery API, and was left alone.
-
+>
+> **AWK-74 found three more on 2026-09-06**, in `credits` rather than `character`:
+> `Bass Trombone` (Alex Arellano, `pi-20200223-4` — not the `pi-20081213-2` the
+> ticket named), `Soprano Saxophone` and `Tenor Saxophone` (Michael Hernandez and
+> Eric Barreto-Maymi, the MANA Quartet's `pi-20211212-4`). It added those three
+> plus `Baritone Saxophone`, so the saxophone family is whole, 39 → 43 — type
+> extended and activated FIRST this time, then the three soloists written and
+> published. The list is ordered by family, not alphabet, which is what keeps
+> `Baritone Saxophone` away from `Baritone` and `Bass Trombone` away from `Bass`
+> in the dropdown. The bare `Saxophone` stays for a credit that names no member
+> of the family; Thomas Giles keeps it, because his two credits disagree
+> (`Saxophone` in 2018, `Baritone Saxophone` in 2021) and the field holds one
+> value. The empty-instrument sweep went 53 → **50 of 321**, through the CDA.
+>
+> One tension this widened rather than settled: `get_performer` **accumulates**
+> a person's instruments across credits while the field's `size` is `max: 1`.
+> The parser already emits nine multi-instrument soloists the space cannot
+> publish as written (counted in `bso-graph.json` on 2026-09-06 — James Busby
+> carries three); with the new values Giles and Scott Bradley (`Bass
+> Trombone, Tuba`) would become the tenth and eleventh on the next parser run —
+> a projection, not a count: the graph was not regenerated, because no interpreter
+> on this machine has `openpyxl`. Nothing re-imports, so nothing broke, but a
+> re-import would need to choose.
 
 > This section previously read *"There is no build… no dependencies installed, so
 > the `.tsx` files do not typecheck yet"*, which had been false since the AWK-22
