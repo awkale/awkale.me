@@ -410,7 +410,7 @@ gate the script can enforce: it cannot see whether AWK-39 landed.
 > pairs, zero collisions.** The two works with no composer at all are AWK-38's.
 
 **`soloist.instrument` is the same publish-time trap, and it caught AWK-69.** The
-field is an **Array** whose `items` carry an `in` validation — 43 allowed values
+field is an **Array** whose `items` carry an `in` validation — 45 allowed values
 as of 2026-09-06 — and like `unique`, Contentful enforces `in` **at publish
 time, not at write time**. So a `PUT` of a value outside the list returns 200 and
 the follow-up publish returns 422, leaving the entry written-but-unpublished with
@@ -418,7 +418,7 @@ the Delivery API still serving the old one. Exactly AWK-37's eleven works, in a
 different field.
 
 > That list is **mirrored in `scripts/contentful/parse_archive.py`'s `ENUM`** —
-> same 43 values, same order — and since AWK-73 the mirror is guarded in two
+> same 45 values, same order — and since AWK-73 the mirror is guarded in two
 > halves, only one of them automated. `archive-schema.json` carries the list
 > under **`pinnedFields`**, the one block in that file describing a field the
 > pipeline did not create. `instrument-enum.test.ts` asserts `ENUM` equals it,
@@ -444,9 +444,9 @@ different field.
 > checks. **AWK-69 cleared the last three on 2026-08-31**: `pi-20081213-2`
 > (Piccolo), `pi-20051023-3` (Organ) and `pi-20120415-1` (Bass-Baritone), each
 > written to its soloist's `instrument` first and republished, then added to both
-> lists so a re-import stops recreating them. `character` now holds only the
-> three genuine roles it is for — `Isolde`, `Dancer`, `Filmmaker`, on 3 of 853
-> live program items.
+> lists so a re-import stops recreating them. `character` then held `Isolde`,
+> `Dancer`, `Filmmaker`, on 3 of 853 live program items — and **AWK-86 moved the
+> last two on 2026-09-06**, so it now holds **`Isolde` alone, on 1 of 866**.
 >
 > One thing AWK-69 did **not** settle, and **AWK-75 did on 2026-09-06**:
 > `instrument` is named *"Instrument / Voice / Role"* and already holds
@@ -454,9 +454,19 @@ different field.
 > and `character` looked softer than either field's name suggests. The rule is
 > now in `CONTEXT.md`: `instrument` is the **Credited role**, of whatever kind;
 > `character` is a **Character**, the named dramatic role of a one-credit item;
-> and a cast is its verbatim `credits` strings. `Dancer` and `Filmmaker` are
-> therefore Credited roles filed in the wrong field — AWK-86 moves them. The
-> pair entity was rejected, not deferred. The archived `pi-20081213-2-2` still carries `Piccolo`; it is one of
+> and a cast is its verbatim `credits` strings. `Dancer` and `Filmmaker` were
+> therefore Credited roles filed in the wrong field, and **AWK-86 moved them the
+> same day**: `in` list extended and activated first (type v14, published v13,
+> 43 → 45, the two after `Soloist` with the other functions), `sol-susan-hebach`
+> and `sol-adam-grannick` written and published, then `character` cleared on
+> `pi-20030213-2` and `pi-20140601-3` by a `PUT` with the key absent. Verified
+> through the Delivery API: `fields.character[exists]` returns exactly one item,
+> nothing draft-modified, and `migrate_schema.py --dry-run` reads the pinned
+> field as matching at 45. The empty-instrument sweep went 49 → **47 of 320**;
+> the 50 of 321 below had already become 49 of 320 by the morning of
+> 2026-09-06, the one Soloist gone being the opera company AWK-76 re-filed as
+> an Ensemble. The graph now routes both credits to the soloist, and
+> `bso-graph.test.ts` pins that by id. The pair entity was rejected, not deferred. The archived `pi-20081213-2-2` still carries `Piccolo`; it is one of
 > AWK-20's 16 superseded items, hidden from the Delivery API, and was left alone.
 >
 > **AWK-74 found three more on 2026-09-06**, in `credits` rather than `character`:
@@ -481,6 +491,11 @@ different field.
 > a projection, not a count: the graph was not regenerated, because no interpreter
 > on this machine has `openpyxl`. Nothing re-imports, so nothing broke, but a
 > re-import would need to choose.
+>
+> > **Regenerated since, twice** — AWK-76 and AWK-86, the latter on 2026-09-06
+> > from a throwaway venv carrying `openpyxl`, so the graph is no longer a
+> > projection. The projection was right: it emits **11** multi-instrument
+> > soloists, Giles and Bradley the tenth and eleventh. The tension stands.
 
 > This section previously read *"There is no build… no dependencies installed, so
 > the `.tsx` files do not typecheck yet"*, which had been false since the AWK-22

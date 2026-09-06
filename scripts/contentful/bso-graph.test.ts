@@ -28,6 +28,13 @@ type Graph = {
   types: Record<string, Record<string, Record<string, unknown>>>
 }
 
+// The two tables the routing tests below read, typed once. Each block used to
+// cast its own slice of `programItem`, three shapes of one table.
+type ProgramItem = { soloists: string[]; credits: string[]; character: string | null }
+type Soloist = { instrument: string[] | null }
+const programItems = graph.types.programItem as Record<string, ProgramItem>
+const soloists = graph.types.soloist as Record<string, Soloist>
+
 describe('the graph describes no field the space lacks — AWK-78', () => {
   it('derives no genre type', () => {
     // ADR-0007 retired the concept; the form vocabulary lives in
@@ -55,7 +62,7 @@ describe('a group the keyword regex misses is still an Ensemble — AWK-76', () 
    * tidy-up of that set cannot quietly re-file the company as a person.
    */
   const ensembles = graph.types.ensemble as Record<string, { name: string; kind: string }>
-  const items = graph.types.programItem as Record<string, { soloists: string[]; credits: string[] }>
+  const items = programItems
 
   it('files New York Opera Exchange as an ensemble, not a soloist', () => {
     expect(graph.types.soloist).not.toHaveProperty('sol-new-york-opera-exchange')
@@ -82,10 +89,7 @@ describe('a Character reaches programItem.character only from a one-Credit item 
    * which nothing else asserts. A Credited role (an instrument, a voice type,
    * a function) never belongs here — that is `soloist.instrument`'s job.
    */
-  const items = Object.values(
-    graph.types.programItem as Record<string, { character: string | null; credits: string[] }>
-  )
-  const withCharacter = items.filter((item) => item.character)
+  const withCharacter = Object.values(programItems).filter((item) => item.character)
 
   // Non-vacuity: the rule is about the items that DO carry one.
   it('has at least one item carrying a Character', () => {
@@ -101,5 +105,32 @@ describe('a Character reaches programItem.character only from a one-Credit item 
     const creditedRoles = readParserEnum()
     expect(creditedRoles.length).toBeGreaterThan(40)
     for (const item of withCharacter) expect(creditedRoles).not.toContain(item.character)
+  })
+})
+
+describe('Dancer and Filmmaker are Credited roles, not Characters — AWK-86', () => {
+  /**
+   * The two credits AWK-69 left in `character` because `ENUM` did not know
+   * them. Under CONTEXT.md's rule a function is a Credited role like `Director`
+   * or `Narrator`, so once the enum carries the value `get_performer` routes
+   * it to the soloist and the item's `character` is empty. Pinned by id, not
+   * only by the rule above, so a value dropping out of `ENUM` fails here by
+   * name rather than as one line of the whole list.
+   */
+  const items = programItems
+
+  it.each([
+    ['sol-susan-hebach', 'Dancer', 'pi-20030213-2', 'Susan Hebach, Dancer'],
+    ['sol-adam-grannick', 'Filmmaker', 'pi-20140601-3', 'Adam Grannick, Filmmaker'],
+  ])('%s carries %s and %s keeps the credit but no character', (soloist, role, item, credit) => {
+    expect(soloists[soloist]?.instrument).toEqual([role])
+    expect(items[item]?.credits).toEqual([credit])
+    expect(items[item]?.character).toBeNull()
+  })
+
+  it('leaves Isolde where she is', () => {
+    // The one Character left once the other two moved, so the AWK-75 block
+    // above is now one item wide. Pinned by id so that width is deliberate.
+    expect(items['pi-19950328-3']?.character).toBe('Isolde')
   })
 })

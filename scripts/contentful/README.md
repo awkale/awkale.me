@@ -71,7 +71,7 @@ anything else on the field still exits non-zero. Before AWK-81 that line read
 which is the state that trains an operator to ignore the mechanism.
 
 **One field is pinned, not added (AWK-73).** `pinnedFields` declares
-`soloist.instrument` — a field that pre-dates this pipeline, whose 43-value `in`
+`soloist.instrument` — a field that pre-dates this pipeline, whose 45-value `in`
 list `parse_archive.py`'s `ENUM` mirrors. Every default and `--dry-run` run
 compares the live field with the declaration and **never writes it**; a
 difference is drift, exits non-zero, and when the `in` list is what differs the
@@ -83,7 +83,7 @@ space, and a clean dry run says nothing about the parser.
 
 ```
 soloist  (pinned: compared, never written)
-  = instrument       matches the spec (Array<Symbol> in[43])
+  = instrument       matches the spec (Array<Symbol> in[45])
 ```
 
 ### Adding a field is two calls, and it can strand
@@ -790,15 +790,18 @@ of the new composers. Partial invalidation does not work either, because
 `eras.json`, `members.json` and `work-categories.json` are all keyed off the
 resolved composer set.
 
-**`programItem.character` is for a role, not an instrument**, and this
+**`programItem.character` is for a Character, not a Credited role**, and this
 transcription got that wrong first time. The field holds the credit left over
 once `parse_archive.py`'s instrument enumeration has claimed what it recognises —
-`Isolde`, `Dancer`, `Filmmaker` — while the instrument belongs on
-`soloist.instrument`. All five of AWK-64's soloist items set it to the instrument,
-copying AWK-59's `pi-19930726-12`; both were cleared on 2026-08-31 so the field
-means one thing. Three live values elsewhere in the space (`Piccolo`, `Organ`,
-`Bass-Baritone`) are still instruments and were left alone — they belong to other
-tickets.
+`Isolde`, and until AWK-86 `Dancer` and `Filmmaker`, which CONTEXT.md's rule
+calls Credited roles and which moved to `soloist.instrument` on 2026-09-06 —
+while the Credited role belongs on `soloist.instrument`. All five of AWK-64's
+soloist items set it to the instrument, copying AWK-59's `pi-19930726-12`; both
+were cleared on 2026-08-31 so the field means one thing. This paragraph then
+said three live values elsewhere (`Piccolo`, `Organ`, `Bass-Baritone`) were
+still instruments and left alone; AWK-69 cleared those the same day, 2026-08-31,
+and AWK-86 the two functions, so `character` holds `Isolde` alone. Corrected
+2026-09-06.
 
 `tilles-center-programs.test.ts` asserts the FILE: contiguous orders, ids unique
 and following AWK-59's naming, every link resolving to something the declaration

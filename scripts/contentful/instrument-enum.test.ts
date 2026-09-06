@@ -61,14 +61,19 @@ describe("parse_archive.py's ENUM against archive-schema.json — AWK-73", () =>
   })
 
   it('keeps each late addition beside its family, not in alphabetical order', () => {
-    // The four adjacencies AWK-69 and AWK-74 chose. `toEqual` above would pass
-    // if both lists were re-sorted alphabetically together; this would not.
+    // The six adjacencies AWK-69, AWK-74 and AWK-86 chose. `toEqual` above would
+    // pass if both lists were re-sorted alphabetically together; this would not.
     const after = (value: string, predecessor: string) =>
       expect(declared.indexOf(value), `${value} directly after ${predecessor}`).toBe(declared.indexOf(predecessor) + 1)
     after('Piccolo', 'Flute')
     after('Organ', 'Piano')
     after('Bass-Baritone', 'Baritone')
     after('Bass Trombone', 'Trombone')
+    // AWK-86: the two functions sit with `Director`, `Narrator`, `Soloist` at
+    // the tail, where the list keeps the roles that are not instruments or
+    // voices — not under D and F among the instruments.
+    after('Dancer', 'Soloist')
+    after('Filmmaker', 'Dancer')
     // And the family ordering is what keeps these two look-alikes apart in the
     // dropdown: a `Baritone Saxophone` next to `Baritone` invites the wrong click.
     expect(Math.abs(declared.indexOf('Baritone Saxophone') - declared.indexOf('Baritone'))).toBeGreaterThan(1)

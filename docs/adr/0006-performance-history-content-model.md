@@ -519,6 +519,7 @@ record adds is the decision behind them:
   Director (18), Narrator (9) and Soloist (8), and AWK-69 filed Bass-Baritone
   there on the strength of the 82 voice types it counted. `Dancer` and
   `Filmmaker` belong there too; moving them is AWK-86, not this record.
+  _(AWK-86 moved them on 2026-09-06; `character` now holds `Isolde` alone.)_
 * `Royal Pianist` stays a Character. It says who was played, and the fact that
   the name contains an instrument does not change what kind of fact it is.
 * A cast list on the site is the item's Credits — "Nicholle Bittlingmeyer,

@@ -402,7 +402,7 @@ describe('archive-schema.json', () => {
       expect(instrument?.type).toBe('Array')
       expect(instrument?.items?.type).toBe('Symbol')
       expect(instrument?.validations?.some((v) => v.in)).toBe(false)
-      expect(instrument?.items?.validations?.find((v) => v.in)?.in).toHaveLength(43)
+      expect(instrument?.items?.validations?.find((v) => v.in)?.in).toHaveLength(45)
     })
   })
 

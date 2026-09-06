@@ -53,7 +53,7 @@ def is_blank(v):
 # instrument/voice/role values allowed by the soloist.instrument enum.
 #
 # THIS LIST MIRRORS THE LIVE CONTENT TYPE. soloist.instrument is an Array whose
-# `items` carry an `in` validation holding these same 43 values in this same
+# `items` carry an `in` validation holding these same 45 values in this same
 # order, and Contentful enforces `in` at PUBLISH time -- so a value added here
 # but not there is written and then silently left unpublished, with the Delivery
 # API serving the old entry. AWK-69 found that out the expensive way.
@@ -72,7 +72,10 @@ def is_blank(v):
 # `character` instead and leaves the soloist's instrument empty, which is a
 # duplicate fact in the wrong field rather than an error. AWK-69 cleared the
 # last three (Piccolo, Organ, Bass-Baritone) and added them below; AWK-74 added
-# Bass Trombone and the soprano/tenor/baritone saxophones, 39 -> 43.
+# Bass Trombone and the soprano/tenor/baritone saxophones, 39 -> 43; AWK-86 added
+# Dancer and Filmmaker, 43 -> 45 -- the two functions AWK-69 left in `character`
+# because this list did not know them, filed at the tail with Director, Narrator
+# and Soloist, the other roles that are neither instrument nor voice.
 #
 # The order is by family, not alphabetical, and that is deliberate: it keeps
 # `Baritone Saxophone` away from `Baritone` and `Bass Trombone` away from `Bass`
@@ -86,7 +89,7 @@ ENUM = ["Violin","Viola","Violoncello","Double Bass","Flute","Piccolo","Oboe","C
         "Tenor Saxophone","Baritone Saxophone","Harpsichord","Guitar","Accordion","Marimba",
         "Vibraphone","Xylophone","Timpani","Drums","Basso Continuo","Soprano","Mezzo-Soprano",
         "Contralto","Alto","Tenor","Baritone","Bass-Baritone","Bass","Director","Narrator",
-        "Soloist"]
+        "Soloist","Dancer","Filmmaker"]
 # sheet spelling -> canonical enum value (keeps us off duplicate instruments)
 ALIAS = {"cello": "Violoncello", "violincello": "Violoncello", "horn": "French Horn",
          "accordian": "Accordion", "french horn": "French Horn", "contrabass": "Double Bass",
@@ -255,7 +258,9 @@ def get_performer(credit):
 
     A credit is 'Name' or 'Name, Role[, Role...]'. Multiple roles mean one
     player covering several instruments ('Bill Utley, Tabla, Temple Blocks,
-    Drums'). Roles that aren't instruments/voices are opera characters.
+    Drums'). A role ENUM does not recognise falls through as the Character --
+    meant for a named dramatic role (Isolde), though a Credited role missing
+    from ENUM lands there too; see the comment above ENUM.
     """
     s = re.sub(r"\s+", " ", str(credit)).strip().rstrip(",;")
     if is_blank(s) or s.endswith(":"):

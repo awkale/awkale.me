@@ -461,7 +461,7 @@ def check_pinned(schema):
     Same drift rule as plan_additions() — only the keys the spec sets are
     compared, and any difference exits non-zero downstream — plus one courtesy:
     when the `in` list under `items` is what differs, the values are spelled
-    out, because "shape differs" on a 43-value list is not actionable."""
+    out, because "shape differs" on a 45-value list is not actionable."""
     drift = 0
     for group in schema.get("pinnedFields", []):
         cid = group["id"]
