@@ -946,10 +946,13 @@ how the sheet was maintained, not of that one pair.
   `period-and-forms.json`, and is permitted to stay incomplete.
 * **Composer birth/death dates are not in the spreadsheet.** Only the handful
   curated by hand have them.
-* **Opera casts are only partly modeled.** A single performer's role lands in
-  `programItem.character`; a full cast keeps its per-singer roles in the
-  verbatim `credits` array, since one field can't hold six. Lossless as text,
-  but not queryable. A `credit` join type would fix it.
+* **Opera casts live in `credits`, by decision.** A single performer's
+  Character lands in `programItem.character`; a full cast keeps its per-singer
+  Characters in the verbatim `credits` array, since one field can't hold six.
+  Lossless as text, not queryable, and AWK-75 accepted that: a `credit` join
+  type was considered and rejected because nothing filters by Character, and a
+  cast list renders from the strings as they stand. See ADR-0006's amendment of
+  2026-09-06 and the Credit / Credited role / Character entries in `CONTEXT.md`.
 * Three concerts have no usable date (`unknown`, `May, 1981 (date n/a)`,
   `var. dates, 1983`); the raw text is preserved in `concert.dateNote`.
 * ~~**Rows 912–913 (Dec 13 2008) are ambiguous in the source.**~~ **Resolved by

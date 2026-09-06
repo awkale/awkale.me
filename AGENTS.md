@@ -435,10 +435,15 @@ different field.
 > three genuine roles it is for — `Isolde`, `Dancer`, `Filmmaker`, on 3 of 853
 > live program items.
 >
-> One thing AWK-69 did **not** settle: `instrument` is named *"Instrument / Voice
-> / Role"* and already holds `Director` (18), `Narrator` (9) and `Soloist` (8), so
-> the boundary between it and `character` is softer than either field's name
-> suggests. The archived `pi-20081213-2-2` still carries `Piccolo`; it is one of
+> One thing AWK-69 did **not** settle, and **AWK-75 did on 2026-09-06**:
+> `instrument` is named *"Instrument / Voice / Role"* and already holds
+> `Director` (18), `Narrator` (9) and `Soloist` (8), so the boundary between it
+> and `character` looked softer than either field's name suggests. The rule is
+> now in `CONTEXT.md`: `instrument` is the **Credited role**, of whatever kind;
+> `character` is a **Character**, the named dramatic role of a one-credit item;
+> and a cast is its verbatim `credits` strings. `Dancer` and `Filmmaker` are
+> therefore Credited roles filed in the wrong field — AWK-86 moves them. The
+> pair entity was rejected, not deferred. The archived `pi-20081213-2-2` still carries `Piccolo`; it is one of
 > AWK-20's 16 superseded items, hidden from the Delivery API, and was left alone.
 >
 > **AWK-74 found three more on 2026-09-06**, in `credits` rather than `character`:
