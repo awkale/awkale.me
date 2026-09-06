@@ -163,31 +163,57 @@ http = Http()
 # ------------------------------------------------------------------ planning
 
 
-def plan_additions(ct, want):
-    """Fields in `want` that the live content type `ct` does not already have.
+def plan_additions(ct, want, gates):
+    """Sort `want` against the live content type `ct`, by field id only.
 
-    Matched by field id only. A field whose id is present but whose shape has
-    drifted is reported as PRESENT and left alone — reshaping it is exactly the
-    class of change Contentful refuses for type edits anyway, and doing it
-    silently would undo a deliberate hand-edit."""
+    Returns (add, present, tightened, drift). A field whose id is present is
+    never reshaped — that is exactly the class of change Contentful refuses for
+    type edits anyway, and doing it silently would undo a deliberate hand-edit —
+    so the last three lists only REPORT:
+
+      * present    — the live field matches every key the spec sets
+      * tightened  — it differs ONLY on `required`, a gate in `gates` declares
+                     `setRequired` for it, and the live value is what that gate
+                     sets. `composer.slug` after `--require-composer-slug`, which
+                     is AWK-81: the spec keeps declaring every added field
+                     optional, because that is what makes adding one to a
+                     populated type safe, and the gate is what requires it. The
+                     two halves of the file disagree on purpose, and this is
+                     where they reconcile. Carried as (field id, gate flag).
+      * drift      — anything else. Exits non-zero downstream.
+
+    `gates` is the declared `gated` block, filtered to this type. The exemption
+    is derived from it rather than from a field name so it cannot quietly cover
+    an unrelated field, and it is scoped to `setRequired`: a `removeValidation`
+    gate aimed at an added field would still read as drift, and
+    archive-schema.test.ts asserts none is. The script cannot tell a gate run
+    from the same edit made by hand in the web app; either way the live value is
+    the one the declared gate asks for, so either way it is not drift."""
     have = {f["id"]: f for f in ct["fields"]}
-    add, present, drift = [], [], []
+    tightening = {g["field"]: g for g in gates if "setRequired" in g}
+    add, present, tightened, drift = [], [], [], []
     for field in want:
         live = have.get(field["id"])
         if live is None:
             add.append(field)
-        else:
+            continue
+        differing = _differing_keys(live, field)
+        gate = tightening.get(field["id"])
+        if not differing:
             present.append(field["id"])
-            if not _same_shape(live, field):
-                drift.append(field["id"])
-    return add, present, drift
+        elif gate and differing == ["required"] and live.get("required") == gate["setRequired"]:
+            tightened.append((field["id"], gate["flag"]))
+        else:
+            drift.append(field["id"])
+    return add, present, tightened, drift
 
 
-def _same_shape(live, want):
-    """Compare only what this script would have set. Contentful adds keys of its
-    own to a stored field, so an exact dict equality would report drift on every
-    field it has ever touched."""
-    return all(live.get(k) == v for k, v in want.items())
+def _differing_keys(live, want):
+    """Keys the spec sets whose live value differs. Compares only what this
+    script would have set: Contentful adds keys of its own to a stored field, so
+    an exact dict equality would report drift on every field it has ever
+    touched."""
+    return [k for k, v in want.items() if live.get(k) != v]
 
 
 def describe(field):
@@ -376,12 +402,17 @@ def add_fields():
         if ct is None:
             sys.exit(f"content type {cid!r} does not exist in {SPACE}/{ENV}")
 
-        add, present, drift = plan_additions(ct, group["addFields"])
+        gates = [g for g in schema["gated"] if g["contentType"] == cid]
+        add, present, tightened, drift = plan_additions(ct, group["addFields"], gates)
         stranded = not add and needs_activation(ct)
 
         print(f"\n{cid}")
         for fid in present:
             print(f"  = {fid:<16} already present, untouched")
+        for fid, flag in tightened:
+            # Not drift. A declared gate asks for this; the spec still adds the
+            # field optional so a default run stays safe on a populated type.
+            print(f"  ~ {fid:<16} required, as {flag} sets; the spec adds it optional")
         for fid in drift:
             print(f"  ! {fid:<16} present but its shape differs from the spec")
         for field in add:

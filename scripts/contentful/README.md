@@ -53,6 +53,21 @@ reshaping a field is the class of change Contentful refuses anyway, and doing it
 silently would undo a deliberate hand-edit. Reconcile it in the web app, or
 update `archive-schema.json` to match.
 
+**One difference is not drift, and it is declared rather than inferred.** A field
+whose *only* difference from the spec is the key a gate under `gated` sets —
+`composer.slug.required`, once `--require-composer-slug` has run — is reported
+as `~ slug required, as --require-composer-slug sets; the spec adds it optional` and
+exits 0 (AWK-81). The spec keeps declaring every added field optional, because
+that is what makes a default run safe on a populated type, and the gate is what
+requires it; the two halves of the file disagree on purpose, and the applier is
+where they reconcile. The exemption is derived from `gated`, so it cannot cover
+a field no gate names; it is scoped to `setRequired`, so a loosening gate aimed
+at an added field would still read as drift (and `archive-schema.test.ts`
+asserts none is); and it checks the live value is exactly what the gate sets, so
+anything else on the field still exits non-zero. Before AWK-81 that line read
+`! slug present but its shape differs from the spec` on every run since AWK-59,
+which is the state that trains an operator to ignore the mechanism.
+
 ### Adding a field is two calls, and it can strand
 
 `PUT /content_types/{id}` writes a **draft**; `PUT /content_types/{id}/published`

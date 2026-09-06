@@ -51,6 +51,11 @@ function inList(f: Field): string[] | undefined {
   return f.validations?.find((v) => v.in)?.in ?? f.items?.validations?.find((v) => v.in)?.in
 }
 
+/** True when the gate's target is a field this file adds, rather than one that pre-exists. */
+function addsField(gate: { contentType: string; field: string }): boolean {
+  return schema.types.find((t) => t.id === gate.contentType)?.addFields.some((f) => f.id === gate.field) ?? false
+}
+
 // IMSLP's vocabulary, adopted verbatim by ADR-0007. Order is IMSLP's own, which
 // is chronological rather than alphabetical, and is kept because the ADR quotes
 // it that way.
@@ -304,6 +309,42 @@ describe('archive-schema.json', () => {
       const required = gated.filter((g) => g.setRequired).map((g) => `${g.contentType}.${g.field}`)
 
       expect(required.sort()).toEqual(['composer.slug', 'work.slug'])
+    })
+
+    it('tightens exactly one field the default run adds, and adds it optional', () => {
+      // AWK-81. `--require-composer-slug` set `required: true` on the live field,
+      // and `addFields` keeps declaring it optional, because every field the
+      // applier ADDS is optional — that is what makes adding one to a type full
+      // of published entries safe. So the two halves of this file disagree on
+      // purpose, and migrate_schema.py reconciles them: a field whose ONLY
+      // difference from the spec is `required`, where a declared `setRequired`
+      // gate names it and the live value is what the gate sets, is reported as
+      // gate-applied rather than as drift.
+      //
+      // This pins the FILE's half of that exemption's scope: which gates the
+      // applier can derive it from. Derived from `gated`, not from a field name,
+      // so a gate that tightens a second added field widens it — and this list
+      // has to grow with it, consciously. The applier's half has no test runner
+      // here (the repo is vitest-only), so it is checked against the live space
+      // with `--dry-run`, which must exit 0 and report no differing field.
+      const tightened = gated.filter((g) => g.setRequired).filter(addsField)
+
+      expect(tightened.map((g) => `${g.contentType}.${g.field}`)).toEqual(['composer.slug'])
+      for (const gate of tightened) {
+        expect(
+          field(gate.contentType, gate.field).required,
+          'the spec adds it optional; the gate is what requires it'
+        ).toBe(false)
+      }
+    })
+
+    it('loosens nothing the default run adds', () => {
+      // The applier exempts `setRequired` and nothing else, so a
+      // `removeValidation` gate aimed at a field in `addFields` would report
+      // drift on every run once it had been applied — the exact state AWK-81
+      // fixed for `required`. Both loosening gates target fields this file does
+      // not add: work.slug is repurposed in place, season.number pre-exists.
+      expect(gated.filter((g) => g.removeValidation).filter(addsField)).toEqual([])
     })
 
     it('names the assertion that has to exist first, for each', () => {
