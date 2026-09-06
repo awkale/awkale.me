@@ -15,7 +15,7 @@ make creating safe. There are **three** declarations across those two appliers.
 
 | Declaration | Applier | Ticket | Does |
 | --- | --- | --- | --- |
-| `archive-schema.json` | `migrate_schema.py` | AWK-30 | Appends 12 optional fields to 6 archive types |
+| `archive-schema.json` | `migrate_schema.py` | AWK-30 | Appends 12 optional fields to 6 archive types; pins 1 pre-existing field (AWK-73) |
 | `portfolio-schema.json` | `migrate_portfolio.py` | AWK-31 | Creates `imageGroup` and `project` |
 | `recording-schema.json` | `migrate_portfolio.py --schema` | AWK-32 | Creates `recording` |
 
@@ -69,6 +69,22 @@ asserts none is); and it checks the live value is exactly what the gate sets, so
 anything else on the field still exits non-zero. Before AWK-81 that line read
 `! slug present but its shape differs from the spec` on every run since AWK-59,
 which is the state that trains an operator to ignore the mechanism.
+
+**One field is pinned, not added (AWK-73).** `pinnedFields` declares
+`soloist.instrument` — a field that pre-dates this pipeline, whose 43-value `in`
+list `parse_archive.py`'s `ENUM` mirrors. Every default and `--dry-run` run
+compares the live field with the declaration and **never writes it**; a
+difference is drift, exits non-zero, and when the `in` list is what differs the
+run spells out which values are on which side, or that only the order moved. It
+is the by-hand half of a two-half guarantee: `instrument-enum.test.ts` asserts
+the parser against the declaration in `bun run test`, and this asserts the
+declaration against the space. Neither implies the other — no test reaches the
+space, and a clean dry run says nothing about the parser.
+
+```
+soloist  (pinned: compared, never written)
+  = instrument       matches the spec (Array<Symbol> in[43])
+```
 
 ### Adding a field is two calls, and it can strand
 

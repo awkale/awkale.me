@@ -3,6 +3,8 @@ import { join } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
+import { readParserEnum } from './parse-archive-source'
+
 /**
  * Guards the shape of `bso-graph.json` against the space it is imported into.
  *
@@ -96,9 +98,7 @@ describe('a Character reaches programItem.character only from a one-Credit item 
 
   it('never files a Credited role as a Character', () => {
     // Read from the parser rather than retyped here, so the two cannot drift.
-    const source = readFileSync(join(import.meta.dirname, 'parse_archive.py'), 'utf8')
-    const enumBlock = /^ENUM = \[([\s\S]*?)\]/m.exec(source)?.[1] ?? ''
-    const creditedRoles = [...enumBlock.matchAll(/"([^"]+)"/g)].map((match) => match[1])
+    const creditedRoles = readParserEnum()
     expect(creditedRoles.length).toBeGreaterThan(40)
     for (const item of withCharacter) expect(creditedRoles).not.toContain(item.character)
   })

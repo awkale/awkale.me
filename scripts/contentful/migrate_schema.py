@@ -26,6 +26,10 @@ Safety properties:
     Works still holding a `genre` and no `forms` and refuses above zero. The
     other four name a test or a backfill this script cannot see, so their prompt
     is the operator's word; this one is a live check.
+  * PINNED FIELDS ARE READ, NEVER WRITTEN. `pinnedFields` (AWK-73) declares a
+    field that pre-exists in the space — soloist.instrument — so the live shape
+    can be compared with the repo's committed copy. A difference is reported as
+    drift like any other and exits non-zero; nothing here changes it.
   * Read-modify-write against X-Contentful-Version, so a concurrent edit in the
     web app loses the race loudly (409) rather than being silently overwritten.
 
@@ -444,6 +448,78 @@ def add_fields():
     return total_added + total_stranded, total_drift
 
 
+def check_pinned(schema):
+    """Report each `pinnedFields` field against the live type. Writes nothing.
+
+    A pinned field pre-exists in the space — AWK-73 pins soloist.instrument — so
+    it is never something to add; this is the half of a guarantee a test cannot
+    give. instrument-enum.test.ts asserts parse_archive.py's ENUM against the
+    declaration in the repo; this asserts the declaration against the space. A
+    green test and a clean run here are BOTH needed before the two lists can be
+    called equal, and neither implies the other.
+
+    Same drift rule as plan_additions() — only the keys the spec sets are
+    compared, and any difference exits non-zero downstream — plus one courtesy:
+    when the `in` list under `items` is what differs, the values are spelled
+    out, because "shape differs" on a 43-value list is not actionable."""
+    drift = 0
+    for group in schema.get("pinnedFields", []):
+        cid = group["id"]
+        ct = http("GET", f"/content_types/{cid}", ok404=True)
+        if ct is None:
+            sys.exit(f"content type {cid!r} does not exist in {SPACE}/{ENV}")
+        have = {f["id"]: f for f in ct["fields"]}
+
+        print(f"\n{cid}  (pinned: compared, never written)")
+        for field in group["fields"]:
+            fid = field["id"]
+            live = have.get(fid)
+            if live is None:
+                print(f"  ! {fid:<16} pinned, but missing from the live type")
+                drift += 1
+                continue
+            differing = _differing_keys(live, field)
+            if not differing:
+                print(f"  = {fid:<16} matches the spec ({describe(field)})")
+                continue
+            drift += 1
+            print(f"  ! {fid:<16} differs from the spec on: {', '.join(differing)}")
+            for line in _in_list_diff(_items_in(live), _items_in(field)):
+                print(f"      {line}")
+    return drift
+
+
+def _items_in(field):
+    """The `in` list under `items.validations`, or None. The field-level
+    `validations` are deliberately not consulted: on an Array they hold `size`,
+    and the allowed values live one level down — the detail AWK-69 missed."""
+    for v in field.get("items", {}).get("validations", []):
+        if "in" in v:
+            return v["in"]
+    return None
+
+
+def _in_list_diff(live, want):
+    """Lines explaining how two `in` lists differ, or none when they do not.
+
+    Three cases, because each asks for a different fix: a value only the space
+    has means the parser is behind; a value only the spec has means the type
+    is; the same values in another order means someone re-sorted the dropdown,
+    which is a decision (AWK-74 ordered it by family on purpose)."""
+    if live is None or want is None or live == want:
+        return []
+    lines = [f"in: live holds {len(live)} value(s), the spec {len(want)}"]
+    extra = [v for v in live if v not in want]
+    missing = [v for v in want if v not in live]
+    if extra:
+        lines.append(f"live only: {extra}")
+    if missing:
+        lines.append(f"spec only: {missing}")
+    if not extra and not missing:
+        lines.append("same values, different order — and the order is the editor's dropdown")
+    return lines
+
+
 def _gate(gate_id, enforced=False):
     """The gate's declaration, and the confirmation it demands.
 
@@ -717,6 +793,9 @@ def main():
         changed, drift = run(gate_id), 0
     else:
         changed, drift = add_fields()
+        # Alongside the additions, not inside them: add_fields() adds, and this
+        # only compares. A gated step runs alone, so it skips this too.
+        drift += check_pinned(json.loads(SCHEMA.read_text()))
 
     print(f"\n{changed} change(s) {'pending' if DRY else 'applied'}"
           f" · {http.calls} API call(s)")

@@ -18,6 +18,15 @@
     "`work.slug` itself already exists and is repurposed in place, not added, so",
     "it appears only under `gated`.",
     "",
+    "`pinnedFields` (AWK-73) is the one block describing fields this pipeline did",
+    "NOT create. A pinned field pre-exists in the space; the applier never adds or",
+    "writes it, and reports it as drift when the live shape differs from what is",
+    "declared here. It exists so a controlled list mirrored elsewhere in the repo",
+    "-- parse_archive.py's ENUM, for soloist.instrument -- has a committed copy",
+    "that a test can assert the mirror against, and a --dry-run can assert the",
+    "space against. A field belongs in exactly one of `addFields` or",
+    "`pinnedFields`; archive-schema.test.ts asserts the two never overlap.",
+    "",
     "HELP TEXT CANNOT BE SET FROM HERE, and a field added by this pipeline ships",
     "without any unless someone adds it afterwards. Contentful stores a field's",
     "help text on the EDITOR INTERFACE, not on the content type:",
@@ -51,7 +60,8 @@
     "work.arrangementType": "docs/adr/0005-composer-identity-and-arrangements.md",
     "work.arrangementOf": "docs/adr/0005-composer-identity-and-arrangements.md",
     "season.orchestras": "docs/adr/0006-performance-history-content-model.md",
-    "programItem.conductor": "docs/adr/0006-performance-history-content-model.md"
+    "programItem.conductor": "docs/adr/0006-performance-history-content-model.md",
+    "soloist.instrument": "CONTEXT.md"
   },
 
   "vocabularyNotes": {
@@ -106,6 +116,34 @@
     "arrangementType": [
       "ADR-0005's four verbs, matching what the source actually writes:",
       "arr. on 24 records, orch. on 10, trans. on 1, ed. on 1."
+    ],
+    "instrument": [
+      "43 values, PINNED rather than added: the field pre-dates this pipeline and",
+      "was extended by hand -- 36 when first mapped, 39 after AWK-69 (Piccolo,",
+      "Organ, Bass-Baritone), 43 after AWK-74 (Bass Trombone and the soprano,",
+      "tenor and baritone saxophones). Contentful enforces `in` at PUBLISH time,",
+      "so a value written outside it returns 200 and then 422s on publish, with",
+      "the Delivery API still serving the old entry. That is what caught AWK-69.",
+      "",
+      "ORDER IS PART OF THE DECLARATION. The list is by instrument family, not",
+      "alphabet, because it is what the editor's dropdown shows: Piccolo sits",
+      "after Flute, Organ after Piano, Bass-Baritone after Baritone, Bass Trombone",
+      "after Trombone, and `Baritone Saxophone` stays well away from `Baritone`.",
+      "",
+      "The `in` lives under `items.validations`, not the field's own `validations`,",
+      "which carry only `size: {max: 1}` -- the field is an Array holding one",
+      "value. Reading the field level alone shows no list at all, which is how",
+      "AWK-69 came to believe the field was unconstrained.",
+      "",
+      "MIRRORED, deliberately, by `parse_archive.py`'s ENUM. instrument-enum.test.ts",
+      "asserts the parser equals this list, sequence included; `migrate_schema.py",
+      "--dry-run` reports drift when the space does not. Extending the enum is",
+      "therefore three edits -- the live type, this list, the parser -- plus the",
+      "count archive-schema.test.ts pins, and the tests say which disagree. No",
+      "ADR decided the list; it grew by ticket, AWK-69 then AWK-74.",
+      "",
+      "The bare `Saxophone` is kept beside the four named members of its family,",
+      "for a credit that names no member (AWK-74). Not two spellings of one thing."
     ]
   },
 
@@ -337,6 +375,76 @@
           "validations": [{ "linkContentType": ["work"] }],
           "disabled": false,
           "omitted": false
+        }
+      ]
+    }
+  ],
+
+  "pinnedFields": [
+    {
+      "id": "soloist",
+      "fields": [
+        {
+          "id": "instrument",
+          "name": "Instrument / Voice / Role",
+          "type": "Array",
+          "localized": false,
+          "required": false,
+          "validations": [{ "size": { "max": 1 } }],
+          "disabled": false,
+          "omitted": false,
+          "items": {
+            "type": "Symbol",
+            "validations": [
+              {
+                "in": [
+                  "Violin",
+                  "Viola",
+                  "Violoncello",
+                  "Double Bass",
+                  "Flute",
+                  "Piccolo",
+                  "Oboe",
+                  "Clarinet",
+                  "Bassoon",
+                  "French Horn",
+                  "Trumpet",
+                  "Trombone",
+                  "Bass Trombone",
+                  "Tuba",
+                  "Percussion",
+                  "Harp",
+                  "Piano",
+                  "Organ",
+                  "Saxophone",
+                  "Soprano Saxophone",
+                  "Alto Saxophone",
+                  "Tenor Saxophone",
+                  "Baritone Saxophone",
+                  "Harpsichord",
+                  "Guitar",
+                  "Accordion",
+                  "Marimba",
+                  "Vibraphone",
+                  "Xylophone",
+                  "Timpani",
+                  "Drums",
+                  "Basso Continuo",
+                  "Soprano",
+                  "Mezzo-Soprano",
+                  "Contralto",
+                  "Alto",
+                  "Tenor",
+                  "Baritone",
+                  "Bass-Baritone",
+                  "Bass",
+                  "Director",
+                  "Narrator",
+                  "Soloist"
+                ]
+              }
+            ]
+          }
         }
       ]
     }

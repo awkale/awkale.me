@@ -52,12 +52,21 @@ def is_blank(v):
 
 # instrument/voice/role values allowed by the soloist.instrument enum.
 #
-# THIS LIST MIRRORS THE LIVE CONTENT TYPE, by hand. soloist.instrument is an
-# Array whose `items` carry an `in` validation holding these same 43 values in
-# this same order, and Contentful enforces `in` at PUBLISH time -- so a value
-# added here but not there is written and then silently left unpublished, with
-# the Delivery API serving the old entry. AWK-69 found that out the expensive
-# way. Change one, change the other.
+# THIS LIST MIRRORS THE LIVE CONTENT TYPE. soloist.instrument is an Array whose
+# `items` carry an `in` validation holding these same 43 values in this same
+# order, and Contentful enforces `in` at PUBLISH time -- so a value added here
+# but not there is written and then silently left unpublished, with the Delivery
+# API serving the old entry. AWK-69 found that out the expensive way.
+#
+# The mirror is asserted, in two halves (AWK-73). archive-schema.json pins the
+# field under `pinnedFields`; instrument-enum.test.ts reads this literal off the
+# source text and asserts it equals that copy, sequence included, and that every
+# ALIAS value below is in it while no ALIAS key is. `migrate_schema.py --dry-run`
+# then compares the copy with the live type -- by hand, since no test here may
+# reach the space. Extending the enum is three edits -- the live type, the
+# declaration, this list -- plus the count archive-schema.test.ts pins. Keep the
+# literal on the line that names it and the values double-quoted, because that
+# is what the test's regex reads.
 #
 # A role missing from here does not fail: get_performer() files it into
 # `character` instead and leaves the soloist's instrument empty, which is a

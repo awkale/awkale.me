@@ -36,6 +36,7 @@ type Field = {
 
 type Schema = {
   types: { id: string; addFields: Field[] }[]
+  pinnedFields: { id: string; fields: Field[] }[]
   gated: { id: string; flag: string; contentType: string; field: string; blockedBy: string }[]
 }
 
@@ -366,6 +367,42 @@ describe('archive-schema.json', () => {
       const seasonGates = gated.filter((g) => g.contentType === 'season')
 
       expect(seasonGates.map((g) => g.field)).toEqual(['number'])
+    })
+  })
+
+  describe('pinnedFields — AWK-73', () => {
+    // The one block describing fields this pipeline did NOT create. A pinned
+    // field pre-exists in the space; migrate_schema.py never adds or writes it
+    // and reports it as drift when the live shape differs. It exists so a list
+    // mirrored elsewhere in the repo has a committed copy to be asserted
+    // against — instrument-enum.test.ts does that for parse_archive.py's ENUM.
+    const pinned = schema.pinnedFields.flatMap((t) => t.fields.map((f) => `${t.id}.${f.id}`))
+
+    it('pins soloist.instrument and nothing else', () => {
+      // Widening this is a decision: each pinned field is one more shape a
+      // --dry-run reports on, and one more thing a web-app edit has to be
+      // mirrored into before the run goes green again.
+      expect(pinned).toEqual(['soloist.instrument'])
+    })
+
+    it('pins nothing the default run adds', () => {
+      // A field in both halves would make the file argue with itself: one half
+      // says "create this", the other "this already exists, never write it".
+      const added = schema.types.flatMap((t) => t.addFields.map((f) => `${t.id}.${f.id}`))
+
+      expect(pinned.filter((id) => added.includes(id))).toEqual([])
+    })
+
+    it('carries the instrument list under items, where the live field keeps it', () => {
+      // The landmine AWK-69 stepped on: the field is an Array, its own
+      // `validations` hold only `size`, and the `in` is one level down.
+      // Anything reading or comparing this declaration has to descend.
+      const instrument = schema.pinnedFields.find((t) => t.id === 'soloist')?.fields.find((f) => f.id === 'instrument')
+
+      expect(instrument?.type).toBe('Array')
+      expect(instrument?.items?.type).toBe('Symbol')
+      expect(instrument?.validations?.some((v) => v.in)).toBe(false)
+      expect(instrument?.items?.validations?.find((v) => v.in)?.in).toHaveLength(43)
     })
   })
 
