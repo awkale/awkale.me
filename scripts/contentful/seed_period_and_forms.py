@@ -3,7 +3,6 @@
 
     python3 scripts/contentful/seed_period_and_forms.py           # report, writes nothing
     python3 scripts/contentful/seed_period_and_forms.py --apply   # write AND publish
-    python3 scripts/contentful/seed_period_and_forms.py --all-works   # forms past the played works
 
 AWK-37, specified by ADR-0007. Retires `genre` in favour of two axes: `period`,
 held on the composer and overridable on the work, and `forms`, a tag set on the
@@ -21,23 +20,18 @@ Three jobs, and they share a pass because they share a read:
 `work.period` rides along as an override, written ONLY where it disagrees with
 the composer's period.
 
-`--all-works` IS A FOURTH JOB AND ONLY THE SECOND HALF OF ONE (AWK-66). It runs
-the genre -> forms mapping over the played works PLUS every Work holding a
-`genre`, and it is what makes deleting `work.genre` safe: AWK-37's scope is
-ADR-0006's played works, deliberately, so it never reached the pre-tenure archive
-substrate and for those Works the retired field is still the ONLY record of their
-form.
+JOB 2 HAS ONLY THREE SOURCES NOW. `work.genre` was deleted on 2026-09-01
+(AWK-66), so the `genreForms` term of the union is empty forever after, and a
+form the retired field used to supply is computed ONLY if a `workForms` row names
+it. AWK-80 (2026-09-06) is where that bit: nineteen rows written as "keeps Suite,
+gains Ballet" had only ever declared Ballet, and began reporting a permanent
+CONFLICT the day the field went. The rows now name the whole set.
 
-It widens the WORK set and nothing else. Composers keep their own scope, and so
-period and diacritics keep theirs -- an out-of-scope Work gets `forms` and never
-a `period`, because period is what the site renders and forms is what would be
-destroyed. That asymmetry is the whole design, so the mode suppresses period
-explicitly rather than relying on the harvest happening to be empty out there.
-
-NOR is it every Work in the space, which would be a different pass. A Work that
-never held a `genre` has nothing to migrate and nothing at risk when the field
-goes, so it stays in AWK-65's curation backlog -- and AWK-65 is explicitly not a
-prerequisite for the delete.
+AWK-66's `--all-works` mode -- the genre -> forms mapping carried to every
+unplayed Work holding a `genre`, which is what made the delete safe -- is RETIRED
+with it (AWK-80). After the delete it planned `358 played plus 0 holding a genre`
+and aborted on its own guard; a mode that can only abort is a flag someone will
+eventually `--force`. period-and-forms.json's `guards` note keeps its history.
 
 Two inputs, and the split is the point. `imslp-harvest.json` is DERIVED and
 disposable -- regenerate it with imslp_harvest.py. `period-and-forms.json` is
@@ -71,17 +65,14 @@ Safety properties:
     already right and restoring the diacritic changes nothing downstream. This
     is restoring data that was never captured, not a rendering choice.
   * SCOPE IS GUARDED. The counts in period-and-forms.json are abort thresholds.
-    `--force` downgrades them to warnings. `--all-works` checks its own ceiling,
-    `maxWorkWritesAllWorks`, rather than raising the in-scope one -- a single
-    raised ceiling would stop catching the one thing the ceiling is for, a pass
-    that has quietly stopped being scoped.
+    `--force` downgrades them to warnings.
   * IDEMPOTENT. A second run reports nothing to do. A run interrupted halfway
     resumes.
   * PUBLICATION STATE IS PRESERVED, NEVER CHOSEN -- the rule backfill_seasons.py
     follows. A row holding unpublished edits is republished ONLY where it already
     holds exactly what this pass computed, which is the refused-publish
-    signature: values present, change set empty. `--all-works` is why that
-    distinction had to be made sharp: out in the unplayed archive an unpublished
+    signature: values present, change set empty. AWK-66's widened pass is why
+    that distinction had to be made sharp: out in the unplayed archive an unpublished
     draft is far likelier to be a person mid-edit than a publish this pass
     failed, and republishing it would decide something that is not ours to
     decide.
@@ -89,12 +80,10 @@ Safety properties:
     web app loses the race loudly (409) rather than being silently overwritten.
 
 NOT IN SCOPE, deliberately:
-  * `work.genre` IS NOT CLEARED AND THE FIELD IS NOT DELETED, by either mode.
-    ADR-0007 sequences this as three separately-owned steps -- AWK-30 added
-    `forms`, this migrates the data, and only then can `genre` go. Deleting it in
-    the same pass that migrates it destroys the only thing a re-run could read.
-    The delete itself is migrate_schema.py --delete-work-genre, which counts the
-    Works this pass has not reached and refuses above zero.
+  * `work.genre` -- it no longer exists. ADR-0007 sequenced this as three
+    separately-owned steps: AWK-30 added `forms`, this pass migrated the data,
+    and migrate_schema.py --delete-work-genre deleted the field on 2026-09-01
+    (AWK-66) once its count of unreached Works read zero.
   * The 113 works carrying no genre. ADR-0007 is explicit that assigning them is
     taste rather than data entry, and that nothing in the spec is blocked on it.
     They are listed in docs/archive/form-curation.md. The 5 of them IMSLP can
@@ -128,12 +117,12 @@ ENV = os.environ.get("CONTENTFUL_ENVIRONMENT_ID", "master")
 LOCALE = os.environ.get("CONTENTFUL_LOCALE", "en-US")
 BASE = f"https://api.contentful.com/spaces/{SPACE}/environments/{ENV}"
 
-FLAGS = {"--apply", "--force", "--all-works"}
+FLAGS = {"--apply", "--force"}
 TAKES_VALUE = {"--token-file"}
 
 
 def _parse_argv(argv):
-    options = {"apply": False, "force": False, "all_works": False, "token_file": None}
+    options = {"apply": False, "force": False, "token_file": None}
     index = 0
     while index < len(argv):
         argument = argv[index]
@@ -359,20 +348,14 @@ def plan_composers(composers, composer_ids, harvest, declaration):
     return rows
 
 
-def plan_works(works, work_ids, genre_names, harvest, declaration, composer_period, forms_only=False):
+def plan_works(works, work_ids, harvest, declaration, composer_period):
     """What forms and what period override each planned work should carry.
 
-    `forms_only` is AWK-66's `--all-works`: compute forms and NEVER a period.
-
-    It suppresses period rather than letting it fall out. Out there in the
-    unplayed archive `workPeriods` names nothing and the harvest holds no row, so
-    period would land None by accident today -- but `inherited` is also None out
-    there, because composer periods are only computed for the played works, and
-    the override rule is `write a harvested style unless it AGREES with the
-    inherited period`. A style with nothing to agree with reads as a
-    disagreement. So the day the harvest widens, this pass would start writing
-    exactly the redundant periods the declaration says it must not."""
-    genre_forms = {k: v for k, v in declaration["genreForms"].items() if k != "note"}
+    Forms are the union of three sources: the harvest, the `workForms` row and
+    the derived Excerpt rule. There WAS a fourth -- `genreForms` over the retired
+    `genre` link -- until AWK-66 deleted the field on 2026-09-01; the mapping
+    stays in period-and-forms.json as the record of what it carried, and the
+    forms it used to supply are declared per work since AWK-80."""
     curated = declaration["workForms"]
     excerpt = declaration["excerptRule"]
     excerpt_re = re.compile(excerpt["pattern"])
@@ -396,27 +379,21 @@ def plan_works(works, work_ids, genre_names, harvest, declaration, composer_peri
         if work_id in titles_expected and titles_expected[work_id] != title:
             mismatches.append((work_id, titles_expected[work_id], title))
 
-        forms = set()
-        genre_id = link_id(field(entry, "genre"))
-        if genre_id and genre_id in genre_names:
-            forms |= set(genre_forms.get(genre_names[genre_id], []))
-        forms |= set(harvest["works"].get(work_id, {}).get("forms", []))
+        forms = set(harvest["works"].get(work_id, {}).get("forms", []))
         forms |= additions.get(work_id, set())
         if excerpt_re.search(title):
             forms.add(excerpt["form"])
 
         # A period override is written only where it DISAGREES with what the
         # work already inherits. An agreeing style is the inheritance working.
-        period = None
-        if not forms_only:
-            inherited = composer_period.get(link_id(field(entry, "composer")))
-            if work_id in overrides:
-                period = overrides[work_id]["period"]
-            else:
-                styles = harvest["works"].get(work_id, {}).get("styles", [])
-                period = styles[0] if len(styles) == 1 and styles[0] != inherited else None
-            if period == inherited:
-                period = None
+        inherited = composer_period.get(link_id(field(entry, "composer")))
+        if work_id in overrides:
+            period = overrides[work_id]["period"]
+        else:
+            styles = harvest["works"].get(work_id, {}).get("styles", [])
+            period = styles[0] if len(styles) == 1 and styles[0] != inherited else None
+        if period == inherited:
+            period = None
 
         rows.append(
             {
@@ -449,66 +426,25 @@ def main(argv):
     works = {w["sys"]["id"]: w for w in fetch_entries("work", token)}
     concerts = fetch_entries("concert", token)
     program_items = fetch_entries("programItem", token)
-    genre_names = {g["sys"]["id"]: field(g, "name") for g in fetch_entries("genre", token)}
 
-    all_works = options["all_works"]
-
-    # TWO SETS, and keeping them apart is the whole of AWK-66's widening.
-    # `composer_ids` is derived from the SCOPE set even when the work set is
-    # wider: deriving it from the planned set instead would drag composer.period
-    # and the diacritic restoration across every composer the archive holds --
-    # 262 of them against 157 in scope -- which is the one thing the widened mode
-    # must not do.
-    scope_work_ids = in_scope(concerts, program_items, works)
-    composer_ids = {link_id(field(works[w], "composer")) for w in scope_work_ids}
+    # Scope is ADR-0006's played works, and composers are derived from it.
+    # AWK-66's `--all-works` widened the work set past this once, to carry the
+    # genre -> forms mapping to the unplayed archive before `work.genre` was
+    # deleted; the field is gone, so the mode is retired (AWK-80).
+    work_ids = in_scope(concerts, program_items, works)
+    composer_ids = {link_id(field(works[w], "composer")) for w in work_ids}
     composer_ids.discard(None)
-    # THE WIDENED SET IS THE PLAYED WORKS PLUS EVERY WORK HOLDING A GENRE, not
-    # every Work in the space. The difference is 7 rows and they matter: film
-    # music out of scope whose titles the derived Excerpt rule happens to match
-    # -- `Selections from "Star Wars"`, `Music from "Gladiator"` -- which never
-    # held a genre, so there is nothing to migrate off them and nothing at risk
-    # when the field goes. They are AWK-65's curation backlog, and the ticket is
-    # explicit that AWK-65 is not a prerequisite for the delete. Widening the
-    # mapping is what makes the delete safe; curating works that never had a
-    # genre is taste, and this pass does not do taste.
-    holds_genre = {w for w in works if link_id(field(works[w], "genre"))}
-    work_ids = scope_work_ids | holds_genre if all_works else scope_work_ids
-    print(f"  in scope: {len(scope_work_ids)} works, {len(composer_ids)} composers")
-    if all_works:
-        print(
-            f"  --all-works: {len(work_ids)} works planned for forms and no periods"
-            f" — {len(scope_work_ids)} played plus {len(holds_genre - scope_work_ids)} holding a genre"
-        )
+    print(f"  in scope: {len(work_ids)} works, {len(composer_ids)} composers")
 
     problems = []
-    if all_works:
-        # The in-scope counts are not this mode's guard: it plans no composers at
-        # all, and a drift in the played set cannot change what a forms-only pass
-        # writes to an unplayed Work. Its own two counts are checked instead --
-        # the size of the archive, and the size of the gap it exists to close.
-        if len(works) != guards["worksInSpace"]:
-            problems.append(f"works in the space {len(works)}, declaration says {guards['worksInSpace']}")
-        out_of_scope = len(holds_genre - scope_work_ids)
-        if out_of_scope != guards["worksOutOfScopeWithGenre"]:
-            problems.append(
-                f"out-of-scope works holding a genre {out_of_scope}, "
-                f"declaration says {guards['worksOutOfScopeWithGenre']}"
-            )
-    else:
-        if len(scope_work_ids) != guards["worksInScope"]:
-            problems.append(f"works in scope {len(scope_work_ids)}, declaration says {guards['worksInScope']}")
-        if len(composer_ids) != guards["composersInScope"]:
-            problems.append(
-                f"composers in scope {len(composer_ids)}, declaration says {guards['composersInScope']}"
-            )
+    if len(work_ids) != guards["worksInScope"]:
+        problems.append(f"works in scope {len(work_ids)}, declaration says {guards['worksInScope']}")
+    if len(composer_ids) != guards["composersInScope"]:
+        problems.append(f"composers in scope {len(composer_ids)}, declaration says {guards['composersInScope']}")
 
-    # No composer rows at all in the widened mode -- not filtered later, never
-    # planned. Period and diacritics stay scoped to the played works.
-    composer_rows = [] if all_works else plan_composers(composers, composer_ids, harvest, declaration)
+    composer_rows = plan_composers(composers, composer_ids, harvest, declaration)
     composer_period = {r["id"]: r["period"] for r in composer_rows}
-    work_rows, mismatches = plan_works(
-        works, work_ids, genre_names, harvest, declaration, composer_period, forms_only=all_works
-    )
+    work_rows, mismatches = plan_works(works, work_ids, harvest, declaration, composer_period)
 
     for work_id, expected, actual in mismatches:
         problems.append(f"{work_id}: declaration says {expected!r}, space says {actual!r}")
@@ -578,76 +514,40 @@ def main(argv):
 
     if len(composer_writes) > guards["maxComposerWrites"]:
         problems.append(f"{len(composer_writes)} composer writes exceeds the {guards['maxComposerWrites']} ceiling")
-    work_ceiling = "maxWorkWritesAllWorks" if all_works else "maxWorkWrites"
-    if len(work_writes) > guards[work_ceiling]:
-        problems.append(f"{len(work_writes)} work writes exceeds the {work_ceiling} ceiling of {guards[work_ceiling]}")
+    if len(work_writes) > guards["maxWorkWrites"]:
+        problems.append(f"{len(work_writes)} work writes exceeds the {guards['maxWorkWrites']} ceiling")
 
     # ---- report ------------------------------------------------------------
     unresolved = [r for r in composer_rows if not r["period"]]
     spellings = [r for r in composer_rows if r["spelling"]]
     from collections import Counter
 
-    if all_works:
-        print("\ncomposer.period, diacritics, work.period — NOT PLANNED (--all-works is forms only)")
-    else:
-        print("\ncomposer.period")
-        for period, count in Counter(r["period"] for r in composer_rows if r["period"]).most_common():
-            print(f"  {count:4d}  {period}")
-        print(f"  {len(unresolved):4d}  (none)")
-        print(f"  sources: {dict(Counter(r['source'] for r in composer_rows))}")
+    print("\ncomposer.period")
+    for period, count in Counter(r["period"] for r in composer_rows if r["period"]).most_common():
+        print(f"  {count:4d}  {period}")
+    print(f"  {len(unresolved):4d}  (none)")
+    print(f"  sources: {dict(Counter(r['source'] for r in composer_rows))}")
 
-        print(f"\ndiacritics — {len(spellings)} composer(s) take an accented spelling")
-        for row in spellings:
-            print(f"  {row['sortName']:34s} -> {row['spelling']['sortName']}")
+    print(f"\ndiacritics — {len(spellings)} composer(s) take an accented spelling")
+    for row in spellings:
+        print(f"  {row['sortName']:34s} -> {row['spelling']['sortName']}")
 
+    # "Receive none" is what THIS PASS computes, not what the space holds. Since
+    # AWK-66 deleted `genre`, most in-scope works hold a form nothing here
+    # derives -- Symphony, Concerto, Overture -- and they are counted below as
+    # receiving none. The applier leaves them alone; see AWK-80 for the gap.
     print("\nwork.forms")
-    print(f"  {sum(1 for r in work_rows if r['forms']):4d}  works receive at least one form")
-    print(f"  {sum(1 for r in work_rows if not r['forms']):4d}  works receive none (the curation backlog)")
+    print(f"  {sum(1 for r in work_rows if r['forms']):4d}  works receive at least one form from this pass")
+    print(f"  {sum(1 for r in work_rows if not r['forms']):4d}  works receive none from it")
+    held_only = sum(1 for r in work_rows if not r["forms"] and r["currentForms"])
+    print(f"  {held_only:4d}  …of which hold forms in the space this pass does not derive")
     for form, count in Counter(f for r in work_rows for f in r["forms"]).most_common():
         print(f"    {count:4d}  {form}")
 
-    if not all_works:
-        print("\nwork.period overrides")
-        for row in work_rows:
-            if row["period"]:
-                print(f"  {row['title'][:52]:54s} {row['period']}")
-
-    # THE GATE AWK-66 EXISTS TO CLOSE, reported by the pass that closes it, so
-    # `--all-works` and a dry run answer it without a separate script. Counted
-    # over the whole space either way -- a count restricted to the planned set
-    # would read zero in the in-scope mode while 203 unplayed Works still held
-    # nothing, which is exactly the false reassurance that would lose the data.
-    # A link to an ARCHIVED genre entry resolves to nothing: `genre_names` comes
-    # from fetch_entries, which excludes archived rows. Such a work receives no
-    # form from the mapping and holds the gate open, and only a hand-written
-    # workForms row can close it -- so name it rather than leaving whoever reads
-    # a stuck gate to work out why one row will not move.
-    unresolvable = [
-        w
-        for w in works.values()
-        if link_id(field(w, "genre")) and link_id(field(w, "genre")) not in genre_names
-    ]
-
-    holding_genre = [w for w in works.values() if link_id(field(w, "genre"))]
-    stranded = [w for w in holding_genre if not (field(w, "forms") or [])]
-    planned = {r["id"]: r for r in work_rows}
-    would_remain = [
-        w for w in stranded if not planned.get(w["sys"]["id"], {}).get("forms")
-    ]
-    print(f"\nthe genre -> forms gate, over all {len(works)} works")
-    print(f"  {len(holding_genre):4d}  hold a genre")
-    print(f"  {len(stranded):4d}  …and no forms yet")
-    print(f"  {len(would_remain):4d}  …and would still hold none after this pass")
-    for row in would_remain[:10]:
-        print(f"        {row['sys']['id']:44s} {(field(row, 'title') or '')[:44]}")
-    if len(would_remain) > 10:
-        print(f"        … and {len(would_remain) - 10} more; --all-works is what reaches them")
-    if unresolvable:
-        print(f"  {len(unresolvable):4d}  …because their genre link resolves to nothing (archived or deleted)")
-        for row in unresolvable[:10]:
-            print(f"        {row['sys']['id']:44s} {(field(row, 'title') or '')[:44]}")
-    if not would_remain:
-        print("  migrate_schema.py --delete-work-genre is unblocked once this pass is applied.")
+    print("\nwork.period overrides")
+    for row in work_rows:
+        if row["period"]:
+            print(f"  {row['title'][:52]:54s} {row['period']}")
 
     print(f"\nwrites: {len(composer_writes)} composer(s), {len(work_writes)} work(s)")
     if composer_conflicts or work_conflicts:

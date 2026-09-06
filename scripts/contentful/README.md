@@ -163,7 +163,8 @@ is the only record of its own data and a deleted one cannot be re-derived —
 ADR-0007 says so in as many words. It was not zero by default: AWK-37's seed is
 scoped to the played Works, so measured live on 2026-09-01, 203 of the 430 Works
 carrying a `genre` were out of scope and held no `forms` at all. Closing that gap
-is `seed_period_and_forms.py --all-works`, below.
+was `seed_period_and_forms.py --all-works`, retired under AWK-80 once the field
+was gone — see below.
 
 Three things make that check trustworthy rather than decorative, and each closes
 a way it could have passed on nothing:
@@ -641,7 +642,6 @@ review costs:
 python3 scripts/contentful/imslp_harvest.py            # cached under .imslp-cache/
 python3 scripts/contentful/seed_period_and_forms.py    # report, writes nothing
 python3 scripts/contentful/seed_period_and_forms.py --apply
-python3 scripts/contentful/seed_period_and_forms.py --all-works --apply   # AWK-66
 ```
 
 Seven things are worth knowing before running it.
@@ -676,13 +676,28 @@ Tippett, Rota, Piazzolla and John Williams have **no IMSLP work pages at all**,
 being in copyright. The remaining 113 are `docs/archive/form-curation.md` — a
 worksheet, not an input. ADR-0007 permits `forms` to stay incomplete.
 
-**`work.genre` is not cleared and the field is not deleted**, by either mode.
-ADR-0007 sequences this as three separately-owned steps: AWK-30 added `forms`,
-this migrates the data, and only then can `genre` go. Deleting it in the pass
-that migrates it destroys the only thing a re-run could read. The delete is
-`migrate_schema.py --delete-work-genre`.
+**`work.genre` no longer exists, and the pass computes forms from three sources,
+not four.** ADR-0007 sequenced this as three separately-owned steps: AWK-30 added
+`forms`, this pass migrated the data, and `migrate_schema.py --delete-work-genre`
+deleted the field on 2026-09-01 (AWK-66). The `genreForms` term of the union has
+been empty ever since, and **that broke the "keep" half of every curated row**:
+a row written as "keeps Suite, gains Ballet" had only ever declared Ballet, and
+19 in-scope works reported a permanent CONFLICT from the day the field went.
+AWK-80 (2026-09-06) made the rows name the whole set — 14 ballet suites gain
+`Suite`, five works gain the one form `genre` used to supply — and settled the
+row it was opened for: **Tzigane is `[Rhapsody]`**, Ravel's *rapsodie de
+concert*, with the hand-set `Concerto` withdrawn in the web app first because the
+applier only ever adds. The same measurement found **337 Works (172 in scope)**
+holding forms nothing in the repo derives any more; they never conflict, because
+an empty computed set skips the check, and whether they belong in `workForms` is
+an open decision on that ticket.
 
-**`--all-works` widens the WORK set and nothing else (AWK-66).** It runs the
+**`--all-works` is retired (AWK-80).** After the delete it planned `358 played
+plus 0 holding a genre` — the default mode with period suppressed — and aborted
+on its own guard, 0 against 203. The three guards it owned went with it. What
+follows is the record of what it did.
+
+**`--all-works` widened the WORK set and nothing else (AWK-66).** It ran the
 `genre` → `forms` mapping over the played Works *plus* every Work holding a
 `genre` — 554 of 659 on 2026-09-01, not all 659 — and it is what makes the delete safe: for
 the 203 out-of-scope rows the retired field was the only record of their form.
@@ -721,9 +736,10 @@ an aria — a clean specimen of the ~6% ADR-0007 measured as actively wrong. The
 are named in `workForms` and flagged `outOfScope`, which is what exempts them
 from the test's harvest check and nothing else.
 
-Both modes report **the gate**: how many Works hold a `genre`, how many of those
-hold no `forms`, and how many would still hold none afterwards. That last number
-reaching zero is what unblocks `--delete-work-genre`.
+Both modes reported **the gate**: how many Works held a `genre`, how many of
+those held no `forms`, and how many would still hold none afterwards. That last
+number reaching zero is what unblocked `--delete-work-genre`; the report went
+with the field.
 
 Dry run is the default, `--apply` publishes, and **a disagreeing value is never
 overwritten** — the contested FIELD is reported as a CONFLICT and skipped while

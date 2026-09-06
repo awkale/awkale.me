@@ -226,9 +226,10 @@ describe('the work curations address real rows', () => {
   })
 
   it('carries AWK-66s four out-of-scope rows, which are the whole residue of the widened mapping', () => {
-    // The widened genre -> forms pass carries 199 of the 203 out-of-scope works
-    // holding a genre with no judgement at all. These four are what is left, and
-    // the count is asserted so a change here has to move the guard with it.
+    // The widened genre -> forms pass carried 199 of the 203 out-of-scope works
+    // holding a genre with no judgement at all. These four are what was left, and
+    // the count is asserted so a change here has to move the guard with it. The
+    // mode itself is retired (AWK-80); the rows stay, because they are decisions.
     const outOfScope = entries(decisions.workForms).filter(([, row]) => row.outOfScope)
 
     expect(outOfScope).toHaveLength(decisions.guards.worksOutOfScopeCurated)
@@ -255,25 +256,42 @@ describe('the work curations address real rows', () => {
     }
   })
 
-  it('holds the 32 migration repairs, and no rows with duplicate forms', () => {
-    // 28 in-scope from AWK-37, plus AWK-66's 4 out-of-scope.
+  it('holds the 38 migration repairs, and no rows with duplicate forms', () => {
+    // 28 in-scope from AWK-37, AWK-66's 4 out-of-scope, and AWK-80's 6: five
+    // forms that used to arrive through the deleted `genre` field, plus Tzigane.
     const rows = entries(decisions.workForms)
-    expect(rows).toHaveLength(32)
+    expect(rows).toHaveLength(38)
     for (const [id, row] of rows) {
       expect(new Set(row.forms).size, `${id} repeats a form`).toBe(row.forms.length)
     }
   })
 
-  it('still repairs the 16 ballets ADR-0007 counted', () => {
+  it('still repairs the 16 ballets ADR-0007 counted, and names the Suite half since the genre delete', () => {
+    // 14 ballet suites, the two Nutcracker Suite rows excepted (their form set
+    // is Ballet + Suite via the harvest), plus AWK-80's two excerpt-ballets.
     const ballets = entries(decisions.workForms).filter(([, row]) => row.forms.includes('Ballet'))
-    expect(ballets).toHaveLength(16)
+    expect(ballets).toHaveLength(18)
+    // AWK-80: `genre` supplied Suite for these until AWK-66 deleted it, so the
+    // row has to. A ballet-suite row naming Ballet alone is the 2026-09-06
+    // conflict coming back.
+    const suites = ballets.filter(([, row]) => /Suite/.test(row.title) && !/^The Nutcracker Suite$/.test(row.title))
+    expect(suites).toHaveLength(14)
+    for (const [id, row] of suites) expect(row.forms, `${id} lost the Suite half`).toContain('Suite')
+  })
+
+  it('settles Tzigane as a Rhapsody and not a Concerto (AWK-80)', () => {
+    // Ravel's own subtitle is `rapsodie de concert`. The harvest carried
+    // Rhapsody until the wiki withdrew it; Concerto was the hand-set genre.
+    // Declared here so the decision outlives the next re-harvest.
+    expect(decisions.workForms['7FdM6FH19h52lHS8EnFx1B']).toEqual({ title: 'Tzigane', forms: ['Rhapsody'] })
   })
 
   it('carries the one work needing two forms as a single row', () => {
     // The reason the shape changed. Under the old form-keyed buckets this work
     // was listed twice, in `ballets` and in `filmMusic`.
     const strada = entries(decisions.workForms).find(([, row]) => row.title.includes('La Strada'))
-    expect(strada?.[1].forms).toEqual(['Ballet', 'Film music'])
+    // Suite joined the row under AWK-80, once `genre` could no longer supply it.
+    expect(strada?.[1].forms).toEqual(['Ballet', 'Film music', 'Suite'])
   })
 
   it('never declares a period for an out-of-scope work', () => {
@@ -341,30 +359,14 @@ describe('the guards match what the harvest measured', () => {
     expect(decisions.guards.maxComposerWrites).toBeLessThan(decisions.guards.composersInScope * 2)
   })
 
-  it('gives the widened mapping its own ceiling, and keeps the in-scope one tight', () => {
-    // AWK-66. A single ceiling raised to cover `--all-works` would stop catching
-    // the one thing a ceiling is for — a pass that has quietly stopped being
-    // scoped — so the in-scope ceiling must stay below the widened set.
-    const widened = decisions.guards.worksInScope + decisions.guards.worksOutOfScopeWithGenre
-
-    expect(decisions.guards.maxWorkWritesAllWorks).toBe(widened + 7)
-    expect(decisions.guards.maxWorkWrites).toBeLessThan(widened)
-  })
-
-  it('accounts for every out-of-scope work holding a genre', () => {
-    // The gate AWK-66 has to reach zero: every work holding a `genre` also
-    // holding `forms`, or the delete loses data that cannot be re-derived. The
-    // decomposition is the argument — 199 carried by genreForms and the derived
-    // Excerpt rule, 4 named by hand — and the sum failing means the mapping
-    // stopped reaching rows it used to reach.
-    expect(decisions.guards.worksOutOfScopeCarriedByMapping + decisions.guards.worksOutOfScopeCurated).toBe(
-      decisions.guards.worksOutOfScopeWithGenre
-    )
-    // The widened set is not the whole space, and the gap is deliberate: works
-    // out of scope that never held a genre have nothing to migrate.
-    expect(decisions.guards.worksOutOfScopeWithGenre).toBeLessThan(
-      decisions.guards.worksInSpace - decisions.guards.worksInScope
-    )
+  it('carries no guard for the retired --all-works mode (AWK-80)', () => {
+    // AWK-66's widened mode carried the genre -> forms mapping to the unplayed
+    // Works before `work.genre` was deleted. The field went on 2026-09-01, so
+    // the mode had nothing left to plan and aborted on its own guard. Its three
+    // numbers went with it; a reappearance means someone resurrected the flag.
+    expect(decisions.guards).not.toHaveProperty('worksOutOfScopeWithGenre')
+    expect(decisions.guards).not.toHaveProperty('worksOutOfScopeCarriedByMapping')
+    expect(decisions.guards).not.toHaveProperty('maxWorkWritesAllWorks')
   })
 
   it('accounts for every uncategorised work', () => {

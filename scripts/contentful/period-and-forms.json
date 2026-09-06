@@ -349,10 +349,13 @@
       "failures ADR-0007 diagnoses:",
       "",
       "  * 16 BALLETS filed as suites, because their titles say Suite and Suite was",
-      "    tested first. They keep Suite and gain Ballet. `Selections from Romeo and",
-      "    Juliet Suites` sat in the Aria bucket instead -- the `, from` pattern",
-      "    reached it first -- so it gains both, plus Excerpt from the derived rule.",
-      "    The three works already filed as Ballet are correct and absent here.",
+      "    tested first. They kept Suite and gained Ballet -- and since AWK-80 the",
+      "    row names BOTH, because the Suite half used to arrive through `genre`",
+      "    and AWK-66 deleted that field (see the AWK-80 paragraph below).",
+      "    `Selections from Romeo and Juliet Suites` sat in the Aria bucket instead",
+      "    -- the `, from` pattern reached it first -- so it gains both, plus",
+      "    Excerpt from the derived rule. The three works already filed as Ballet",
+      "    are correct and absent here.",
       "  * The 13-strong ARIA bucket, taken apart. Six are genuine (three of them",
       "    duets, kept because Aria is the vocabulary's only word for a sung operatic",
       "    number); four are dances named as such by their own titles; one is film",
@@ -383,6 +386,36 @@
       "applier re-reads every title from the space and aborts on a mismatch, which",
       "is the check that actually protects a renamed or deleted row.",
       "",
+      "AWK-80 (2026-09-06) ADDED SIX ROWS AND WIDENED FOURTEEN, and the cause is",
+      "one event: AWK-66 deleted `work.genre` on 2026-09-01, so the genreForms term",
+      "of the applier's union is empty forever after. Every row written as `keeps",
+      "X and gains Y` had only ever declared Y, and 19 in-scope works began",
+      "reporting a permanent CONFLICT -- the space held the form genre used to",
+      "supply and nothing here computed it. A row now names the WHOLE set a work",
+      "should hold, minus what the harvest and the derived Excerpt rule still",
+      "supply. The 14 ballet rows gain Suite; Riverdance, La Gioconda's Dance of",
+      "the Hours, Aida's Triumphal March, the Liebestod and the Warsaw Concerto are",
+      "new rows for the same reason.",
+      "",
+      "The sixth is the one AWK-80 was opened for. `7FdM6FH19h52lHS8EnFx1B` --",
+      "Tzigane, a Contentful-generated id because the Work was entered by hand for",
+      "the 1992-07-17 LIYO concert -- is `[Rhapsody]` and NOT `[Concerto, Rhapsody]`.",
+      "IMSLP carried Rhapsody for it from 2026-08-30 until the wiki withdrew the",
+      "category on 2026-08-31; Concerto was its hand-set genre. Alex settled it on",
+      "2026-09-06: Ravel's own subtitle is `rapsodie de concert`, a concert",
+      "rhapsody, not a concerto. The web app was edited to `[Rhapsody]` first,",
+      "because the applier only ever adds, and this row is what keeps the",
+      "decision from being the next re-harvest's casualty.",
+      "",
+      "THE ROWS HERE ARE NOT THE WHOLE STORY, and that is recorded rather than",
+      "fixed. Measured 2026-09-06, 337 Works (172 in scope) hold forms that no",
+      "harvest row, no row here and no Excerpt match produces -- Symphony,",
+      "Concerto, Overture, mostly -- all of them genre's former output. They never",
+      "conflict because an empty computed set skips the check, so the applier",
+      "leaves them alone; but a `forms` field cleared in the web app has no",
+      "re-derivation path. Whether those ~340 belong here, in a frozen snapshot,",
+      "or nowhere is an open decision on AWK-80, not a gap in this file.",
+      "",
       "THE 113 WORKS CARRYING NO FORM AT ALL ARE NOT HERE. They are",
       "docs/archive/form-curation.md, a worksheet nothing reads. ADR-0007 is explicit",
       "that assigning them is taste rather than data entry, and that Form may stay",
@@ -399,6 +432,7 @@
       "not an edit here."
     ],
 
+    "7FdM6FH19h52lHS8EnFx1B": { "title": "Tzigane", "forms": ["Rhapsody"] },
     "wrk-ah-mes-amis-from-la-fille-du-r-6f782b": {
       "title": "\"Ah! Mes Amis\", from La Fille du Regiment",
       "forms": ["Aria"]
@@ -425,23 +459,23 @@
     },
     "wrk-appalachian-spring-suite-for-f-3b8b50": {
       "title": "Appalachian Spring Suite for Full Orchestra",
-      "forms": ["Ballet"]
+      "forms": ["Ballet", "Suite"]
     },
     "wrk-bacchanale-from-samson-et-dali-39d09b": { "title": "Bacchanale, from Samson et Dalila", "forms": ["Dance"] },
     "wrk-ballet-suite-from-la-strada-e3f510": {
       "title": "Ballet Suite from \"La Strada\"",
-      "forms": ["Ballet", "Film music"]
+      "forms": ["Ballet", "Film music", "Suite"]
     },
-    "wrk-billy-the-kid-ballet-suite-12d759": { "title": "Billy the Kid Ballet Suite", "forms": ["Ballet"] },
-    "wrk-coppelia-ballet-suite-26fc3a": { "title": "Coppelia Ballet Suite", "forms": ["Ballet"] },
+    "wrk-billy-the-kid-ballet-suite-12d759": { "title": "Billy the Kid Ballet Suite", "forms": ["Ballet", "Suite"] },
+    "wrk-coppelia-ballet-suite-26fc3a": { "title": "Coppelia Ballet Suite", "forms": ["Ballet", "Suite"] },
     "wrk-dance-of-the-seven-veils-from-d76fbe": {
       "title": "Dance of the Seven Veils, from Salome",
       "forms": ["Dance"]
     },
-    "wrk-daphnis-et-chloe-suite-no-2-c2583e": { "title": "Daphnis et Chloe Suite No. 2", "forms": ["Ballet"] },
+    "wrk-daphnis-et-chloe-suite-no-2-c2583e": { "title": "Daphnis et Chloe Suite No. 2", "forms": ["Ballet", "Suite"] },
     "wrk-divertimento-the-fairy-s-kiss-4b4e6c": {
       "title": "Divertimento, The Fairy's Kiss Suite",
-      "forms": ["Ballet"]
+      "forms": ["Ballet", "Suite"]
     },
     "wrk-excerpt-from-quartet-for-the-e-0f9b0a": {
       "title": "Excerpt from Quartet for the End of Time",
@@ -456,10 +490,10 @@
     "wrk-flower-duet-from-lakme-d530f8": { "title": "Flower Duet, from Lakme", "forms": ["Aria"] },
     "wrk-les-animaux-modeles-suite-de-b-53eb7b": {
       "title": "Les Animaux Modeles, Suite de Ballet",
-      "forms": ["Ballet"]
+      "forms": ["Ballet", "Suite"]
     },
-    "wrk-les-biches-suite-320e44": { "title": "Les Biches Suite", "forms": ["Ballet"] },
-    "wrk-les-sylphides-ballet-suite-e0ae28": { "title": "Les Sylphides Ballet Suite", "forms": ["Ballet"] },
+    "wrk-les-biches-suite-320e44": { "title": "Les Biches Suite", "forms": ["Ballet", "Suite"] },
+    "wrk-les-sylphides-ballet-suite-e0ae28": { "title": "Les Sylphides Ballet Suite", "forms": ["Ballet", "Suite"] },
     "wrk-papageno-s-aria-sc-9-from-the-c55bff": {
       "title": "Papageno's Aria (Sc. 9) from The Magic Flute",
       "forms": ["Aria", "Excerpt"],
@@ -469,26 +503,46 @@
       "title": "Ritual Dances, from The Midsummer Marriage",
       "forms": ["Dance"]
     },
-    "wrk-romeo-and-juliet-suite-no-2-924f49": { "title": "Romeo and Juliet Suite No. 2", "forms": ["Ballet"] },
+    "wrk-romeo-and-juliet-suite-no-2-924f49": { "title": "Romeo and Juliet Suite No. 2", "forms": ["Ballet", "Suite"] },
     "wrk-scenes-from-i-pagliacci-3ed6df": { "title": "Scenes from I Pagliacci", "forms": ["Excerpt"] },
     "wrk-selections-from-the-nutcracker-49b26c": {
       "title": "Selections from The Nutcracker Suite",
-      "forms": ["Ballet"]
+      "forms": ["Ballet", "Suite"]
     },
-    "wrk-spartacus-suite-no-2-8ee84a": { "title": "Spartacus, Suite No. 2", "forms": ["Ballet"] },
+    "wrk-spartacus-suite-no-2-8ee84a": { "title": "Spartacus, Suite No. 2", "forms": ["Ballet", "Suite"] },
     "wrk-symphonic-dances-from-west-sid-9ffa7f": {
       "title": "Symphonic Dances, from West Side Story",
       "forms": ["Dance"]
     },
+    "wrk-symphonic-suite-from-riverdanc-00bb7d": { "title": "Symphonic Suite, from Riverdance", "forms": ["Suite"] },
     "wrk-tales-from-the-vienna-woods-wa-d717fd": {
       "title": "Tales from the Vienna Woods Waltzes",
       "forms": ["Waltz"],
       "outOfScope": true
     },
-    "wrk-the-firebird-suite-1919-84f2ad": { "title": "The Firebird Suite (1919)", "forms": ["Ballet"] },
-    "wrk-the-miraculous-manadrin-suite-86d4bb": { "title": "The Miraculous Manadrin Suite", "forms": ["Ballet"] },
+    "wrk-the-dance-of-the-hours-from-la-71150c": {
+      "title": "The Dance of the Hours, from La Gioconda",
+      "forms": ["Ballet"]
+    },
+    "wrk-the-firebird-suite-1919-84f2ad": { "title": "The Firebird Suite (1919)", "forms": ["Ballet", "Suite"] },
+    "wrk-the-miraculous-manadrin-suite-86d4bb": {
+      "title": "The Miraculous Manadrin Suite",
+      "forms": ["Ballet", "Suite"]
+    },
     "wrk-the-nutcracker-suite-65bec1": { "title": "The Nutcracker Suite", "forms": ["Ballet"] },
-    "wrk-the-nutcracker-suite-c5dabb": { "title": "The Nutcracker Suite", "forms": ["Ballet"] }
+    "wrk-the-nutcracker-suite-c5dabb": { "title": "The Nutcracker Suite", "forms": ["Ballet"] },
+    "wrk-trumphal-march-ballet-music-fr-99cee9": {
+      "title": "Trumphal March & Ballet Music, from Aida (Act II)",
+      "forms": ["Ballet"]
+    },
+    "wrk-vorspiel-und-liebestod-from-tr-66f23b": {
+      "title": "Vorspiel und Liebestod, from Tristan und Isolde",
+      "forms": ["Prelude"]
+    },
+    "wrk-warsaw-concerto-from-dangerous-699e0f": {
+      "title": "Warsaw Concerto from \"Dangerous Moonlight\"",
+      "forms": ["Concerto"]
+    }
   },
 
   "formCategories": {
@@ -647,7 +701,20 @@
       "it used to reach. 199 of the 203 are carried by genreForms and the derived",
       "Excerpt rule between them; the other 4 are named in `workForms`. Note that",
       "genreForms ALONE leaves 33 -- the whole `Aria` bucket -- so the Excerpt rule",
-      "is load-bearing here rather than incidental."
+      "is load-bearing here rather than incidental.",
+      "",
+      "AWK-80 RETIRED `--all-works` (2026-09-06), and with it the three numbers",
+      "the widened mode guarded: `worksOutOfScopeWithGenre`,",
+      "`worksOutOfScopeCarriedByMapping` and `maxWorkWritesAllWorks`. The mode",
+      "existed to carry the genre -> forms mapping to the 203 unplayed Works before",
+      "the field went; the field went on 2026-09-01, so a run afterwards plans",
+      "`358 played plus 0 holding a genre` -- the default mode with period",
+      "suppressed -- and aborts on its own guard, 0 against 203. The paragraphs",
+      "above stay as the record of what the numbers meant. `worksOutOfScopeCurated`",
+      "stays because the four rows it counts are still declared. `worksWithGenre`,",
+      "`worksWithoutGenre` and the three that decompose it are the LAST numbers",
+      "measured while `genre` existed, kept because the test's sums still hold",
+      "and because nothing can measure them again."
     ],
     "worksInSpace": 666,
     "worksInScope": 358,
@@ -657,13 +724,10 @@
     "worksExcerptFromTitle": 4,
     "worksLeftToCurate": 120,
     "worksWithGenre": 227,
-    "worksOutOfScopeWithGenre": 203,
-    "worksOutOfScopeCarriedByMapping": 199,
     "worksOutOfScopeCurated": 4,
     "composersMatchedToImslp": 117,
     "composersWithHandPeriod": 46,
     "maxComposerWrites": 165,
-    "maxWorkWrites": 365,
-    "maxWorkWritesAllWorks": 568
+    "maxWorkWrites": 365
   }
 }
