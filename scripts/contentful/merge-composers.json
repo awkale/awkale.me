@@ -87,6 +87,26 @@
     }
   },
 
+  "afterAwk23": [
+    "Merges that happened after the 2026-08-19 run, outside this script. Recorded",
+    "so the guard's numbers are read as the state this script was written",
+    "against rather than as the state of the space.",
+    "",
+    "* AWK-79, 2026-09-01: `cmp-bach-johann-sebastian-arr-by-stokowski` was one",
+    "  of the 12 pre-tenure records left alone above. A sixth LIYO concert",
+    "  brought its one work into scope, and it was merged into the clean",
+    "  `cmp-bach-johann-sebastian` BY HAND in the web app -- the work keeps its",
+    "  `-stokowski` slug and its `Orchestration` credit, which this script would",
+    "  have overwritten to `Arrangement` from the `arr.` in the name. Live now",
+    "  reads 11 contaminated archive-wide, not 12, and all 11 are pre-tenure.",
+    "",
+    "The scope guard is NOT re-baselined for it. The three structural counts have",
+    "drifted anyway, to 138/443/394 by 2026-09-06, as concerts were transcribed",
+    "and entered by hand after this ran. A dry run therefore aborts on",
+    "drift, which is the guard doing its job: the migration is complete, nothing",
+    "in scope is contaminated, and there is no reason to run it."
+  ],
+
   "correctionsToAdr0005": [
     "Recorded here because the ADR states them as fact and live Contentful",
     "disagrees. Verified 2026-08-19; the migration follows live, per the ADR's own",

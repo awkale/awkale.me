@@ -563,6 +563,19 @@ naming no arranger, where the arranger *is* the filed composer of traditional
 material and there is nothing to merge toward. One is not even a person — `English
 Carol`. A sweep over every `arr. by` match is wrong.
 
+**It is 11 now, not 12.** One of the pre-tenure records,
+`cmp-bach-johann-sebastian-arr-by-stokowski`, came into scope on 2026-09-01 when
+a sixth LIYO concert reached its one work, and AWK-79 merged it into
+`cmp-bach-johann-sebastian` **by hand in the web app** rather than by re-running
+this script. Two reasons. The scope guard had already drifted — concerts
+transcribed and entered by hand since AWK-23 moved the structural counts to
+138/443/394 — so a run would have needed `--force` to delete one record. And the work already carried the credit correctly
+as `Orchestration`; the script derives the verb from the name, and `arr.` would
+have overwritten it to `Arrangement`. The work keeps its `-stokowski` slug, which
+is what makes it unique beside Bach's other works. The merge is recorded under
+`afterAwk23` in `merge-composers.json`; the guard is not re-baselined, because
+the migration is complete and nothing in scope is contaminated.
+
 ### What guards the file
 
 `merge-composers.test.ts` pins the four verbs, cross-checks them against the `in`
