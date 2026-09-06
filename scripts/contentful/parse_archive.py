@@ -215,11 +215,7 @@ def get_work(title, composer_id, composer_raw):
     def build():
         km = KEY_RX.search(title)
         nm = NICK_RX.search(title)
-        # No form is derived here. The title-keyword `genre` this once emitted
-        # was retired by ADR-0007 and the field deleted under AWK-66; the graph
-        # stopped describing it under AWK-78, because the importer writes every
-        # key a work carries and a key with no field behind it is a 422.
-        # `work.forms` in the space is the migrated result.
+        # No form is derived: `genre` is gone (ADR-0007, AWK-66, AWK-78 -- see README).
         return {"title": title,
                 "slug": f"{slugify(composer_raw or 'anon', 24)}--{slugify(title, 34)}-{h6(key)}",
                 "musicalKey": km.group(1).title() if km else None,
