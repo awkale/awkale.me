@@ -15,7 +15,7 @@ make creating safe. There are **three** declarations across those two appliers.
 
 | Declaration | Applier | Ticket | Does |
 | --- | --- | --- | --- |
-| `archive-schema.json` | `migrate_schema.py` | AWK-30 | Appends 10 optional fields to 4 archive types |
+| `archive-schema.json` | `migrate_schema.py` | AWK-30 | Appends 12 optional fields to 6 archive types |
 | `portfolio-schema.json` | `migrate_portfolio.py` | AWK-31 | Creates `imageGroup` and `project` |
 | `recording-schema.json` | `migrate_portfolio.py --schema` | AWK-32 | Creates `recording` |
 
@@ -31,13 +31,15 @@ decided that `master` does not have. `migrate_schema.py` applies it.
 # report what is missing -- writes nothing, and this is the safe default
 python3 scripts/contentful/migrate_schema.py --dry-run
 
-# add the 10 fields and re-activate the 4 content types
+# add the 12 fields and re-activate the 6 content types
 python3 scripts/contentful/migrate_schema.py
 ```
 
-Ten fields across four types: `concert.attended` / `satOut`, `composer.slug` /
-`period`, `conductor.slug`, and `work.period` / `forms` / `arranger` /
-`arrangementType` / `arrangementOf`.
+Twelve fields across six types: `concert.attended` / `satOut`, `composer.slug` /
+`period`, `conductor.slug`, `programItem.conductor` (AWK-60), `season.orchestras`
+(AWK-59), and `work.period` / `forms` / `arranger` / `arrangementType` /
+`arrangementOf`. AWK-30 shipped the first ten; the count in this file lagged
+until AWK-81.
 
 **Schema only — it writes no entry data**, so it is safe to run before the
 re-import and before any seeding pass. It is also **additive**: a field already
