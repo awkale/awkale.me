@@ -334,6 +334,14 @@ AWK-37; wiring the CDA is AWK-39.
 > > 346/156 — the fourth re-baseline in four tickets. And `import_to_contentful.py`
 > > **still writes `work.genre`**, so a re-import after the delete fails on an
 > > unknown field. Recorded, not repaired; fix it before any future re-import.
+> >
+> > > **Repaired under AWK-78 on 2026-09-06.** `parse_archive.py` derives no
+> > > genre and `import_to_contentful.py` knows neither the type nor the link, so
+> > > a regenerated `bso-graph.json` carries no `genre` anywhere and
+> > > `bso-graph.test.ts` pins it. A dry run the same day planned no `genre`
+> > > write. **A re-import is still not routine:** that dry run would also create
+> > > 26 Composers, 1 Hall and 1 Work the sheet has and the space does not. Read
+> > > its `create=` rows first.
 >
 > The remaining **104** Works carry no Form and that is a permitted state, not a
 > gap: ADR-0007 lets Form stay incomplete while Period carries the browsing. They

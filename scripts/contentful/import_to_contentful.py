@@ -54,11 +54,11 @@ STATE = Path(__file__).parent / "import-state.json"
 OVERRIDE = {("concert", "program")}
 
 # push order respects link dependencies
-ORDER = ["genre", "season", "orchestra", "hall", "conductor", "composer",
+ORDER = ["season", "orchestra", "hall", "conductor", "composer",
          "soloist", "ensemble", "work", "programItem", "concert"]
 
 LINK_FIELDS = {   # field -> True if array of links
-    ("work", "composer"): False, ("work", "genre"): False,
+    ("work", "composer"): False,
     ("programItem", "work"): False, ("programItem", "composer"): False,
     ("programItem", "soloists"): True,
     ("concert", "season"): False, ("concert", "hall"): False,
@@ -181,7 +181,7 @@ def match_key(ctype, fields, composer_key_of=None):
     f = fields
     if ctype in ("composer", "conductor", "soloist"):
         return name_key(val(f, "firstName"), val(f, "lastName"))
-    if ctype in ("orchestra", "hall", "genre", "ensemble"):
+    if ctype in ("orchestra", "hall", "ensemble"):
         return norm(val(f, "name") or "")
     if ctype == "season":
         return (season_institution(val(f, "label")), val(f, "number"))
@@ -231,7 +231,7 @@ for ct in ORDER:
 def graph_match_key(ct, gid, rec):
     if ct in ("composer", "conductor", "soloist"):
         return name_key(rec.get("firstName"), rec.get("lastName"))
-    if ct in ("orchestra", "hall", "genre", "ensemble"):
+    if ct in ("orchestra", "hall", "ensemble"):
         return norm(rec.get("name") or "")
     if ct == "season":
         return (season_institution(rec.get("label")), rec.get("number"))

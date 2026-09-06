@@ -93,28 +93,6 @@ def ensemble_kind(name):
     if "singers" in n: return "Vocal Group"
     return "Other"
 
-# ordered: more specific patterns first
-GENRE_RX = [
-    ("Concerto Grosso", r"\bconcerto grosso\b"),
-    ("Symphony",        r"\bsymphon(y|ie|ia)\b|\bsinfoni"),
-    ("Concerto",        r"\bconcerto\b|\bconcertino\b"),
-    ("Overture",        r"\bovertur"),
-    ("Suite",           r"\bsuite\b"),
-    ("Mass",            r"\bmass\b|\brequiem\b|\bte deum\b|\bmagnificat\b"),
-    ("Cantata",         r"\bcantata\b|\boratorio\b"),
-    ("Variations",      r"\bvariations\b"),
-    ("Rhapsody",        r"\brhapsod"),
-    ("Fantasia",        r"\bfantas"),
-    ("Serenade",        r"\bserenade\b|\bdivertimento\b"),
-    ("Ballet",          r"\bballet\b"),
-    ("Tone Poem",       r"\btone poem\b|\bsymphonic poem\b"),
-    ("Prelude",         r"\bprelude\b|\bvorspiel\b"),
-    ("Waltz",           r"\bwaltz\b|\bvalse\b"),
-    ("March",           r"\bmarch\b"),
-    ("Sonata",          r"\bsonata\b"),
-    ("Aria",            r"\baria\b|,\s*from\b|\bfrom (the |la |der |das |le )?\w"),
-]
-
 KEY_RX = re.compile(r"\bin\s+([A-G](?:-flat|-sharp|b|#)?\s+(?:Major|Minor))\b", re.I)
 NICK_RX = re.compile(r'\("([^"]+)"\)')
 NOTE_RX = re.compile(r"world premiere|premiere|concert version|excerpts?|\bmvts?\b|"
@@ -221,9 +199,6 @@ def get_hall(raw):
     return R.get("hall", norm(name), f"hal-{slugify(name)}",
                  lambda: {"name": name, "location": loc, "slug": slugify(name, 60)})
 
-def get_genre(name):
-    return R.get("genre", norm(name), f"gen-{slugify(name)}", lambda: {"name": name})
-
 def get_season(num, notes):
     # `label` is filled in a later pass, once the concerts exist. It cannot be
     # built here: the label carries the season's YEARS, and the year is not a
@@ -240,17 +215,16 @@ def get_work(title, composer_id, composer_raw):
     def build():
         km = KEY_RX.search(title)
         nm = NICK_RX.search(title)
-        genre_id = None
-        for gname, rx in GENRE_RX:
-            if re.search(rx, title, re.I):
-                genre_id = get_genre(gname)
-                break
+        # No form is derived here. The title-keyword `genre` this once emitted
+        # was retired by ADR-0007 and the field deleted under AWK-66; the graph
+        # stopped describing it under AWK-78, because the importer writes every
+        # key a work carries and a key with no field behind it is a 422.
+        # `work.forms` in the space is the migrated result.
         return {"title": title,
                 "slug": f"{slugify(composer_raw or 'anon', 24)}--{slugify(title, 34)}-{h6(key)}",
                 "musicalKey": km.group(1).title() if km else None,
                 "nickname": nm.group(1) if nm else None,
                 "composer": composer_id,
-                "genre": genre_id,
                 "movement": None}
     return R.get("work", key, f"wrk-{slugify(title, 30)}-{h6(key)}", build)
 

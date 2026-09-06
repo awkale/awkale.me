@@ -168,11 +168,25 @@ the type has no remaining reader once this runs, but does not say to delete it,
 and the 25-value vocabulary lives in `archive-schema.json` now. Deleting a type
 and 17 entries is a bigger one-way door and buys nothing but tidiness.
 
-**`import_to_contentful.py` still writes `work.genre`**, and `parse_archive.py`
+~~**`import_to_contentful.py` still writes `work.genre`**, and `parse_archive.py`
 still derives one per Work. Once the field is gone a re-import PUTs an unknown
-field and fails. Neither runs routinely — the last import was AWK-20 on
-2026-08-14 — so this is recorded rather than repaired, and it is the first thing
-to fix before any future re-import.
+field and fails.~~ **Repaired under AWK-78 on 2026-09-06.** Neither script knows
+the field now: the parser derives no genre, so a regenerated `bso-graph.json`
+carries no `genre` type and no `genre` key on any Work, and the importer neither
+fetches the `genre` type nor maps the link. The graph held the one real choice —
+it could have kept saying what the spreadsheet implied and let only the importer
+change — and it does not, because a parser output describing a deleted field is
+a second thing to drift and `work.forms` already carries the answer.
+`bso-graph.test.ts` pins both absences.
+
+A `--dry-run` against the live space the same day planned `work create=1
+unchanged=624` with no `genre` anywhere in its output. The same run before the
+fix would have queued `update:genre` on every Work the parser derived one for,
+because the merge fills any field the live entry lacks and, after AWK-66, every
+Work lacked this one. **That dry run also planned `composer create=26`, `hall
+create=1` and `work create=1`** — entries the sheet has and the space does not.
+Read the `create=` rows before trusting a re-import; the 422 was not the only
+thing standing between the sheet and the space.
 
 ### What guards the file
 
@@ -908,8 +922,11 @@ how the sheet was maintained, not of that one pair.
 
 ## Known gaps
 
-* **Genre is inferred from the title** by keyword and covers ~68% of works. The
-  rest are left unset rather than guessed.
+* ~~**Genre is inferred from the title** by keyword and covers ~68% of works.~~
+  **Nothing is inferred about form any more.** ADR-0007 retired `genre`, AWK-66
+  deleted the field, and AWK-78 took the keyword table out of the parser. Form
+  lives in `work.forms`, seeded by `seed_period_and_forms.py` from IMSLP plus
+  `period-and-forms.json`, and is permitted to stay incomplete.
 * **Composer birth/death dates are not in the spreadsheet.** Only the handful
   curated by hand have them.
 * **Opera casts are only partly modeled.** A single performer's role lands in
@@ -938,8 +955,7 @@ concert ──┬─ season
           ├─ hall
           ├─ orchestra[]
           ├─ conductor
-          └─ program[] ─→ programItem ──┬─ work ──┬─ composer
-                                        │         └─ genre
+          └─ program[] ─→ programItem ──┬─ work ─── composer
                                         ├─ composer      (when no work is named)
                                         └─ soloists[] ─→ soloist | ensemble
 ```

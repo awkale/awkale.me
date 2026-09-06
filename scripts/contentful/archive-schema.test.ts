@@ -182,9 +182,12 @@ describe('archive-schema.json', () => {
     })
 
     it('keeps every one of the 17 live genre entry names', () => {
-      // Sourced from bso-graph.json's `genre` type. Dropping one here would
-      // strand its assignments when AWK-37 migrates genre -> forms, and the loss
-      // would show up as works quietly losing a tag rather than as an error.
+      // The names of the 17 `genre` entries still in the space (the type outlived
+      // its field; see ADR-0007 and AWK-66). They were read off bso-graph.json's
+      // `genre` type until AWK-78 stopped the parser deriving one, so this list
+      // is now the only copy in the repo. Dropping one here would have stranded
+      // its assignments when AWK-37 migrated genre -> forms, and the loss would
+      // have shown up as works quietly losing a tag rather than as an error.
       const live = [
         'Aria',
         'Ballet',
