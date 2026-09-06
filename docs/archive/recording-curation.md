@@ -137,6 +137,31 @@ directions. This is why `recording` has no `date` field.
 
 ## The three that are blocked, and on what
 
+> **Partly unblocked, 2026-09-06 — [AWK-57](https://linear.app/awkale/issue/AWK-57).**
+> The tour Concerts now exist as a declaration: `cnc-20200229` at the Auditorio
+> Silvestre Revueltas, Conservatorio Nacional de Música, and `cnc-20200301` at the
+> Castillo de Chapultepec, both Mexico City, both Felipe Tristan. So *"the tour
+> Concert does not exist"* is no longer the blocker, and the three verdicts above
+> stay ⛔ on something narrower: **which of the two dates each video is from.**
+>
+> The descriptions say only *"February-March 2020"* and name three participating
+> institutions across at least two cities, so the tour had dates beyond these two.
+> Both Concerts share one program, so `recording-item-on-concert-program` is
+> satisfied by either and cannot catch a wrong choice — the check that would
+> normally backstop a guess is blind here.
+>
+> The **Program Item** is settled for all three, because each video names its work.
+> Only `recording.concert` is open. The video ids and their items are in
+> `scripts/contentful/mexico-tour-programs.json` under `pendingRecordings`, since
+> the feed holds only the 15 most recent uploads and these three are from 2021-04.
+>
+> Two corrections to what follows. **The tour did not repeat the February program** —
+> it played four works to Brooklyn's five, dropping Danzón No. 4 and the Ricercar and
+> adding *Huapango*. And *Huapango* **was** on the printed program, third of four,
+> then repeated as the encore, so it is two Program Items rather than one. The tour
+> Concerts therefore share five fresh items with each other and nothing with
+> `cnc-20200223`. See ADR-0012's amendment.
+
 The "BSO Mexico 2020" batch (#8, #10, #14). Two of the three map cleanly onto
 works on `cnc-20200223`'s program:
 

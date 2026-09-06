@@ -22,12 +22,28 @@ which reports `unchanged` for every entry and succeeds. A run that does nothing
 and says so cheerfully is indistinguishable from a run that worked, and the
 person reading the output is the one who typed the wrong flag.
 
+AWK-57 added mexico-tour-programs.json -- the two dated Brooklyn Symphony Mexico
+tour Concerts -- and it is the first declaration that creates nothing but Halls:
+two Halls, five Program items and two Concerts, with every Work, Composer,
+Conductor, Orchestra and Season reused. It is also the first to use the
+archive's RUN shape, and that is what the dedupe in build_plan is for.
+
 WHAT A DECLARATION MAY LEAVE OUT. `composers`, `conductors`, `soloists`,
 `works`, `workMovements`, `halls` and `orchestras` are each optional and absent
-means none -- AWK-82 creates no Soloists and merges no movement lists, and
-AWK-64 creates neither a Hall nor an Orchestra. `concert.season` is optional
-too, because a festival Concert legitimately has none (ADR-0006); `hall`,
-`orchestra`, `conductor`, `date`, `title` and `attended` are not.
+means none -- AWK-82 creates no Soloists and merges no movement lists, AWK-64
+creates neither a Hall nor an Orchestra, and AWK-57 has none of the seven.
+`concert.season` is optional too, because a festival Concert legitimately has
+none (ADR-0006), and so is `concert.dateNote`, which only a run's second night
+carries; `hall`, `orchestra`, `conductor`, `date`, `title` and `attended` are
+not.
+
+TWO CONCERTS MAY SHARE ONE SET OF PROGRAM ITEMS. That is a run -- one program
+played twice by one orchestra -- and nine of them already live in the space,
+where cnc-20070523 links pi-20070520-*. A declaration expresses it by listing
+the same items, with the same ids, on both Concerts; build_plan dedupes them so
+five shared items are five writes rather than ten. app/lib/invariants.ts polices
+the shape from the other side, failing a build where one item sits on Concerts
+more than 14 days apart or on two orchestras.
 
 DRY RUN IS THE DEFAULT, like seed_participation.py, backfill_slugs.py,
 merge_composers.py, backfill_seasons.py and seed_period_and_forms.py. The
@@ -86,7 +102,8 @@ ENV = os.environ.get("CONTENTFUL_ENVIRONMENT_ID", "master")
 LOCALE = os.environ.get("CONTENTFUL_LOCALE", "en-US")
 BASE = f"https://api.contentful.com/spaces/{SPACE}/environments/{ENV}"
 
-DECLARATIONS = ("tilles-center-programs.json", "lisfa-festival-programs.json")
+DECLARATIONS = ("tilles-center-programs.json", "lisfa-festival-programs.json",
+                "mexico-tour-programs.json")
 
 FLAGS = {"--apply", "--publish"}
 TAKES_VALUE = {"--token-file", "--plan"}
@@ -342,9 +359,56 @@ def build_plan(decl):
         # then declines to change.
         if concert.get("season"):
             fields["season"] = link(concert["season"])
+        # AWK-57. OPTIONAL, and the same "absent is a decision" reading as
+        # `season` above. Twelve live Concerts carry this field and every one is
+        # either a fuzzy date (`unknown`, `var. dates, 1983`) or the sentence a
+        # run's SECOND night carries, naming the first -- archive-corrections.
+        # test.ts asserts that wording for 2008-12-14. A first night has never
+        # carried one, so writing null here would make the field a value this
+        # script then declines to change.
+        if concert.get("dateNote"):
+            fields["dateNote"] = concert["dateNote"]
         plan.append(("concert", cid, fields))
 
-    return plan
+    # AWK-57. One write per ENTRY, not per mention. A run declares the same
+    # Program items on both its Concerts -- that is what makes it a run -- so
+    # without this, five shared items are ten plan rows: ten GETs, a doubled
+    # `programItem` count that the guards would have to inflate to match, and a
+    # publish pass that visits each item twice.
+    #
+    # THE DUPLICATES MUST AGREE, and that is checked here rather than assumed.
+    # An earlier version kept the first occurrence and dropped the rest
+    # unread, on the reasoning that the declaration's own test holds the copies
+    # in step. That put the safety net in a different file from the hazard: a
+    # declaration edited without its test, or written from scratch against this
+    # applier, would lose a write silently. Two rows sharing an id and
+    # disagreeing is not a duplicate at all -- it is two different intentions
+    # for one entry, and only a person can say which was meant.
+    #
+    # The ctype is compared too, because ids are unique ACROSS content types in
+    # Contentful. Keying the dedupe on the id alone is right; letting a
+    # declaration point one id at two types and writing whichever came first is
+    # not.
+    seen, unique, conflicts = {}, [], []
+    for ctype, eid, fields in plan:
+        if eid in seen:
+            if seen[eid] != (ctype, fields):
+                was_ctype, was_fields = seen[eid]
+                differing = sorted(
+                    k for k in set(fields) | set(was_fields)
+                    if fields.get(k) != was_fields.get(k)
+                ) or ["<content type>"]
+                conflicts.append(f"  {eid}: declared as {was_ctype} and again as "
+                                 f"{ctype}, disagreeing on {', '.join(differing)}")
+            continue
+        seen[eid] = (ctype, fields)
+        unique.append((ctype, eid, fields))
+    if conflicts:
+        sys.exit("one entry id is declared twice with different values.\n"
+                 "A run shares Program items by declaring the SAME rows on both\n"
+                 "Concerts, so the copies have to be identical:\n"
+                 + "\n".join(conflicts))
+    return unique
 
 
 def verify_reuse(decl):

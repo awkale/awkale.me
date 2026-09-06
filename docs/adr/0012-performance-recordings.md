@@ -127,6 +127,14 @@ they are not. The tour date has to exist as its own Concert entry sharing
 `pi-20200223-*`, exactly as a two-night run does — the archive's existing shape,
 reused.
 
+> **The conclusion holds and two of its premises do not** — see
+> [the amendment](#amendment--the-tour-dates-and-what-the-sources-said-2026-09-06)
+> at the foot of this record. The tour did **not** repeat the February program, so
+> the tour Concerts share nothing with `cnc-20200223`; they share one set of items
+> with **each other**. That these videos are not the Brooklyn Museum performance —
+> the thing this section exists to say — is unchanged and is why the amendment
+> creates two Concerts rather than reusing one.
+
 **A `work.recordingUrl` would have erased that distinction silently**, and this is
 the argument against every cheaper shape considered. Hanging recordings off the Work
 says "there is a recording of this piece"; hanging them off the pair says "there is a
@@ -138,6 +146,12 @@ before it has anywhere to hang. That is net-new data entry of exactly the shape
 ADR-0006 anticipated for pre-BSO youth-orchestra programs.
 
 ### Encores need nothing new
+
+> **The rule holds; the example was wrong about this Work.** *Huapango* WAS on the
+> printed program — see
+> [the amendment](#amendment--the-tour-dates-and-what-the-sources-said-2026-09-06).
+> It was played third of four and then repeated as the encore, so the tour Concerts
+> carry it twice. Everything below about what an encore *is* survives intact.
 
 The third Mexico video is titled *"MONCAYO Ha[u]pango **Encore**"*, which explains a
 puzzle rather than creating one: *Huapango*'s only appearance in the archive is
@@ -274,3 +288,74 @@ already, when "the music section" stopped meaning the performance history.
   belongs to whatever record settles that section.
 
 *"Embedding would be nicer"* is not a trigger. This record answers it.
+
+## Amendment — the tour dates, and what the sources said (2026-09-06)
+
+[AWK-57](https://linear.app/awkale/issue/AWK-57) closed the gap this record left
+open. The two Mexico tour Concerts now exist, and three things this record settled
+*by inspection* did not survive contact with a source.
+
+**The blocker was one fact and it was outside the repository, exactly as stated.**
+This record and AWK-57 both concluded the tour date was unrecoverable from anything
+here — not the spreadsheet, not the video titles, not the feed. That was right. It
+came from two pages of a performer's own concert log, supplied by Alex, and it took
+both dates, both halls and the conductor with it.
+
+| | |
+| --- | --- |
+| **2020-02-29**, 7 PM | Auditorio Silvestre Revueltas, Conservatorio Nacional de Música, Mexico City |
+| **2020-03-01**, 1 PM | Castillo de Chapultepec, Mexico City |
+
+**Two dates, not one.** Every sentence in this record says *"the tour date"*,
+singular, because one Concert was all the three videos seemed to need. The sources
+give two consecutive performances, and the archive's run shape holds them.
+
+**The tour did not repeat the February program**, which is the premise the
+*"false binary"* section above reasons from. Brooklyn played five works; the tour
+played four. Danzón No. 4 and the Kempton *Ricercar* were not on tour, and
+*Huapango* — which Brooklyn did not play — was.
+
+**So the tour Concerts share nothing with `cnc-20200223`.** `order` lives on the
+Program item, so a shared item would carry the museum's ordering into a Concert
+where the work sits elsewhere: *Mozartiana* is third at the museum and second on
+tour. The two tour dates are a run **with each other**, sharing five fresh items
+numbered from the first night, exactly as `cnc-20070523` links `pi-20070520-*`.
+
+**Worth knowing, because it is the trap:** sharing `pi-20200223-*` across a 7-day
+span would have **passed** `program-item-run-is-close`, whose ceiling is 14 days. No
+invariant reads whether two Concerts played the same program. The build could never
+have reported this, which is why the argument had to be made in prose and why the
+declaration's test asserts the passing case as a warning rather than a reassurance.
+
+**The encore was a repeat, not a work the program lacked.** *"Encores need nothing
+new"* reasons from *Huapango* being absent from the printed program. It was printed,
+third of four, on both pages. Alex resolved the conflict from memory: it was
+programmed and then played again at the end. The video's own description settles the
+second half — `Program: *Encore* MONCAYO Huapango`. So each tour Concert carries two
+*Huapango* items, order 3 plain and order 5 noted `Encore`, both linking the one
+existing Work. **The rule the section states is untouched:** an encore is a Program
+Item with a high `order` and a `note`, no schema change, no new invariant. With five
+items, 5 is both the high order and the true position, so nothing was invented.
+
+**The 2000 trap is still live and is now guarded.** The archive's only prior
+*Huapango* Program Item remains `pi-20001216-2`. The Work is reused; that item is
+not, and `mexico-tour-programs.test.ts` asserts no link in the declaration reaches
+it.
+
+### What is still blocked, and on a narrower fact
+
+**The three recordings are still not attached** — the thing AWK-57 was opened for.
+The videos are dated only *"February-March 2020"*, and their descriptions name
+**three** participating institutions across at least two cities, so the tour had
+dates beyond these two. Both Concerts share one program, so
+`recording-item-on-concert-program` is satisfied by either and **cannot** catch a
+wrong choice: the check that would normally backstop a guess is blind here.
+
+The work each video shows is known even though its Concert is not, so the ids and
+their Program Items are recorded in `mexico-tour-programs.json` under
+`pendingRecordings`. The feed returns only the 15 most recent uploads and these
+three are from 2021-04, so they will fall off it.
+
+**This does not weaken *"seeding cannot be scripted"*.** It is another instance of
+it. Two of the three videos map onto a work by title alone, and doing that would have
+attached them to a Brooklyn Museum performance they are not.

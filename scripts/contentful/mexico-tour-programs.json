@@ -1,0 +1,468 @@
+{
+  "note": [
+    "AWK-57's transcription of the two dated Brooklyn Symphony Orchestra Mexico",
+    "tour Concerts, separated from the script that applies it. Read by",
+    "transcribe_programs.py --plan, asserted by mexico-tour-programs.test.ts.",
+    "",
+    "DECIDED AND NEVER REGENERATED, in the sense period-and-forms.json uses and",
+    "both program declarations repeat. The sources are two public web pages and",
+    "a public RSS feed rather than a scan -- so unlike AWK-64 and AWK-82 they",
+    "CAN be re-read -- but nothing in this repository derives this file from",
+    "them, there is no parser to run, and the spreadsheet holds no row for",
+    "either date. A correction here is the only record of the correction.",
+    "",
+    "THIS TICKET SAT BLOCKED FOR A WEEK ON ONE FACT. AWK-57 was split out of",
+    "AWK-38 on 2026-08-29 as the item blocked on 'a fact no source in this repo",
+    "holds' -- the tour date. ADR-0012 reached the same conclusion by",
+    "inspection. Alex supplied two links on 2026-09-06 and both dates, both",
+    "halls and the conductor came out of them at once.",
+    "",
+    "FOUR THINGS THE TICKET AND ADR-0012 BELIEVED DID NOT SURVIVE THE SOURCES,",
+    "and they are recorded here rather than only in the ticket because this file",
+    "is what a later reader will find first:",
+    "",
+    "  1. The tour did NOT repeat the 2020-02-23 Brooklyn Museum program.",
+    "     Brooklyn played five works; the tour played four. Danzon No. 4 and the",
+    "     Kempton Ricercar were not on tour, and Huapango -- which Brooklyn did",
+    "     not play -- was.",
+    "",
+    "  2. So the tour Concerts do NOT share `pi-20200223-*`, which is what both",
+    "     the ticket and ADR-0012 called for. `order` lives on the Program item,",
+    "     so a shared item would carry Brooklyn's ordering into a Concert where",
+    "     the work sits elsewhere -- Mozartiana is third at the museum and",
+    "     second on tour. The two tour dates are a run WITH EACH OTHER and share",
+    "     nothing with Brooklyn. `cnc-20200223` is not touched.",
+    "",
+    "  3. The encore was NOT a work the printed program lacked. ADR-0012's",
+    "     'Encores need nothing new' reasons from Huapango being absent from the",
+    "     program; both source pages print it third of four. Alex resolved the",
+    "     apparent conflict from memory on 2026-09-06: it was programmed and",
+    "     then REPEATED as the encore. Hence two Huapango items per Concert.",
+    "     ADR-0012's conclusion survives -- an encore is a Program item with a",
+    "     high order and a note, and needs no schema change -- but its premise",
+    "     does not.",
+    "",
+    "  4. `attended` cannot come from seed_participation.py, which the ticket's",
+    "     step 4 required. That plan is generated from the participation",
+    "     checklist AND bso-graph.json; the graph holds no row for either date",
+    "     and never will, because the spreadsheet holds none. `attended` is",
+    "     declared here, as AWK-64 and AWK-82 declare it.",
+    "",
+    "THE GRAPH'S IDS ARE NOT THE SPACE'S IDS, and this file was first drafted",
+    "with three that do not exist in Contentful: `orc-bso`, ",
+    "`cmp-van-beethoven-ludwig` and `cnd-nicholas-armstrong`. All three are",
+    "bso-graph.json ids. The space holds the Brooklyn Symphony Orchestra under",
+    "`7GW6fT7mUQE6pZLJXHj1TC` and Beethoven under `2tfdUTvmRn1etYq5czTknE`,",
+    "because 33 hand-curated concerts and their links live under Contentful",
+    "auto-ids -- participation.json's note says the same of its own join key.",
+    "Every id in `reuse` below was read back from the Delivery API on",
+    "2026-09-06, and verify_reuse re-reads them at apply time.",
+    "",
+    "WHAT THIS DOES NOT FINISH is the thing AWK-57 was opened for: attaching the",
+    "three BSO Mexico 2020 recordings. See `pendingRecordings`."
+  ],
+
+  "sources": {
+    "2020-02-29": "https://andrewwestling.com/music/concerts/202002291900",
+    "2020-03-01": "https://andrewwestling.com/music/concerts/202003011300",
+    "feed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCsDWWl_zTBj3K2_dFH6HMdg",
+    "note": [
+      "TWO PRIMARY PAGES AND ONE CORROBORATING FEED, and the distinction matters",
+      "because the feed is what everyone had already read.",
+      "",
+      "The two pages are a performer's own concert log -- Andrew Westling, a BSO",
+      "player -- one page per date, each giving the date, the start time, the",
+      "hall, the city, the orchestra, the conductor and the program in order.",
+      "They are third-party and self-published, which is the honest description;",
+      "they are also the only source anywhere that dates these concerts, and the",
+      "conductor and program they give are independently corroborated below.",
+      "Read 2026-09-06.",
+      "",
+      "The feed is the channel RSS that docs/archive/recording-curation.md was",
+      "built from, and it returns the 15 most recent uploads and no more. Its",
+      "three 'BSO Mexico 2020' entries carry a description the curation pass did",
+      "not quote: 'Brooklyn Symphony Orchestra - MEXICO TOUR 2020 / Felipe",
+      "Tristan, Associate Conductor / February-March 2020', then a list of",
+      "participating institutions, then the program. That is where the conductor",
+      "corroboration comes from, and where the word Encore is explicit rather",
+      "than only in a video title.",
+      "",
+      "THE FEED NAMES THREE INSTITUTIONS AND ONLY ONE IS BELOW. Escuela Superior",
+      "de Musica y Danza de Monterrey, Conservatorio Nacional de Musica, and",
+      "Escuela Superior de Musica de Mexico. The Conservatorio is the 2020-02-29",
+      "venue; Monterrey is a different city. So the tour had dates beyond these",
+      "two, in at least two cities, and nothing here dates them or gives their",
+      "programs. They are not created -- absence of evidence, not evidence of",
+      "absence, and a Concert with no date is not a Concert this archive can",
+      "hold."
+    ]
+  },
+
+  "reuse": {
+    "note": [
+      "Live entry ids this transcription links but does not create. Every one",
+      "was read back from the Delivery API on 2026-09-06 before it was written",
+      "down, and the display value beside each id is what came back.",
+      "",
+      "NOTHING IS CREATED EXCEPT HALLS. No Work, no Composer, no Conductor, no",
+      "Orchestra, no Season -- the entire tour program was already in the",
+      "archive, played at other times by other forces. That is the exact",
+      "opposite of AWK-82, where all seven program lines were new works, and it",
+      "is why this declaration has no `works`, `composers`, `conductors` or",
+      "`orchestras` section at all rather than empty ones.",
+      "",
+      "THE NAMES BESIDE THE IDS ARE A CHECK, NOT A LABEL. transcribe_programs.py",
+      "re-reads each entry and aborts if the id has gone missing, if it now",
+      "resolves to a different content type, or if its live display value no",
+      "longer matches what is recorded here. So correcting a name here is not",
+      "tidying; it is the thing that keeps the check honest.",
+      "",
+      "TWO IDS ARE CONTENTFUL AUTO-IDS and that is not a mistake to tidy up.",
+      "`7GW6fT7mUQE6pZLJXHj1TC` and `2tfdUTvmRn1etYq5czTknE` are the live",
+      "Brooklyn Symphony Orchestra and Beethoven. The readable `orc-bso` and",
+      "`cmp-van-beethoven-ludwig` exist in bso-graph.json and nowhere else; a",
+      "link to either would be accepted by Contentful and render a Concert with",
+      "a hole in it. See the top note.",
+      "",
+      "THE FOUR WORKS ARE THE POINT OF REUSING RATHER THAN CREATING. Every one",
+      "carries slugs, forms and a composer link the archive already settled, and",
+      "two of them -- Leonore and Mozartiana -- are the works the two mapped",
+      "recordings will eventually hang from."
+    ],
+    "works": {
+      "leonore": {
+        "id": "wrk-leonore-overture-no-3-8e5797",
+        "title": "Leonore Overture No. 3",
+        "why": "Beethoven's, live slug `leonore-overture-no-3`, forms [Overture]. Also `pi-20200223-1` at the Brooklyn Museum six days earlier, which is the one work whose position is the same on both programs."
+      },
+      "mozartiana": {
+        "id": "wrk-suite-no-4-in-g-major-mozartia-054ffb",
+        "title": "Suite No. 4 in G Major (\"Mozartiana\")",
+        "why": "Tchaikovsky's, nickname `Mozartiana`, forms [Suite]. The entry id keeps the importer's truncated hash form; the live slug is the clean `suite-no-4-in-g-major-mozartiana`. Curation video #14 maps here."
+      },
+      "huapango": {
+        "id": "wrk-huapango-7422ba",
+        "title": "Huapango",
+        "why": "Moncayo's, and the trap ADR-0012 names. The archive's only prior Huapango PROGRAM ITEM is `pi-20001216-2`, on a pre-tenure 2000 concert two decades from the recording -- a title matcher lands there confidently. The WORK is what is reused; that item is not touched. Two items below link this one Work."
+      },
+      "lesPreludes": {
+        "id": "wrk-les-preludes-d-apres-lamartine-2a1468",
+        "title": "Les Preludes (d'apres Lamartine)",
+        "why": "Liszt's. The archive spells it without diacritics and this follows the space rather than the sources, which print `Les Preludes` and `Les Préludes` respectively. Curation video #8 maps here."
+      }
+    },
+    "composers": {
+      "beethoven": {
+        "id": "2tfdUTvmRn1etYq5czTknE",
+        "sortName": "Beethoven, Ludwig van",
+        "why": "A Contentful auto-id, NOT `cmp-van-beethoven-ludwig`, which exists only in the parser graph. Confirmed by reading the composer link off the live Leonore work rather than by guessing at a readable id."
+      },
+      "tchaikovsky": {
+        "id": "cmp-tchaikovsky-pyotr-ilyich",
+        "sortName": "Tchaikovsky, Pyotr Ilyich"
+      },
+      "moncayo": {
+        "id": "cmp-moncayo-garcia-jose-pablo",
+        "sortName": "Moncayo Garcia, Jose Pablo",
+        "why": "Filed under the doubled surname, unaccented, and with no period set. AWK-37's diacritics pass did not reach him; leaving that as it is, because a composer's spelling is that ticket's business and changing it here would put a decided thing in two places."
+      },
+      "liszt": {
+        "id": "cmp-liszt-franz",
+        "sortName": "Liszt, Franz"
+      }
+    },
+    "conductors": {
+      "tristan": {
+        "id": "cnd-felipe-tristan",
+        "name": "Felipe Tristan",
+        "why": "Already in the archive with 11 concerts, 2018 to 2026. Both source pages credit him and all three video descriptions call him Associate Conductor. NOT Nicholas Armstrong, who conducted the Brooklyn Museum date six days earlier -- the differing conductor is a second reason these are separate Concerts rather than one program repeated. `conductor` has no `name` field; the value here is the firstName/lastName join verify_reuse compares against."
+      }
+    },
+    "orchestras": {
+      "bso": {
+        "id": "7GW6fT7mUQE6pZLJXHj1TC",
+        "name": "Brooklyn Symphony Orchestra",
+        "why": "A Contentful auto-id, NOT `orc-bso`. Read off the live `cnc-20200223`, which links this same entry. Its abbreviation is `BSO`, which is what the concerts table renders and what an invariant message names instead of an id."
+      }
+    },
+    "seasons": {
+      "s47": {
+        "id": "sea-47",
+        "label": "BSO Season 47, 2019-2020",
+        "why": "The season the Brooklyn Museum date already belongs to, and its live notes read `SUSPENDED; 2020-2021 SEASON CANCELED, DUE TO COVID-19 PANDEMIC` -- these two concerts are within a fortnight of that. ADR-0006 lets a FESTIVAL concert carry no season and AWK-82 made the field optional; a tour date is not that. This is the orchestra's own numbered season, played abroad."
+      }
+    }
+  },
+
+  "halls": {
+    "note": [
+      "THE ARCHIVE'S FIRST HALLS OUTSIDE THE UNITED STATES. docs/agents/facts.md",
+      "records 'all 13 halls are Brooklyn/NYC, so the archive holds no tour venue",
+      "at all' as the general form of this ticket's problem; the space now holds",
+      "18 and the statement was still true of every one of them until these two.",
+      "",
+      "`location` follows the space's format -- `Town, NY` for the Brooklyn and",
+      "New York halls, `Institution, Town, NY` where the hall sits inside a",
+      "larger campus -- with the country added, which no existing location",
+      "carries because none needed it. The Auditorio takes the long form because",
+      "it is a room inside the Conservatorio; the Castillo does not.",
+      "",
+      "SLUGS ARE HAND-WRITTEN and folded the way ADR-0008 folds a filing name.",
+      "Diacritics fold out of a slug and stay in the name: `Musica` in the slug",
+      "would be wrong twice over, since the slug does not contain the",
+      "institution at all. hall.slug is read by no route today and is still",
+      "swept by AWK-61's whitespace invariant.",
+      "",
+      "THE ACCENTS IN `location` ARE DELIBERATE, and they are the one place this",
+      "declaration does not follow the space's existing spelling. The archive",
+      "writes `Les Preludes` and `Moncayo Garcia` unaccented because the",
+      "spreadsheet did and AWK-37's pass has not reached them; these two halls",
+      "are new records with no such history, and writing `Musica` to match the",
+      "neighbours would be inventing a wrong spelling rather than preserving one."
+    ],
+    "hal-auditorio-silvestre-revueltas": {
+      "name": "Auditorio Silvestre Revueltas",
+      "location": "Conservatorio Nacional de Música, Mexico City, Mexico",
+      "slug": "auditorio-silvestre-revueltas",
+      "why": "The 2020-02-29 venue, printed by the source as `Auditorio Silvestre Revueltas, Conservatorio Nacional de Musica`. Split into name and location per the space's format. The Conservatorio is one of the three institutions the video descriptions name, which is the only overlap between the two source kinds."
+    },
+    "hal-castillo-de-chapultepec": {
+      "name": "Castillo de Chapultepec",
+      "location": "Mexico City, Mexico",
+      "slug": "castillo-de-chapultepec",
+      "why": "The 2020-03-01 venue. A castle and museum rather than a concert hall, which is unremarkable for a touring afternoon program and worth one line so nobody later reads it as a transcription slip."
+    }
+  },
+
+  "concerts": {
+    "note": [
+      "Ids and titles follow AWK-59, AWK-64 and AWK-82: cnc-YYYYMMDD and a title",
+      "of 'YYYY-MM-DD — <institution>' with an em dash.",
+      "",
+      "ITEM IDS DERIVE FROM THE FIRST NIGHT AND BOTH CONCERTS CARRY THE SAME",
+      "FIVE. This is the archive's run shape and the first time a committed",
+      "declaration has used it -- AWK-64 and AWK-82 both create items fresh per",
+      "Concert, because their Concerts are unrelated. Nine runs already live in",
+      "the space work exactly this way: cnc-20070523 links pi-20070520-*, and",
+      "archive-corrections.test.ts asserts the same of the 2008-12-13/14 pair.",
+      "",
+      "THE APPLIER HAD TO LEARN THIS. transcribe_programs.py builds each",
+      "Concert's program from the items declared inline on it, so five items",
+      "across two Concerts produced ten plan rows and a guard count that would",
+      "have had to say ten where five entities exist. AWK-57 added a dedupe by",
+      "entry id, in the same spirit as AWK-82 making `season` optional: the",
+      "first declaration to need a shape is the one that pays for it.",
+      "",
+      "SHARED WITH EACH OTHER, NEVER WITH THE BROOKLYN MUSEUM. Sharing",
+      "`pi-20200223-*` is what AWK-57's body and ADR-0012 both called for and it",
+      "is wrong -- see the top note. Worth knowing: the 7-day span to 2020-02-23",
+      "is inside app/lib/invariants.ts's 14-day ceiling, so the build would have",
+      "accepted it. No rule reads whether two Concerts played the same program,",
+      "which is exactly why that argument had to be made in prose.",
+      "",
+      "attended is true on both and satOut is empty on both: Alex played both",
+      "dates in full, stated 2026-09-06.",
+      "",
+      "`sourceNote` IS NOT WRITTEN TO CONTENTFUL, following AWK-82. The content",
+      "model has nowhere to put a start time or a tour's name, and concert.",
+      "dateNote qualifies a DATE rather than describing an occasion -- filling it",
+      "with 'Mexico tour' would be a third use of a field whose twelve live",
+      "values are all either a fuzzy date or the second-night sentence below.",
+      "What says Mexico on the rendered page is the hall's location."
+    ],
+    "cnc-20200229": {
+      "title": "2020-02-29 — BSO",
+      "date": "2020-02-29",
+      "season": "sea-47",
+      "hall": "hal-auditorio-silvestre-revueltas",
+      "orchestra": ["7GW6fT7mUQE6pZLJXHj1TC"],
+      "conductor": "cnd-felipe-tristan",
+      "attended": true,
+      "satOut": [],
+      "sourceNote": "Saturday 7:00 PM, Auditorio Silvestre Revueltas at the Conservatorio Nacional de Música, Mexico City. The first of the two dated tour concerts, and a leap day.",
+      "program": [
+        {
+          "id": "pi-20200229-1",
+          "order": 1,
+          "label": "Leonore Overture No. 3",
+          "work": "wrk-leonore-overture-no-3-8e5797",
+          "composer": "2tfdUTvmRn1etYq5czTknE",
+          "why": "Printed as `Leonore Overture No. 3, Op. 72b`. The label follows the archive's existing title for this Work rather than the printed opus number, because the Work record is reused and a per-performance label that adds an opus the Work does not carry would read as a different Work."
+        },
+        {
+          "id": "pi-20200229-2",
+          "order": 2,
+          "label": "Suite No. 4 in G Major (\"Mozartiana\")",
+          "work": "wrk-suite-no-4-in-g-major-mozartia-054ffb",
+          "composer": "cmp-tchaikovsky-pyotr-ilyich",
+          "why": "SECOND on tour, THIRD at the Brooklyn Museum. This one item is the clearest reason the two programs cannot share Program items: `order` lives here, and `pi-20200223-3` carries a 3."
+        },
+        {
+          "id": "pi-20200229-3",
+          "order": 3,
+          "label": "Huapango",
+          "work": "wrk-huapango-7422ba",
+          "composer": "cmp-moncayo-garcia-jose-pablo",
+          "why": "Programmed, third of four, on both source pages. Brooklyn did not play it. ADR-0012 assumed the encore was a work the printed program lacked; this item is the half of that assumption the sources overturn."
+        },
+        {
+          "id": "pi-20200229-4",
+          "order": 4,
+          "label": "Les Preludes (d'apres Lamartine)",
+          "work": "wrk-les-preludes-d-apres-lamartine-2a1468",
+          "composer": "cmp-liszt-franz",
+          "why": "Printed as `Les Preludes`. Label follows the archive's fuller existing title, which names the Lamartine after which Liszt titled it."
+        },
+        {
+          "id": "pi-20200229-5",
+          "order": 5,
+          "label": "Huapango",
+          "work": "wrk-huapango-7422ba",
+          "composer": "cmp-moncayo-garcia-jose-pablo",
+          "note": "Encore",
+          "why": "THE SAME WORK AGAIN. Alex stated on 2026-09-06 that Huapango was repeated as the encore, which reconciles the source pages printing it in the program against the video titled `MONCAYO Haupango Encore` and described as `Program: *Encore* MONCAYO Huapango`. The video's spelling of the title is a typo; its description spells it correctly, as does the archive. ADR-0012 asks for `a high order and note: \"Encore\"`; with five items, 5 is the high order and also its true position, so nothing has to be invented."
+        }
+      ]
+    },
+    "cnc-20200301": {
+      "title": "2020-03-01 — BSO",
+      "date": "2020-03-01",
+      "dateNote": "Additional performance of the 2020-02-29 program",
+      "season": "sea-47",
+      "hall": "hal-castillo-de-chapultepec",
+      "orchestra": ["7GW6fT7mUQE6pZLJXHj1TC"],
+      "conductor": "cnd-felipe-tristan",
+      "attended": true,
+      "satOut": [],
+      "sourceNote": "Sunday 1:00 PM, Castillo de Chapultepec, Mexico City. The second of the two dated tour concerts, the next day.",
+      "program": [
+        {
+          "id": "pi-20200229-1",
+          "order": 1,
+          "label": "Leonore Overture No. 3",
+          "work": "wrk-leonore-overture-no-3-8e5797",
+          "composer": "2tfdUTvmRn1etYq5czTknE",
+          "why": "The same five items as 2020-02-29, repeated verbatim. They are declared twice because transcribe_programs.py reads each Concert's program from the items on it; the applier dedupes by entry id, and mexico-tour-programs.test.ts asserts the two lists are deep-equal so an edit to one copy cannot drift from the other."
+        },
+        {
+          "id": "pi-20200229-2",
+          "order": 2,
+          "label": "Suite No. 4 in G Major (\"Mozartiana\")",
+          "work": "wrk-suite-no-4-in-g-major-mozartia-054ffb",
+          "composer": "cmp-tchaikovsky-pyotr-ilyich"
+        },
+        {
+          "id": "pi-20200229-3",
+          "order": 3,
+          "label": "Huapango",
+          "work": "wrk-huapango-7422ba",
+          "composer": "cmp-moncayo-garcia-jose-pablo"
+        },
+        {
+          "id": "pi-20200229-4",
+          "order": 4,
+          "label": "Les Preludes (d'apres Lamartine)",
+          "work": "wrk-les-preludes-d-apres-lamartine-2a1468",
+          "composer": "cmp-liszt-franz"
+        },
+        {
+          "id": "pi-20200229-5",
+          "order": 5,
+          "label": "Huapango",
+          "work": "wrk-huapango-7422ba",
+          "composer": "cmp-moncayo-garcia-jose-pablo",
+          "note": "Encore"
+        }
+      ]
+    }
+  },
+
+  "pendingRecordings": {
+    "note": [
+      "THE THREE VIDEOS THIS DECLARATION DOES NOT ATTACH, and the reason AWK-57",
+      "is not finished by applying it. Not written to Contentful; the `recording`",
+      "entries would be a separate pass and transcribe_programs.py has no",
+      "section for them.",
+      "",
+      "WHAT IS STILL MISSING IS WHICH DATE. The descriptions say only",
+      "'February-March 2020' and name three participating institutions across at",
+      "least two cities, so there were tour dates beyond these two. Both",
+      "Concerts below share one program, so app/lib/invariants.ts's",
+      "`recording-item-on-concert-program` is satisfied by EITHER Concert and",
+      "cannot catch a wrong choice -- the check that would normally backstop a",
+      "guess is blind here, which is the whole argument for not guessing.",
+      "",
+      "THE ITEM IS KNOWN EVEN THOUGH THE CONCERT IS NOT, and that asymmetry is",
+      "why these are worth recording now. Each video names its work; the work",
+      "resolves to exactly one item on the shared program. Only `recording.",
+      "concert` is undetermined.",
+      "",
+      "THE IDS ARE HERE SO NOBODY RE-DERIVES THEM. The channel feed returns the",
+      "15 most recent uploads and no more -- these three are from 2021-04 and",
+      "already sit at positions 8, 10 and 14. They will fall off.",
+      "",
+      "docs/archive/recording-curation.md is the worksheet for the other twelve",
+      "and ADR-0012 forbids scripting any of it."
+    ],
+    "mozartiana": {
+      "videoId": "ol0umRhQJ_o",
+      "item": "pi-20200229-2",
+      "title": "BSO Mexico 2020 - TCHAIKOVSKY Orchestral Suite No. 4, Op. 61 (\"Mozartiana\")",
+      "why": "Curation #14. Its description lists all four movements with timings, which is the only per-video detail in the batch that could not have come from the program alone."
+    },
+    "lesPreludes": {
+      "videoId": "PDmI9MMKISY",
+      "item": "pi-20200229-4",
+      "title": "BSO Mexico 2020 - LISZT - Les Préludes",
+      "why": "Curation #8."
+    },
+    "huapangoEncore": {
+      "videoId": "ffetcO1_Y-I",
+      "item": "pi-20200229-5",
+      "title": "BSO Mexico 2020 - MONCAYO Haupango Encore",
+      "why": "Curation #10, and the one video that identifies its own Program item unambiguously -- it is the encore, so it is item 5 rather than item 3, and the two are the same Work. `Haupango` in the title is the video's typo; the description spells it correctly."
+    }
+  },
+
+  "guards": {
+    "note": [
+      "Counts the test asserts, so a hand edit that drops or doubles something",
+      "fails rather than applying quietly. transcribe_programs.py checks the",
+      "same numbers against the plan it builds and exits before touching the",
+      "network if they disagree.",
+      "",
+      "`programItems` IS 5, NOT 10. Both Concerts declare the same five items,",
+      "so the raw plan holds ten rows; the applier dedupes by entry id before",
+      "comparing. This number is what would catch that dedupe being removed.",
+      "",
+      "THE SIX ZEROES ARE FINDINGS. Nothing is created but Halls -- every Work,",
+      "Composer, Conductor and Orchestra the tour needs was already in the",
+      "archive. AWK-82's guards are the mirror image, with seven works created",
+      "and none reused.",
+      "",
+      "`entriesCreated` is the sum of every creation: 2 halls, 5 program items",
+      "and 2 concerts. The three pendingRecordings are NOT entries and are not",
+      "counted."
+    ],
+    "concerts": 2,
+    "programItems": 5,
+    "worksCreated": 0,
+    "worksReused": 4,
+    "workMovementsMerged": 0,
+    "composersCreated": 0,
+    "composersReused": 4,
+    "conductorsCreated": 0,
+    "conductorsReused": 1,
+    "hallsCreated": 2,
+    "orchestrasCreated": 0,
+    "orchestrasReused": 1,
+    "seasonsReused": 1,
+    "soloistsCreated": 0,
+    "itemsWithOwnConductor": 0,
+    "itemsWithSoloists": 0,
+    "itemsWithNote": 1,
+    "concertsWithSeason": 2,
+    "concertsWithDateNote": 1,
+    "entriesCreated": 9
+  }
+}
