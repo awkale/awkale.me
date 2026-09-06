@@ -89,8 +89,16 @@ ENSEMBLE_RX = re.compile(
     r"chorus|choir|chorale|choralettes|ensemble|quintet|quartet|sextet|trio|octet|"
     r"orchestra|philharmonia|band|players|singers|company|community sing|society",
     re.I)
-# groups whose names carry none of the keywords above
-ENSEMBLE_NAMES = {"spiritus et anima", "the nancy beth falloon waltzers"}
+# groups whose names carry none of the keywords above. This allowlist, not the
+# regex, is where such a name goes: "opera" and "exchange" are left out of
+# ENSEMBLE_RX on purpose, because it is matched against every credit name and
+# either word would start turning singers into ensembles. AWK-76 added the
+# opera company after it fell through to the personal-name branch and was
+# imported as a Soloist filed under "E". Its kind is `Other`, by choice rather
+# than by accident: ensemble_kind() falls through to it, and an opera company is
+# neither a Chorus nor a Vocal Group, so the fallback is the right answer.
+ENSEMBLE_NAMES = {"spiritus et anima", "the nancy beth falloon waltzers",
+                  "new york opera exchange"}
 
 def ensemble_kind(name):
     n = name.lower()

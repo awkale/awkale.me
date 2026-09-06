@@ -103,6 +103,16 @@ A named featured performer on a Program item. Section players are not recorded
 anywhere in the archive.
 _Avoid_: Performer, musician, player
 
+**Ensemble**:
+A named group billed on a Program item in a Soloist's place: a chorus, a choir,
+a chamber group, an opera company. Its own entity, `ensemble`, with a `kind`
+from a short controlled list; it is linked through the same
+`programItem.soloists` field a Soloist is, which is polymorphic on purpose. The
+parser routes a Credit here on a keyword in the name or on a short allowlist of
+group names that carry none.
+_Avoid_: Group, company, as the name of the concept; filing one as a Soloist
+because its name reads like a person's
+
 **Credit**:
 The verbatim line a Soloist — or a group linked in its place — was billed under
 on a Program item: "Nicholle Bittlingmeyer, Carmen", "Jason Asbury, Director",
