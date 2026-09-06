@@ -70,3 +70,36 @@ describe('a group the keyword regex misses is still an Ensemble — AWK-76', () 
     expect(item.credits).toEqual(['New York Opera Exchange'])
   })
 })
+
+describe('a Character reaches programItem.character only from a one-Credit item — AWK-75', () => {
+  /**
+   * The rule in CONTEXT.md and ADR-0006's 2026-09-06 amendment: `character` is
+   * the one named dramatic role of an item with exactly one Credit, and a cast
+   * keeps its per-singer Characters in the verbatim `credits` strings. The
+   * parser enforces that in a single condition in `get_performer`'s caller,
+   * which nothing else asserts. A Credited role (an instrument, a voice type,
+   * a function) never belongs here — that is `soloist.instrument`'s job.
+   */
+  const items = Object.values(
+    graph.types.programItem as Record<string, { character: string | null; credits: string[] }>
+  )
+  const withCharacter = items.filter((item) => item.character)
+
+  // Non-vacuity: the rule is about the items that DO carry one.
+  it('has at least one item carrying a Character', () => {
+    expect(withCharacter.length).toBeGreaterThan(0)
+  })
+
+  it('never sets character on an item with more than one Credit', () => {
+    for (const item of withCharacter) expect(item.credits, item.character ?? '').toHaveLength(1)
+  })
+
+  it('never files a Credited role as a Character', () => {
+    // Read from the parser rather than retyped here, so the two cannot drift.
+    const source = readFileSync(join(import.meta.dirname, 'parse_archive.py'), 'utf8')
+    const enumBlock = /^ENUM = \[([\s\S]*?)\]/m.exec(source)?.[1] ?? ''
+    const creditedRoles = [...enumBlock.matchAll(/"([^"]+)"/g)].map((match) => match[1])
+    expect(creditedRoles.length).toBeGreaterThan(40)
+    for (const item of withCharacter) expect(creditedRoles).not.toContain(item.character)
+  })
+})
