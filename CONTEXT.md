@@ -103,6 +103,40 @@ A named featured performer on a Program item. Section players are not recorded
 anywhere in the archive.
 _Avoid_: Performer, musician, player
 
+**Credit**:
+The verbatim line a Soloist — or a group linked in its place — was billed under
+on a Program item: "Nicholle Bittlingmeyer, Carmen", "Jason Asbury, Director",
+"Janine Carstein, Accompanist". One string in `programItem.credits`, kept beside
+the link. The link names the person; the Credit is the only record of what they
+were billed as on that item, so an opera cast lives here — nine Credits on the
+Act II _Carmen_ item, one Character each. Lossless and unqueryable on purpose: a
+pair entity that would make it queryable was considered under AWK-75 and
+rejected, because nothing filters by it and a cast list renders straight from
+the Credits.
+_Avoid_: treating it as a duplicate of the Soloist link; deriving a Credited
+role from it after import
+
+**Credited role**:
+What a Soloist was billed as: an instrument (Violin), a voice type
+(Mezzo-Soprano) or a function (Director, Narrator). Held in
+`soloist.instrument`, whose label _Instrument / Voice / Role_ is the honest
+name — the field is a controlled list of roles, not of instruments, and the
+parser mirrors that list by hand. A cast member billed by Character alone has
+no Credited role, and that empty is the rule, not a gap: the source never
+recorded a voice type, and none is being recovered.
+_Avoid_: Instrument, as the name of the concept — a Narrator has none and is
+filed here anyway; Voice type; reading an empty value as missing data
+
+**Character**:
+The named dramatic role a Soloist played on a Program item — Isolde, Carmen,
+Royal Pianist. It belongs to the (Program item, Soloist) pair, so its record is
+the Credit; `programItem.character` restates it only when the item has exactly
+one Credit, and is otherwise empty. A Character says who was played, never what
+the performer was: Royal Pianist is a Character even though it names an
+instrument.
+_Avoid_: Role, alone — ambiguous with Credited role; filing an instrument or
+voice type here; expecting the field to hold a cast
+
 **Conductor**:
 The person who conducted a Concert.
 

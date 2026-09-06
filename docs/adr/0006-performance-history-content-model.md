@@ -144,6 +144,12 @@ Concerts, Works and Composers are routed, as ADR-0001 set out. Of the remaining
 dimensions, **Conductor and Hall are browse filters; Soloist and Ensemble are
 credits that display but do not filter.**
 
+> **Amended 2026-09-06.** "Credits that display" now has a defined shape: the
+> per-item credit line is the verbatim `credits` array, and an opera cast is that
+> line with several names. See
+> [the amendment](#amendment--a-cast-is-its-credits-2026-09-06) at the foot of
+> this record.
+
 Restricting the page set to what Alex played is what makes the filters worth
 having. **16 conductors and 5 halls** read as one player's career; the
 archive-wide 37 and 13 read as an institution's history. Soloist is the
@@ -443,6 +449,12 @@ through a link. A conductor record that nothing links is invisible too.
 This does not settle whether `credits` should be rendered. That is a separate
 question and is left open; accompanists remain unrendered.
 
+> **Amended 2026-09-06.** Settled: `credits` is the record of a cast and is what
+> a cast list renders from. Whether AWK-68 draws it as a column or a line beneath
+> the work is still that ticket's call. See
+> [the amendment](#amendment--a-cast-is-its-credits-2026-09-06) at the foot of
+> this record.
+
 ### Rendering — per concert, not per row
 
 A concert shows a Conductor column only if **at least one** of its items names its
@@ -473,3 +485,69 @@ different conductors. Nothing is wrong, and an invariant guarding a case that do
 not exist is a check that can only ever fire on a false positive. It is recorded
 as a comment at the point of resolution instead. Promote it to a ninth invariant
 in `app/lib/invariants.ts` when a real case appears — not before.
+
+## Amendment — a cast is its Credits (2026-09-06)
+
+AWK-75. This record made Soloist a credit that displays but does not filter, and
+the conductor amendment above left "whether `credits` should be rendered" open.
+The question that forced an answer was narrower: `programItem.character` cannot
+hold an opera cast, and the parser knows it — it keeps the field only when the
+credit naming a Character is the item's only credit, so the Act II _Carmen_ item,
+nine singers and nine characters, carries none. Only 3 of 853 live items hold
+`character` at all.
+
+### What was measured
+
+From the parser's graph, read on 2026-09-06 against the 43-value instrument
+list: 67 (item, credit) pairs carry a role that is not on the list, across 17
+items. 12 of those items are casts of two to nine. 3 are one-credit items, and
+theirs is the role that reaches `character` — Isolde, Dancer, Filmmaker. The
+other 2 carry one such role among several credits, so it reaches nothing. 53 of
+the graph's 310 Soloists have no instrument, and 43 of them are cast members
+whose credit names a Character instead — the source never recorded their voice
+type. The live space is larger by the transcribed Soloists and, after AWK-74's
+three fixes, reads 50 of 321. Recount both before trusting either.
+
+### The rule
+
+Three terms, **Credit**, **Credited role** and **Character**, are defined in
+`CONTEXT.md`; the definitions live there and are not repeated here. What this
+record adds is the decision behind them:
+
+* `soloist.instrument` is the Credited role, of whatever kind. The field's
+  label, _Instrument / Voice / Role_, was already the honest name — it holds
+  Director (18), Narrator (9) and Soloist (8), and AWK-69 filed Bass-Baritone
+  there on the strength of the 82 voice types it counted. `Dancer` and
+  `Filmmaker` belong there too; moving them is AWK-86, not this record.
+* `Royal Pianist` stays a Character. It says who was played, and the fact that
+  the name contains an instrument does not change what kind of fact it is.
+* A cast list on the site is the item's Credits — "Nicholle Bittlingmeyer,
+  Carmen" — rendered as written. That is a display of the Soloist credit this
+  record already grants, not a new surface, and it needs no new type.
+
+### Considered and rejected
+
+**A pair entity** — a `credit` type between Program item and Soloist holding the
+Character and voice type per singer — is the correct relational model and was
+rejected. It is a new content type in a space that holds 14, 67 entries to seed,
+a parser and importer change and one more `fetchAll` in the sweep on top of the
+two AWK-68 already needs, and it buys a query nothing runs: Soloist is not a facet (see Surfaces), Character is not one,
+and a cast list renders from the strings as they stand.
+`scripts/contentful/README.md`'s known-gaps entry says a join type "would fix
+it"; this record says the gap is accepted.
+
+**Instrument as "what the performer is"** — with Character as "who they played"
+— reads well and fails on contact: Director, Narrator and Soloist are neither,
+so 35 records would need a third home the model does not have.
+
+**Recovering the 43 voice types by hand** is not worth it. The xlsx never held
+them, a printed program names the Character sung rather than the voice type, and
+no surface reads the value. An empty `instrument` on a cast member is the rule.
+
+### What this does not change
+
+Nothing renders yet — `credits` and `character` are still unread by
+`app/lib/archive.ts`, and drawing them is AWK-68's work. `soloist.instrument`'s
+controlled list and its hand-mirrored `ENUM` in the parser move together as
+before. The parser's one-credit condition on `character` is now the documented
+rule rather than a workaround, and it stays.
