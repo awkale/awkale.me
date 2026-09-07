@@ -84,10 +84,15 @@ NOT IN SCOPE, deliberately:
     separately-owned steps: AWK-30 added `forms`, this pass migrated the data,
     and migrate_schema.py --delete-work-genre deleted the field on 2026-09-01
     (AWK-66) once its count of unreached Works read zero.
-  * The 113 works carrying no genre. ADR-0007 is explicit that assigning them is
-    taste rather than data entry, and that nothing in the spec is blocked on it.
-    They are listed in docs/archive/form-curation.md. The 5 of them IMSLP can
-    answer for are seeded here; the rest wait for a human.
+  * The works carrying no genre WERE out of scope here and no longer are, which
+    is AWK-65 reversing this paragraph rather than amending it. ADR-0007 is
+    explicit that assigning them is taste rather than data entry, so they lived
+    in docs/archive/form-curation.md -- a worksheet nothing reads -- and waited
+    for a human. Since 2026-09-06 all 114 are seeded as blank rows in
+    `workForms`, so curating one is filling an array rather than authoring an
+    object, and the pass plans them like any other row. A blank still writes
+    nothing: the union of the harvest, its row and the derived Excerpt rule is
+    empty for it. What IS still out of scope is deciding them.
   * The 19 arranger-only composer records AWK-23 created. They hold zero works,
     so they are never in scope, and a null period on them is correct.
   * `work.slug`, `composer.slug`, and every filing name.

@@ -673,8 +673,13 @@ category. (Those counts moved with AWK-66's re-baseline, from 114 and 24 — the
 are live-derived and will move again. Read them off the pass, not off this line.) The cause is structural: the archive names excerpts (`Act II, Carmen`)
 where IMSLP names works, and Barber, Bernstein, Britten, Khachaturian, Glass,
 Tippett, Rota, Piazzolla and John Williams have **no IMSLP work pages at all**,
-being in copyright. The remaining 113 are `docs/archive/form-curation.md` — a
-worksheet, not an input. ADR-0007 permits `forms` to stay incomplete.
+being in copyright. The remaining 114 are seeded as **blank rows in `workForms`**
+since AWK-65 — `{ "title": …, "forms": [] }`, so curating one is filling an array
+rather than authoring an object. `docs/archive/form-curation.md` still lists them
+as a readable index but is not where the work happens, and nothing reads it.
+ADR-0007 permits `forms` to stay incomplete; a work looked at and deliberately
+left empty takes `"settled": true`, which is what tells it apart from a blank
+nobody has reached.
 
 **`work.genre` no longer exists, and the pass computes forms from three sources,
 not four.** ADR-0007 sequenced this as three separately-owned steps: AWK-30 added

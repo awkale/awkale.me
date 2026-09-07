@@ -1,4 +1,4 @@
-# Form curation — the 115 works nothing can answer for
+# Form curation — the 114 works nothing can answer for
 
 Generated under AWK-37 from the live space, and regenerated under AWK-64, which
 added five: the new Works of the three Tilles Center LIYO programs that no
@@ -20,22 +20,57 @@ That makes it the one case where `worksLeftToCurate` in
 list — the guard's decomposition has no term for a hand-set form, and 7 is the
 number that keeps its arithmetic true.
 
-**A worksheet, not an input** —
-nothing reads this file, and the seed does not consult it. Fill a row in by
-adding the work to a bucket in `workForms` in
-`scripts/contentful/period-and-forms.json`, then re-run the seed.
+Corrected under AWK-65 (2026-09-06), which **removed one row**: Schoenberg's
+*Kammersymphonie No. 1 in E Major*
+(`wrk-kammersymphonie-no-1-in-e-majo-189b0a`). AWK-82's re-harvest picked up
+`Symphony` for it from IMSLP, so it is no longer a work nothing can answer for
+and the applier writes it on the next `--apply` with no judgement from anyone.
+That is the first time a row here has gone stale by being *answered* rather than
+by being curated — AWK-64's regeneration checked for exactly this and found
+none — and it is worth expecting again, because the wiki churns in both
+directions: the same re-harvest withdrew Tzigane's `Rhapsody`.
+
+**A reference, no longer the place you work** — nothing reads this file and the
+seed does not consult it, which was true before and still is. What changed under
+AWK-65 is that filling a row in no longer happens here or from here: all 114 were
+seeded as blank rows in `workForms` in
+`scripts/contentful/period-and-forms.json`, so curating one is typing a form
+name into an array that already carries the right id and title. This table stays
+as the readable index — composer, work, id in one place — but the row it
+describes lives in the JSON.
+
+**The backlog this table lists is closed.** Every one of the 114 was ruled on in
+two review rounds on 2026-09-07. Of the 152 rows in `workForms`, **111 carry a
+form and 29 are** `settled` — looked at, and deliberately carrying none. The 12
+still blank are decided too: they use one of the nine forms AWK-65 added to
+`archive-schema.json` that the live Contentful `in` validation does not carry
+yet, so writing them would buy a rejected publish. They go in the moment that
+web-app edit is made.
+
+So a row appearing here no longer means "nobody has reached it". It means the
+work reached this list once, by the route described below. What the work carries
+now is in the JSON, and `guards.workFormsFilled`, `workFormsSettled` and
+`workFormsRows` are the live count — the three sum, and the test says so.
 
 These are the works that end up with **zero** forms after every automatic route
 has run: the retired `genre` mapping, the IMSLP harvest, and the derived
 `Excerpt` rule. ADR-0007 is explicit that assigning them is taste rather than
-data entry — doing it is "inventing a category for *Boléro*", 115 times — and
+data entry — doing it is "inventing a category for *Boléro*", 114 times — and
 equally explicit that **nothing in the spec is blocked on them**. Period carries
-the browse load and Form is permitted to stay incomplete, so an empty row here
-is a decided state, not a defect.
+the browse load and Form is permitted to stay incomplete, so a blank row is a
+decided state, not a defect. A work you look at and decide keeps no form takes
+`"settled": true` on its JSON row; a bare blank normally says only that nobody
+has reached it yet — with the one exception noted above, that the 12 blanks left
+today are decided and merely unwritable.
 
-The vocabulary is the 25 values in `archive-schema.json`. Extending it means
-editing that `in` list and re-running the applier; there is no `genre` entry to
-create any more.
+The vocabulary is the **34** values in `archive-schema.json` — 25 until AWK-65
+added Essay, Fugue, Hymn, Intermezzo, Pavane, Poem, Polka, Romance and Tango,
+each for a specific work the old list had no word for. Extending it means
+editing that `in` list; there is no `genre` entry to create any more. **That
+edit does not reach Contentful on its own** — `migrate_schema.py` is additive and
+will not reshape a field that already exists, so a new value has to be added to
+the `in` validation in the web app by hand or the publish is rejected, entry by
+entry. The nine above are declared and **not yet in the space**.
 
 No work reaches this list still carrying a retired `genre`, which is worth
 stating because it is the check that the migration lost nothing: everything the
@@ -139,7 +174,6 @@ rather than dropped.
 | Rossini, Gioachino | Act I Finale, L'Italiana in Algeri | `wrk-act-i-finale-l-italiana-in-alg-ad9781` |
 | Saint-Saens, Camille | Introduction and Rondo Capriccioso | `wrk-introduction-and-rondo-capriccioso` |
 | Saint-Saens, Camille | La Muse et Le Poete | `wrk-la-muse-et-le-poete-2d515a` |
-| Schoenberg, Arnold | Kammersymphonie No. 1 in E Major | `wrk-kammersymphonie-no-1-in-e-majo-189b0a` |
 | Sedivec, Kristen | Garden Gnomes of Doom | `wrk-garden-gnomes-of-doom-a3be3a` |
 | Silverman, Eric | Windup | `wrk-windup-6fac65` |
 | Steffe, William | Battle Hymn of the Republic | `wrk-battle-hymn-of-the-republic` |

@@ -41,7 +41,7 @@ interface Decisions {
   workPeriods: Record<string, { title: string; period: string; why: string }>
   genreForms: Record<string, string[]>
   excerptRule: { pattern: string; form: string }
-  workForms: Record<string, { title: string; forms: string[]; outOfScope?: boolean }>
+  workForms: Record<string, { title: string; forms: string[]; outOfScope?: boolean; settled?: boolean }>
   formCategories: Record<string, string>
   guards: Record<string, number>
 }
@@ -80,11 +80,36 @@ const PERIODS = vocabulary('work', 'period')
 const FORMS = vocabulary('work', 'forms')
 
 describe('the vocabularies are the schema’s, not a second copy', () => {
-  it('reads nine periods and twenty-five forms out of archive-schema.json', () => {
+  it('reads nine periods and thirty-four forms out of archive-schema.json', () => {
     // If this fails the schema moved, and every `in` assertion below is
     // asserting against the wrong list rather than failing individually.
     expect(PERIODS).toHaveLength(9)
-    expect(FORMS).toHaveLength(25)
+    // 25 until AWK-65 added nine — Essay, Fugue, Hymn, Intermezzo, Pavane,
+    // Poem, Polka, Romance, Tango — for works the curation pass had no word
+    // for. ADR-0007 anticipated this: it "fixes the mechanism, not the
+    // enumeration", and its own eight additions were made the same way.
+    expect(FORMS).toHaveLength(34)
+  })
+
+  it('declares a vocabulary the live Contentful validation may not have yet', () => {
+    // THIS TEST CANNOT CHECK THE THING THAT MATTERS, and says so rather than
+    // implying coverage. The 34 values here are a declaration; the `in`
+    // validation on work.forms in the space is the authority, migrate_schema.py
+    // is additive and will NOT reshape an existing field, and nothing in this
+    // repo reads the live list. So a value added here reaches Contentful only
+    // when someone edits it in the web app by hand, and until they do, a row
+    // using one is rejected at publish rather than caught here.
+    const added = ['Essay', 'Fugue', 'Hymn', 'Intermezzo', 'Pavane', 'Poem', 'Polka', 'Romance', 'Tango']
+    for (const form of added) expect(FORMS).toContain(form)
+    // What IS checkable: no curated row may use one of the nine until the
+    // web-app edit lands. Delete this block once the live validation agrees —
+    // and not before, because it is the only thing standing between a curation
+    // batch and a failed publish.
+    const rows = entries(decisions.workForms).filter(([, row]) => row.forms.some((f) => added.includes(f)))
+    expect(
+      rows.map(([id]) => id),
+      'a row uses a form the live space may reject; confirm the web-app edit first'
+    ).toEqual([])
   })
 
   it('constrains composer.period to the same nine values as work.period', () => {
@@ -142,9 +167,22 @@ describe('the retired genre vocabulary survives the migration', () => {
     // name over would migrate the error rather than the data, so the genuine
     // ones are named individually in workForms instead.
     expect(decisions.genreForms.Aria).toEqual([])
-    // Six in scope, plus Papageno's from AWK-66's out-of-scope four.
+    // Six in scope, plus Papageno's from AWK-66's out-of-scope four, plus the
+    // SIX AWK-65 ADDED — and those six are a deliberate widening of what the
+    // word covers here, recorded because it reads like the migration error this
+    // very test guards against. `Act II, Carmen`, `Selections, Carmen`, `Act I,
+    // Tosca`, `Act III, Rigoletto` and the Lucia and Italiana finales are whole
+    // acts and selections, not sung numbers: they CONTAIN arias rather than
+    // being one, which is the distinction ADR-0007 drew when it found the old
+    // bucket ~half wrong. Alex settled it on 2026-09-07 in favour of Aria on
+    // all six, alongside Excerpt. The row is the decision; this note is why it
+    // is not a regression.
     const arias = entries(decisions.workForms).filter(([, row]) => row.forms.includes('Aria'))
-    expect(arias).toHaveLength(7)
+    expect(arias).toHaveLength(13)
+    // Every one of the six is an excerpt too — that half is not in dispute.
+    const operaRows = arias.filter(([, row]) => /^(Act |Selections, )/.test(row.title))
+    expect(operaRows).toHaveLength(6)
+    for (const [id, row] of operaRows) expect(row.forms, `${id} lost the Excerpt half`).toContain('Excerpt')
   })
 })
 
@@ -246,31 +284,71 @@ describe('the work curations address real rows', () => {
     expect(outOfScope.find(([, row]) => row.title.includes('Vienna Woods'))?.[1].forms).toEqual(['Waltz'])
   })
 
-  it('assigns only forms in the vocabulary, and never an empty set', () => {
-    // An empty array is not "no opinion" — it is a row that will never write,
-    // which the worksheet already expresses by omission. Keeping the two apart
-    // stops a half-finished edit from looking like a decision.
+  it('assigns only forms in the vocabulary, and allows an empty set only as an uncurated blank', () => {
+    // An empty array USED to be illegal here: omission said "considered, left
+    // blank" and a row that would never write said nothing a reader could
+    // trust. AWK-65 seeded the backlog as blank rows so that curating one is
+    // filling an array rather than authoring an object, which spends that
+    // distinction — every work is present now, so absence says nothing.
+    // `settled` is what buys it back, and the two states it separates are the
+    // ones that actually matter: untouched backlog, versus a work looked at and
+    // left empty on purpose.
     for (const [id, row] of entries(decisions.workForms)) {
-      expect(row.forms.length, `${id} has an empty forms array; delete the row instead`).toBeGreaterThan(0)
       for (const form of row.forms) expect(FORMS).toContain(form)
+      // A settled row is a decision that the work carries no form, so a form
+      // beside the flag is a contradiction rather than a richer row.
+      if (row.settled) expect(row.forms, `${id} is settled AND carries forms; drop one`).toHaveLength(0)
+      // An out-of-scope row is a curation of an unplayed work — the only reason
+      // to name one at all is the form it gets, so a blank one is a stray.
+      if (row.outOfScope) expect(row.forms.length, `${id} is an out-of-scope blank; delete it`).toBeGreaterThan(0)
     }
   })
 
-  it('holds the 38 migration repairs, and no rows with duplicate forms', () => {
-    // 28 in-scope from AWK-37, AWK-66's 4 out-of-scope, and AWK-80's 6: five
-    // forms that used to arrive through the deleted `genre` field, plus Tzigane.
+  it('counts its rows and its filled rows against the guards, and repeats no form', () => {
+    // Two numbers because the file now holds two kinds of row. The total moves
+    // only when scope does; the filled count is what a curation batch bumps,
+    // and it starts at the 38 migration repairs this test used to pin directly
+    // — 28 in-scope from AWK-37, AWK-66's 4 out-of-scope, and AWK-80's 6.
     const rows = entries(decisions.workForms)
-    expect(rows).toHaveLength(38)
+    expect(rows).toHaveLength(decisions.guards.workFormsRows)
+    expect(rows.filter(([, row]) => row.forms.length > 0)).toHaveLength(decisions.guards.workFormsFilled)
+    expect(rows.filter(([, row]) => row.settled)).toHaveLength(decisions.guards.workFormsSettled)
     for (const [id, row] of rows) {
       expect(new Set(row.forms).size, `${id} repeats a form`).toBe(row.forms.length)
     }
   })
 
+  it('accounts for every row as filled, settled or not yet reached', () => {
+    // The three states are exhaustive and disjoint, so they sum. A row that is
+    // BOTH filled and settled is caught above as a contradiction; this catches
+    // the other direction — a guard nudged without the rows moving with it.
+    const rows = entries(decisions.workForms)
+    const untouched = rows.filter(([, row]) => !row.forms.length && !row.settled)
+    expect(decisions.guards.workFormsFilled + decisions.guards.workFormsSettled + untouched.length).toBe(
+      decisions.guards.workFormsRows
+    )
+    // THE RESIDUE IS NOW ENTIRELY ONE CAUSE, which is the state worth asserting.
+    // All 12 are DECIDED and unwritable: each uses one of the nine forms the
+    // live Contentful validation does not carry yet, so writing them would buy
+    // a rejected publish rather than a curated work. Nothing here is unreviewed
+    // — every work of the 114 has been ruled on. When the web-app edit lands,
+    // these 12 go in, this expectation becomes 0, and the stopgap test above
+    // gets deleted in the same commit.
+    expect(untouched).toHaveLength(12)
+  })
+
   it('still repairs the 16 ballets ADR-0007 counted, and names the Suite half since the genre delete', () => {
     // 14 ballet suites, the two Nutcracker Suite rows excepted (their form set
-    // is Ballet + Suite via the harvest), plus AWK-80's two excerpt-ballets.
+    // is Ballet + Suite via the harvest), plus AWK-80's two excerpt-ballets,
+    // plus AWK-65's six: Fancy Free, The Three-Cornered Hat, Petroushka,
+    // Nobilissima Visione and Rodeo in the first batch, Barber's Souvenirs in
+    // the second (published as `Souvenirs (Ballet Suite), Op. 28` — piano duets
+    // Kirstein commissioned Barber to orchestrate for Ballet Society). All six
+    // are curation rather than repair — works that carried NO form at all, not
+    // ones filed wrongly — so they move this count without bearing on the 16
+    // ADR-0007 counted.
     const ballets = entries(decisions.workForms).filter(([, row]) => row.forms.includes('Ballet'))
-    expect(ballets).toHaveLength(18)
+    expect(ballets).toHaveLength(24)
     // AWK-80: `genre` supplied Suite for these until AWK-66 deleted it, so the
     // row has to. A ballet-suite row naming Ballet alone is the 2026-09-06
     // conflict coming back.

@@ -190,6 +190,29 @@ seventeen `genre` entries' **names**.
 > `genre` *type* has no remaining reader once the migration below runs, where
 > under the Link shape it would have survived as the vocabulary's home.
 
+> **The vocabulary is 34 values, not 25, since
+> [AWK-65](https://linear.app/awkale/issue/AWK-65/curate-forms-for-the-114-works-that-carry-none)
+> (2026-09-07).** Annotated rather than corrected in place, because unlike the
+> Symbol/Link error above nothing here was ever *wrong*: 25 was the count when
+> this was written, and the paragraph two sections up says outright that this
+> record "fixes the mechanism, not the enumeration". Curating the works that
+> carry no form is what moves the enumeration, exactly as it did when this
+> record's own eight additions were made.
+>
+> The nine are `Essay`, `Fugue`, `Hymn`, `Intermezzo`, `Pavane`, `Poem`,
+> `Polka`, `Romance` and `Tango`, each added for a named work the 25 could not
+> describe — Fauré's *Pavane* and Delius's Paradise Garden intermezzo among
+> them, both of which a reviewer declined to file under `Dance` or `Excerpt`
+> rather than accept a word that did not fit.
+>
+> **One consequence this record did not foresee.** Because `forms` is a Symbol
+> `in` validation rather than a Link, and `migrate_schema.py` is additive by
+> design, editing that list in `archive-schema.json` no longer reaches
+> Contentful — the field already exists, so nothing reshapes it. Extending the
+> vocabulary is now two edits that nothing checks against each other: the `in`
+> list here, and the same list in the web app by hand. Under the Link shape the
+> vocabulary had one home and this could not have happened.
+
 ## Considered options
 
 **Drop genre entirely and add nothing.** The cheapest answer, and defensible on

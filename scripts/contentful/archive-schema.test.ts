@@ -157,7 +157,13 @@ describe('archive-schema.json', () => {
       expect(forms.items?.type).toBe('Symbol')
     })
 
-    it('carries the 17 existing genre names plus ADR-0007s 8 additions', () => {
+    it('carries the 17 genre names, ADR-0007s 8 additions and AWK-65s 9', () => {
+      // 25 until AWK-65 (2026-09-07). The nine below are each a word one
+      // specific uncurated work needed and the 25 could not supply; ADR-0007
+      // permits the growth in as many words — it fixes "the mechanism, not the
+      // enumeration". THIS LIST IS A DECLARATION, NOT THE LIVE VALIDATION:
+      // migrate_schema.py is additive and never reshapes an existing field, so
+      // the nine reach Contentful only via a hand edit in the web app.
       expect(inList(forms)).toEqual([
         'Aria',
         'Ballet',
@@ -167,20 +173,29 @@ describe('archive-schema.json', () => {
         'Concerto',
         'Concerto Grosso',
         'Dance',
+        'Essay',
         'Excerpt',
         'Fantasia',
         'Film music',
+        'Fugue',
+        'Hymn',
+        'Intermezzo',
         'March',
         'Mass',
         'Oratorio',
         'Overture',
+        'Pavane',
+        'Poem',
+        'Polka',
         'Prelude',
         'Rhapsody',
+        'Romance',
         'Serenade',
         'Sonata',
         'Song cycle',
         'Suite',
         'Symphony',
+        'Tango',
         'Tone Poem',
         'Variations',
         'Waltz',

@@ -351,6 +351,17 @@ AWK-37; wiring the CDA is AWK-39.
 > > **113** as of AWK-66, not 104 — the scope has moved four times since. Count
 > > it with the pass, do not read it here.
 >
+> > **114**, and they are no longer only a worksheet, as of AWK-65 (2026-09-06).
+> > All of them are seeded as blank rows in `workForms` in
+> > `scripts/contentful/period-and-forms.json`, so curating one is typing a form
+> > into a `"forms": []` that already carries the right id and title, not
+> > authoring the object. `docs/archive/form-curation.md` is now a readable index
+> > rather than the input. A row decided to keep no form takes `"settled": true`;
+> > a bare blank means nobody has reached it. One row left the list by being
+> > **answered** rather than curated — AWK-82's re-harvest gave Schoenberg's
+> > *Kammersymphonie No. 1* `Symphony` — which is the first time that has
+> > happened and will not be the last.
+>
 > **Seeding the data was not enough to render it.** `loadArchive()` read
 > `work.fields.period ?? null` with no composer fallback, so 333 of 338 work pages
 > showed an em dash with the answer sitting on the composer record. The
