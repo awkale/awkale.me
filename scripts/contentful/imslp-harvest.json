@@ -9,10 +9,10 @@
     "transitional composers under both, and `composer.period` is a single",
     "Symbol, so those are settled by hand in `composerPeriods`."
   ],
-  "harvestedAt": "2026-09-01",
+  "harvestedAt": "2026-09-07",
   "counts": {
-    "worksInScope": 358,
-    "composersInScope": 158,
+    "worksInScope": 359,
+    "composersInScope": 159,
     "composersMatched": 117,
     "composersWithOneEra": 112,
     "composersWithSeveralEras": [
@@ -22,9 +22,9 @@
       "Sibelius, Jean",
       "Strauss, Richard"
     ],
-    "composersUnmatched": 1,
+    "composersUnmatched": 2,
     "worksMatched": 121,
-    "worksWithHarvestedForms": 34
+    "worksWithHarvestedForms": 33
   },
   "composers": {
     "1fMmco9iSJOaiQpUxfUqG8": {
@@ -621,6 +621,12 @@
       "eras": [],
       "canonicalName": null
     },
+    "cmp-moncayo-garcia-jose-pablo": {
+      "sortName": "Moncayo Garcia, Jose Pablo",
+      "imslpPage": null,
+      "eras": [],
+      "canonicalName": null
+    },
     "cmp-mozart-wolfgang-amadeus": {
       "sortName": "Mozart, Wolfgang Amadeus",
       "imslpPage": "Mozart, Wolfgang Amadeus",
@@ -1070,7 +1076,7 @@
     "7FdM6FH19h52lHS8EnFx1B": {
       "title": "Tzigane",
       "imslpPage": "Tzigane, M.76 (Ravel, Maurice)",
-      "styles": ["Early 20th century"],
+      "styles": [],
       "forms": []
     },
     "7LcFfaOQJpSeO8OvHw7sCm": {
@@ -1727,6 +1733,12 @@
       "styles": [],
       "forms": []
     },
+    "wrk-huapango-7422ba": {
+      "title": "Huapango",
+      "imslpPage": null,
+      "styles": [],
+      "forms": []
+    },
     "wrk-hummingbirds-for-orchestra-wor-d97c31": {
       "title": "Hummingbirds for Orchestra",
       "imslpPage": null,
@@ -1796,7 +1808,7 @@
     "wrk-la-muse-et-le-poete-2d515a": {
       "title": "La Muse et Le Poete",
       "imslpPage": "La muse et le poète, Op.132 (Saint-Saëns, Camille)",
-      "styles": [],
+      "styles": ["Romantic"],
       "forms": []
     },
     "wrk-la-valse-a7d89c": {
@@ -1940,8 +1952,8 @@
     "wrk-norfolk-rhapsody-no-1-a75c93": {
       "title": "Norfolk Rhapsody No. 1",
       "imslpPage": "Norfolk Rhapsody No.1 (Vaughan Williams, Ralph)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Rhapsody"]
     },
     "wrk-o-mimi-tu-piu-non-torni-from-l-08ece6": {
       "title": "\"O Mimi, tu piu non torni\", from La Boheme",
@@ -2096,8 +2108,8 @@
     "wrk-parade-d31ba2": {
       "title": "Parade",
       "imslpPage": "Parade (Satie, Erik)",
-      "styles": ["Early 20th century"],
-      "forms": ["Ballet"]
+      "styles": [],
+      "forms": []
     },
     "wrk-pavane-for-orchestra-f79d04": {
       "title": "Pavane for Orchestra",
@@ -2382,7 +2394,7 @@
       "forms": []
     },
     "wrk-serenade-eine-kleine-nachtmusik": {
-      "title": "Serenade (\"Eine Kleine Nachtmusik\")",
+      "title": "Serenade No. 13 in G major, K. 525",
       "imslpPage": null,
       "styles": [],
       "forms": []
@@ -2816,8 +2828,8 @@
     "wrk-symphony-no-9-in-d-minor-chora-124d49": {
       "title": "Symphony No. 9 in D Minor (\"Choral\")",
       "imslpPage": "Symphony No.9, Op.125 (Beethoven, Ludwig van)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-9-in-e-flat-major-975280": {
       "title": "Symphony No. 9 in E-flat Major",
@@ -2918,14 +2930,14 @@
     "wrk-the-nutcracker-suite-65bec1": {
       "title": "The Nutcracker Suite",
       "imslpPage": "The Nutcracker (suite), Op.71a (Tchaikovsky, Pyotr)",
-      "styles": ["Romantic"],
-      "forms": ["Ballet", "Suite"]
+      "styles": [],
+      "forms": []
     },
     "wrk-the-nutcracker-suite-c5dabb": {
       "title": "The Nutcracker Suite",
       "imslpPage": "The Nutcracker (suite), Op.71a (Tchaikovsky, Pyotr)",
-      "styles": ["Romantic"],
-      "forms": ["Ballet", "Suite"]
+      "styles": [],
+      "forms": []
     },
     "wrk-the-perfect-fool-ballet-b48e56": {
       "title": "The Perfect Fool Ballet",
@@ -3038,8 +3050,8 @@
     "wrk-variations-on-a-theme-by-haydn-297bd3": {
       "title": "Variations on a Theme by Haydn",
       "imslpPage": "Variations on a Theme by Haydn, Op.56 (Brahms, Johannes)",
-      "styles": ["Romantic"],
-      "forms": ["Variations"]
+      "styles": [],
+      "forms": []
     },
     "wrk-variations-on-america-f29980": {
       "title": "Variations on \"America\"",
@@ -3074,8 +3086,8 @@
     "wrk-violin-concerto-in-d-major-03dc75": {
       "title": "Violin Concerto in D Major, Opus 77",
       "imslpPage": "Violin Concerto, Op.77 (Brahms, Johannes)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-violin-concerto-in-d-major-3cbe5e": {
       "title": "Violin Concerto in D Major, Opus 35",
@@ -3129,6 +3141,10 @@
   "unmatched": [
     {
       "sortName": "Diamond, David",
+      "candidates": []
+    },
+    {
+      "sortName": "Moncayo Garcia, Jose Pablo",
       "candidates": []
     }
   ]

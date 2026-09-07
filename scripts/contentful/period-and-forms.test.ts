@@ -327,14 +327,20 @@ describe('the work curations address real rows', () => {
     expect(decisions.guards.workFormsFilled + decisions.guards.workFormsSettled + untouched.length).toBe(
       decisions.guards.workFormsRows
     )
-    // THE RESIDUE IS NOW ENTIRELY ONE CAUSE, which is the state worth asserting.
-    // All 12 are DECIDED and unwritable: each uses one of the nine forms the
-    // live Contentful validation does not carry yet, so writing them would buy
-    // a rejected publish rather than a curated work. Nothing here is unreviewed
-    // — every work of the 114 has been ruled on. When the web-app edit lands,
-    // these 12 go in, this expectation becomes 0, and the stopgap test above
-    // gets deleted in the same commit.
-    expect(untouched).toHaveLength(12)
+    // 12 of the 13 are DECIDED and unwritable: each uses one of the nine forms
+    // the live Contentful validation does not carry yet, so writing them would
+    // buy a rejected publish rather than a curated work. When the web-app edit
+    // lands, those 12 go in and the stopgap test above gets deleted in the same
+    // commit.
+    //
+    // THE 13TH IS HUAPANGO, and it is a new backlog entry rather than a
+    // leftover. AWK-57 declared the two Mexico 2020 tour Concerts on
+    // 2026-09-06, both attended, and both program it — so a Work that had sat
+    // out of scope since 2026-07-30, reachable only from an unattended BHO
+    // date, came into scope behind them. IMSLP holds no page for Moncayo, so
+    // nothing automatic can answer for it and it waits for a judgement like
+    // the 114 before it.
+    expect(untouched).toHaveLength(13)
   })
 
   it('still repairs the 16 ballets ADR-0007 counted, and names the Suite half since the genre delete', () => {
@@ -347,13 +353,25 @@ describe('the work curations address real rows', () => {
     // are curation rather than repair — works that carried NO form at all, not
     // ones filed wrongly — so they move this count without bearing on the 16
     // ADR-0007 counted.
+    // Parade is the 25th, and it is here because the wiki took its category
+    // back: the 2026-09-07 re-harvest dropped `Ballet` from Satie's page, which
+    // had been the work's only source for it. Declaring it is what stops the
+    // next re-harvest from being able to lose it again.
     const ballets = entries(decisions.workForms).filter(([, row]) => row.forms.includes('Ballet'))
-    expect(ballets).toHaveLength(24)
+    expect(ballets).toHaveLength(25)
     // AWK-80: `genre` supplied Suite for these until AWK-66 deleted it, so the
     // row has to. A ballet-suite row naming Ballet alone is the 2026-09-06
     // conflict coming back.
-    const suites = ballets.filter(([, row]) => /Suite/.test(row.title) && !/^The Nutcracker Suite$/.test(row.title))
-    expect(suites).toHaveLength(14)
+    //
+    // THE TWO NUTCRACKER SUITE ROWS ARE NO LONGER EXCEPTED. They used to be,
+    // because their Ballet + Suite pair arrived through the harvest — and on
+    // 2026-09-07 IMSLP withdrew BOTH categories from the Nutcracker suite page,
+    // so the computed set fell to the row's bare `Ballet` while the space still
+    // held Suite. That is the AWK-80 conflict, arriving by a different route
+    // than the genre delete. Both rows now name the pair themselves and join
+    // the count, which is why it reads 16 rather than 14.
+    const suites = ballets.filter(([, row]) => /Suite/.test(row.title))
+    expect(suites).toHaveLength(16)
     for (const [id, row] of suites) expect(row.forms, `${id} lost the Suite half`).toContain('Suite')
   })
 

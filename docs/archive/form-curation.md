@@ -1,4 +1,4 @@
-# Form curation — the 114 works nothing can answer for
+# Form curation — the 115 works nothing can answer for
 
 Generated under AWK-37 from the live space, and regenerated under AWK-64, which
 added five: the new Works of the three Tilles Center LIYO programs that no
@@ -39,13 +39,21 @@ name into an array that already carries the right id and title. This table stays
 as the readable index — composer, work, id in one place — but the row it
 describes lives in the JSON.
 
-**The backlog this table lists is closed.** Every one of the 114 was ruled on in
-two review rounds on 2026-09-07. Of the 152 rows in `workForms`, **111 carry a
-form and 29 are** `settled` — looked at, and deliberately carrying none. The 12
-still blank are decided too: they use one of the nine forms AWK-65 added to
-`archive-schema.json` that the live Contentful `in` validation does not carry
-yet, so writing them would buy a rejected publish. They go in the moment that
-web-app edit is made.
+**The backlog this table lists is closed, bar one new arrival.** Every one of the
+114 was ruled on in two review rounds on 2026-09-07. Of the 155 rows in
+`workForms`, **113 carry a form and 29 are** `settled` — looked at, and
+deliberately carrying none. Twelve of the 13 still blank are decided too: they
+use one of the nine forms AWK-65 added to `archive-schema.json` that the live
+Contentful `in` validation does not carry yet, so writing them would buy a
+rejected publish. They go in the moment that web-app edit is made.
+
+**The 13th is Huapango**, added the same day and genuinely undecided. AWK-57
+declared the two Mexico 2020 tour Concerts — both attended, both programming it
+— so a Work that had existed since 2026-07-30 and sat out of scope, reachable
+only from the unattended 2000-12-16 BHO date, came into scope behind them.
+IMSLP holds no page for Moncayo, so nothing automatic can answer for it. That
+also makes it the third time a transcription has dragged an *existing* Work into
+scope rather than adding a new one.
 
 So a row appearing here no longer means "nobody has reached it". It means the
 work reached this list once, by the route described below. What the work carries
@@ -55,13 +63,14 @@ now is in the JSON, and `guards.workFormsFilled`, `workFormsSettled` and
 These are the works that end up with **zero** forms after every automatic route
 has run: the retired `genre` mapping, the IMSLP harvest, and the derived
 `Excerpt` rule. ADR-0007 is explicit that assigning them is taste rather than
-data entry — doing it is "inventing a category for *Boléro*", 114 times — and
+data entry — doing it is "inventing a category for *Boléro*", 115 times — and
 equally explicit that **nothing in the spec is blocked on them**. Period carries
 the browse load and Form is permitted to stay incomplete, so a blank row is a
 decided state, not a defect. A work you look at and decide keeps no form takes
 `"settled": true` on its JSON row; a bare blank normally says only that nobody
-has reached it yet — with the one exception noted above, that the 12 blanks left
-today are decided and merely unwritable.
+has reached it yet — with the exception noted above, that 12 of the 13 blanks
+left today are decided and merely unwritable. Huapango is the only one the plain
+reading still fits.
 
 The vocabulary is the **34** values in `archive-schema.json` — 25 until AWK-65
 added Essay, Fugue, Hymn, Intermezzo, Pavane, Poem, Polka, Romance and Tango,
@@ -149,6 +158,7 @@ rather than dropped.
 | Marquez, Arturo | Danzon No. 2 | `wrk-danzon-no-2-a544d0` |
 | Marquez, Arturo | Danzon No. 4 | `wrk-danzon-no-4-e6645c` |
 | Minotto, Paul | The Persistence of Memory | `wrk-the-persistence-of-memory-a7a439` |
+| Moncayo Garcia, Jose Pablo | Huapango | `wrk-huapango-7422ba` |
 | Mozart, Wolfgang Amadeus | Andante in C Major | `wrk-andante-in-c-major-aa83cd` |
 | Mussorgsky, Modest | Pictures at an Exhibition | `wrk-pictures-at-an-exhibition-981048` |
 | Mussorgsky, Modest | Songs and Dances of Death | `wrk-songs-and-dances-of-death-b552b9` |
