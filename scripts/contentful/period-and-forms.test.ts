@@ -333,14 +333,12 @@ describe('the work curations address real rows', () => {
     // lands, those 12 go in and the stopgap test above gets deleted in the same
     // commit.
     //
-    // THE 13TH IS HUAPANGO, and it is a new backlog entry rather than a
-    // leftover. AWK-57 declared the two Mexico 2020 tour Concerts on
-    // 2026-09-06, both attended, and both program it — so a Work that had sat
-    // out of scope since 2026-07-30, reachable only from an unattended BHO
-    // date, came into scope behind them. IMSLP holds no page for Moncayo, so
-    // nothing automatic can answer for it and it waits for a judgement like
-    // the 114 before it.
-    expect(untouched).toHaveLength(13)
+    // THE RESIDUE IS NOW ENTIRELY ONE CAUSE. Huapango was the 13th and is
+    // curated — `Dance`, because a huapango is a Mexican folk dance form and
+    // Moncayo's is the concert setting of one. Nothing here is unreviewed:
+    // every work of the 115 has been ruled on, and what is left is a schema
+    // edit rather than a judgement.
+    expect(untouched).toHaveLength(12)
   })
 
   it('still repairs the 16 ballets ADR-0007 counted, and names the Suite half since the genre delete', () => {

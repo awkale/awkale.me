@@ -279,6 +279,11 @@
       "period": "Classical",
       "why": "Schubert, 1816. The composer is filed Romantic, so this is the transitional case ADR-0007 builds the field for. Declared rather than harvested because the IMSLP page carries no style at all -- Schubert's Fifth is one of the five sparsity probes the record names by hand. NOT wrk-symphony-no-5-in-b-flat-major-0b7c14, which is Prokofiev's and shares the title exactly."
     },
+    "wrk-symphony-no-9-in-d-minor-chora-124d49": {
+      "title": "Symphony No. 9 in D Minor (\"Choral\")",
+      "period": "Romantic",
+      "why": "Beethoven is filed Classical, so the Ninth is the transitional case this field exists for -- the work that ends one period and is usually said to open the next. DECLARED RATHER THAN LEFT DERIVED, which is the whole point of the row: IMSLP gave the page a Romantic style between 2026-09-01 and 2026-09-07 and the 2026-09-07 apply wrote the override off it, but the same re-harvest WITHDREW categories from four other pages, including both Nutcracker Suites. A wiki that can take Ballet back can take this back, and an override that vanishes leaves no conflict and no warning -- the work simply reverts to Beethoven's Classical and nobody is told. Recorded so the next re-harvest cannot quietly undo a value the site renders."
+    },
     "4hNjkaXhqp8kuH3fbco2XQ": {
       "title": "Brandenburg Concerto No. 5",
       "period": "Baroque",
@@ -596,7 +601,7 @@
 
     "wrk-parade-d31ba2": { "title": "Parade", "forms": ["Ballet"] },
     "wrk-variations-on-a-theme-by-haydn-297bd3": { "title": "Variations on a Theme by Haydn", "forms": ["Variations"] },
-    "wrk-huapango-7422ba": { "title": "Huapango", "forms": [] },
+    "wrk-huapango-7422ba": { "title": "Huapango", "forms": ["Dance"] },
 
     "wrk-enigma-variation-no-9-nimrod-08dbf4": {
       "title": "\"Enigma\" Variation No. 9, Nimrod",
@@ -1046,9 +1051,13 @@
       "Norfolk Rhapsody No. 1 -- and Tzigane lost its style as well as the form it",
       "lost in AWK-80, which is the wiki churning in both directions inside one run.",
       "",
-      "HUAPANGO IS A NEW BACKLOG ENTRY, not a leftover. It has no IMSLP page and no",
-      "title the Excerpt rule reaches, so it is blank and waiting for a judgement,",
-      "the 115th work to arrive in that state."
+      "HUAPANGO ARRIVED IN THE BACKLOG AND LEFT IT THE SAME DAY. It has no IMSLP",
+      "page and no title the Excerpt rule reaches, so nothing automatic could answer",
+      "for it -- the 115th work to arrive in that state, and curated by hand as",
+      "`Dance`. A huapango is a Mexican folk dance form and Moncayo's is the concert",
+      "setting of one, which makes it one of the mechanical cases rather than one of",
+      "the judgement calls. The residue is now entirely the twelve rows blocked on",
+      "the vocabulary edit: nothing in this file is unreviewed."
     ],
     "worksInSpace": 666,
     "worksInScope": 359,
@@ -1060,7 +1069,7 @@
     "worksWithGenre": 227,
     "worksOutOfScopeCurated": 4,
     "workFormsRows": 155,
-    "workFormsFilled": 113,
+    "workFormsFilled": 114,
     "workFormsSettled": 29,
     "composersMatchedToImslp": 117,
     "composersWithHandPeriod": 47,

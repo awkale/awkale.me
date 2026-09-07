@@ -39,21 +39,22 @@ name into an array that already carries the right id and title. This table stays
 as the readable index — composer, work, id in one place — but the row it
 describes lives in the JSON.
 
-**The backlog this table lists is closed, bar one new arrival.** Every one of the
-114 was ruled on in two review rounds on 2026-09-07. Of the 155 rows in
-`workForms`, **113 carry a form and 29 are** `settled` — looked at, and
-deliberately carrying none. Twelve of the 13 still blank are decided too: they
+**The backlog this table lists is closed.** Every one of the 115 has been ruled
+on — the 114 in two review rounds on 2026-09-07, and Huapango the same day. Of the 155 rows in
+`workForms`, **114 carry a form and 29 are** `settled` — looked at, and
+deliberately carrying none. The 12 still blank are decided too: they
 use one of the nine forms AWK-65 added to `archive-schema.json` that the live
 Contentful `in` validation does not carry yet, so writing them would buy a
 rejected publish. They go in the moment that web-app edit is made.
 
-**The 13th is Huapango**, added the same day and genuinely undecided. AWK-57
-declared the two Mexico 2020 tour Concerts — both attended, both programming it
-— so a Work that had existed since 2026-07-30 and sat out of scope, reachable
-only from the unattended 2000-12-16 BHO date, came into scope behind them.
-IMSLP holds no page for Moncayo, so nothing automatic can answer for it. That
-also makes it the third time a transcription has dragged an *existing* Work into
-scope rather than adding a new one.
+**Huapango joined this list and left it the same day.** AWK-57 declared the two
+Mexico 2020 tour Concerts — both attended, both programming it — so a Work that
+had existed since 2026-07-30 and sat out of scope, reachable only from the
+unattended 2000-12-16 BHO date, came into scope behind them. IMSLP holds no page
+for Moncayo, so nothing automatic could answer for it; it was curated by hand as
+`Dance`, a huapango being a Mexican folk dance form. That also makes it the third
+time a transcription has dragged an *existing* Work into scope rather than adding
+a new one.
 
 So a row appearing here no longer means "nobody has reached it". It means the
 work reached this list once, by the route described below. What the work carries
@@ -68,9 +69,8 @@ equally explicit that **nothing in the spec is blocked on them**. Period carries
 the browse load and Form is permitted to stay incomplete, so a blank row is a
 decided state, not a defect. A work you look at and decide keeps no form takes
 `"settled": true` on its JSON row; a bare blank normally says only that nobody
-has reached it yet — with the exception noted above, that 12 of the 13 blanks
-left today are decided and merely unwritable. Huapango is the only one the plain
-reading still fits.
+has reached it yet — though as of today none of the 12 remaining blanks means
+that. Every one is decided and merely unwritable.
 
 The vocabulary is the **34** values in `archive-schema.json` — 25 until AWK-65
 added Essay, Fugue, Hymn, Intermezzo, Pavane, Poem, Polka, Romance and Tango,
