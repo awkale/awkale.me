@@ -80,32 +80,41 @@ const PERIODS = vocabulary('work', 'period')
 const FORMS = vocabulary('work', 'forms')
 
 describe('the vocabularies are the schema’s, not a second copy', () => {
-  it('reads nine periods and thirty-four forms out of archive-schema.json', () => {
+  it('reads nine periods and thirty-five forms out of archive-schema.json', () => {
     // If this fails the schema moved, and every `in` assertion below is
     // asserting against the wrong list rather than failing individually.
     expect(PERIODS).toHaveLength(9)
     // 25 until AWK-65 added nine — Essay, Fugue, Hymn, Intermezzo, Pavane,
     // Poem, Polka, Romance, Tango — for works the curation pass had no word
-    // for. ADR-0007 anticipated this: it "fixes the mechanism, not the
-    // enumeration", and its own eight additions were made the same way.
-    expect(FORMS).toHaveLength(34)
+    // for, plus Melodrama as a tenth on 2026-09-08. ADR-0007 anticipated this:
+    // it "fixes the mechanism, not the enumeration", and its own eight
+    // additions were made the same way.
+    expect(FORMS).toHaveLength(35)
   })
 
-  it('keeps AWK-65s nine additions, which the live validation now carries too', () => {
-    // THIS TEST STILL CANNOT CHECK THE THING THAT MATTERS. The 34 values here
-    // are a declaration; the `in` validation on work.forms in the space is the
-    // authority, migrate_schema.py is additive and will NOT reshape an existing
-    // field, and nothing in this repo reads the live list. Alex added these nine
-    // in the web app on 2026-09-08, which is what unblocked the twelve rows
-    // using them — and the stopgap that forbade those rows was deleted in the
-    // same commit, exactly as it was written to be.
+  it('keeps AWK-65s nine additions, whatever the live validation carries', () => {
+    // THIS TEST STILL CANNOT CHECK THE THING THAT MATTERS, and 2026-09-08 is the
+    // proof. The 35 values here are a declaration; the `in` validation on
+    // work.forms in the space is the authority, migrate_schema.py is additive
+    // and will NOT reshape an existing field, and nothing in this repo reads the
+    // live list. Alex added the nine in the web app that day and EIGHT landed —
+    // `Hymn` did not, and the suite was green throughout. It surfaced only as
+    // three publish refusals on the apply, one per row using it, and the applier
+    // named the offending field index rather than the value: sorted forms make
+    // `fields.forms.en-US.1` on `[Fugue, Hymn]` the same word as index 0 on
+    // `[Hymn]`. That triangulation is how the missing value was identified.
     //
-    // What survives is the weaker claim: the nine are still DECLARED. Losing one
-    // here while the space keeps it would strand any row using it, which is the
-    // drift running the other way and is equally silent.
+    // So the claim here stays deliberately weak: the nine are DECLARED. Losing
+    // one here while the space keeps it would strand any row using it, which is
+    // the same drift in the other direction and just as silent.
     for (const form of ['Essay', 'Fugue', 'Hymn', 'Intermezzo', 'Pavane', 'Poem', 'Polka', 'Romance', 'Tango']) {
       expect(FORMS).toContain(form)
     }
+    // Melodrama is the tenth, and the only one added to the space FIRST and
+    // declared here afterwards — the drift running the other way. No row uses
+    // it yet; it exists for the three narrated works, which are currently a
+    // Tone Poem and two settled rows.
+    expect(FORMS).toContain('Melodrama')
   })
 
   it('constrains composer.period to the same nine values as work.period', () => {

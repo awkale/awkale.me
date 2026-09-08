@@ -157,13 +157,17 @@ describe('archive-schema.json', () => {
       expect(forms.items?.type).toBe('Symbol')
     })
 
-    it('carries the 17 genre names, ADR-0007s 8 additions and AWK-65s 9', () => {
-      // 25 until AWK-65 (2026-09-07). The nine below are each a word one
-      // specific uncurated work needed and the 25 could not supply; ADR-0007
-      // permits the growth in as many words — it fixes "the mechanism, not the
-      // enumeration". THIS LIST IS A DECLARATION, NOT THE LIVE VALIDATION:
-      // migrate_schema.py is additive and never reshapes an existing field, so
-      // the nine reach Contentful only via a hand edit in the web app.
+    it('carries the 17 genre names, ADR-0007s 8 additions and AWK-65s 10', () => {
+      // 25 until AWK-65 (2026-09-07), which added nine words specific uncurated
+      // works needed and the 25 could not supply; ADR-0007 permits the growth in
+      // as many words — it fixes "the mechanism, not the enumeration". Melodrama
+      // is the tenth, added 2026-09-08: the term of art for spoken narration over
+      // music, and the only word that covers Peter and the Wolf, Lincoln Portrait
+      // and The Composer is Dead. It is declared here and used by no row yet.
+      // THIS LIST IS A DECLARATION, NOT THE LIVE VALIDATION: migrate_schema.py is
+      // additive and never reshapes an existing field, so a value reaches
+      // Contentful only via a hand edit in the web app, and the two can disagree
+      // in either direction with nothing to catch it.
       expect(inList(forms)).toEqual([
         'Aria',
         'Ballet',
@@ -182,6 +186,7 @@ describe('archive-schema.json', () => {
         'Intermezzo',
         'March',
         'Mass',
+        'Melodrama',
         'Oratorio',
         'Overture',
         'Pavane',
