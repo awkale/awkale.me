@@ -41,11 +41,12 @@ describes lives in the JSON.
 
 **The backlog this table lists is closed.** Every one of the 115 has been ruled
 on — the 114 in two review rounds on 2026-09-07, and Huapango the same day. Of the 155 rows in
-`workForms`, **114 carry a form and 29 are** `settled` — looked at, and
-deliberately carrying none. The 12 still blank are decided too: they
-use one of the nine forms AWK-65 added to `archive-schema.json` that the live
-Contentful `in` validation does not carry yet, so writing them would buy a
-rejected publish. They go in the moment that web-app edit is made.
+`workForms`, **126 carry a form and 29 are** `settled` — looked at, and
+deliberately carrying none. **Nothing is blank and unsettled.** Twelve rows sat
+decided-but-unwritable for two days, because their forms were among the nine
+this file adds to `archive-schema.json` and the live Contentful `in` validation
+did not carry them yet; they went in on 2026-09-08 once that web-app edit
+landed.
 
 **Huapango joined this list and left it the same day.** AWK-57 declared the two
 Mexico 2020 tour Concerts — both attended, both programming it — so a Work that
@@ -68,9 +69,9 @@ data entry — doing it is "inventing a category for *Boléro*", 115 times — a
 equally explicit that **nothing in the spec is blocked on them**. Period carries
 the browse load and Form is permitted to stay incomplete, so a blank row is a
 decided state, not a defect. A work you look at and decide keeps no form takes
-`"settled": true` on its JSON row; a bare blank normally says only that nobody
-has reached it yet — though as of today none of the 12 remaining blanks means
-that. Every one is decided and merely unwritable.
+`"settled": true` on its JSON row; a bare blank says nobody has reached it yet,
+and as of 2026-09-08 there are none. A blank appearing here again can only mean
+a new work has entered scope.
 
 The vocabulary is the **34** values in `archive-schema.json` — 25 until AWK-65
 added Essay, Fugue, Hymn, Intermezzo, Pavane, Poem, Polka, Romance and Tango,
@@ -79,7 +80,10 @@ editing that `in` list; there is no `genre` entry to create any more. **That
 edit does not reach Contentful on its own** — `migrate_schema.py` is additive and
 will not reshape a field that already exists, so a new value has to be added to
 the `in` validation in the web app by hand or the publish is rejected, entry by
-entry. The nine above are declared and **not yet in the space**.
+entry. The nine above were declared here for two days before the space carried
+them — a drift nothing in the repo detects, and one that runs both ways: a value
+added in the web app and never declared here is just as invisible. Any addition
+is two edits, only ever as consistent as whoever makes them.
 
 No work reaches this list still carrying a retired `genre`, which is worth
 stating because it is the check that the migration lost nothing: everything the

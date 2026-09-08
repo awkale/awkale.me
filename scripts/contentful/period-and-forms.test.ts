@@ -91,25 +91,21 @@ describe('the vocabularies are the schema’s, not a second copy', () => {
     expect(FORMS).toHaveLength(34)
   })
 
-  it('declares a vocabulary the live Contentful validation may not have yet', () => {
-    // THIS TEST CANNOT CHECK THE THING THAT MATTERS, and says so rather than
-    // implying coverage. The 34 values here are a declaration; the `in`
-    // validation on work.forms in the space is the authority, migrate_schema.py
-    // is additive and will NOT reshape an existing field, and nothing in this
-    // repo reads the live list. So a value added here reaches Contentful only
-    // when someone edits it in the web app by hand, and until they do, a row
-    // using one is rejected at publish rather than caught here.
-    const added = ['Essay', 'Fugue', 'Hymn', 'Intermezzo', 'Pavane', 'Poem', 'Polka', 'Romance', 'Tango']
-    for (const form of added) expect(FORMS).toContain(form)
-    // What IS checkable: no curated row may use one of the nine until the
-    // web-app edit lands. Delete this block once the live validation agrees —
-    // and not before, because it is the only thing standing between a curation
-    // batch and a failed publish.
-    const rows = entries(decisions.workForms).filter(([, row]) => row.forms.some((f) => added.includes(f)))
-    expect(
-      rows.map(([id]) => id),
-      'a row uses a form the live space may reject; confirm the web-app edit first'
-    ).toEqual([])
+  it('keeps AWK-65s nine additions, which the live validation now carries too', () => {
+    // THIS TEST STILL CANNOT CHECK THE THING THAT MATTERS. The 34 values here
+    // are a declaration; the `in` validation on work.forms in the space is the
+    // authority, migrate_schema.py is additive and will NOT reshape an existing
+    // field, and nothing in this repo reads the live list. Alex added these nine
+    // in the web app on 2026-09-08, which is what unblocked the twelve rows
+    // using them — and the stopgap that forbade those rows was deleted in the
+    // same commit, exactly as it was written to be.
+    //
+    // What survives is the weaker claim: the nine are still DECLARED. Losing one
+    // here while the space keeps it would strand any row using it, which is the
+    // drift running the other way and is equally silent.
+    for (const form of ['Essay', 'Fugue', 'Hymn', 'Intermezzo', 'Pavane', 'Poem', 'Polka', 'Romance', 'Tango']) {
+      expect(FORMS).toContain(form)
+    }
   })
 
   it('constrains composer.period to the same nine values as work.period', () => {
@@ -327,18 +323,13 @@ describe('the work curations address real rows', () => {
     expect(decisions.guards.workFormsFilled + decisions.guards.workFormsSettled + untouched.length).toBe(
       decisions.guards.workFormsRows
     )
-    // 12 of the 13 are DECIDED and unwritable: each uses one of the nine forms
-    // the live Contentful validation does not carry yet, so writing them would
-    // buy a rejected publish rather than a curated work. When the web-app edit
-    // lands, those 12 go in and the stopgap test above gets deleted in the same
-    // commit.
-    //
-    // THE RESIDUE IS NOW ENTIRELY ONE CAUSE. Huapango was the 13th and is
-    // curated — `Dance`, because a huapango is a Mexican folk dance form and
-    // Moncayo's is the concert setting of one. Nothing here is unreviewed:
-    // every work of the 115 has been ruled on, and what is left is a schema
-    // edit rather than a judgement.
-    expect(untouched).toHaveLength(12)
+    // THERE IS NO RESIDUE. Every row in this file is either formed or settled:
+    // 126 carry a form, 29 record a considered decision to carry none, and the
+    // backlog ADR-0007 opened — 104 works at AWK-37, 115 by the time it closed
+    // — is empty. A blank-and-unsettled row appearing here again means a NEW
+    // work entered scope, which is the only way one can now arise, and it is
+    // the state the three-way sum above exists to surface on the next run.
+    expect(untouched).toHaveLength(0)
   })
 
   it('still repairs the 16 ballets ADR-0007 counted, and names the Suite half since the genre delete', () => {
