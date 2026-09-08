@@ -537,6 +537,14 @@ and a cast list renders from the strings as they stand.
 `scripts/contentful/README.md`'s known-gaps entry says a join type "would fix
 it"; this record says the gap is accepted.
 
+> **Amended 2026-09-08.** "The two AWK-68 already needs" priced a cost that
+> turned out not to exist: the rule this record set — that a cast list renders
+> from the strings as they stand — is what makes both of those `fetchAll` calls
+> unnecessary. AWK-68 needs **zero**. The pair entity stays rejected, and more
+> cheaply than this paragraph claims. See
+> [the amendment](#amendment--the-credit-is-the-render-path-2026-09-08) at the
+> foot of this record.
+
 **Instrument as "what the performer is"** — with Character as "who they played"
 — reads well and fails on contact: Director, Narrator and Soloist are neither,
 so 35 records would need a third home the model does not have.
@@ -552,3 +560,84 @@ Nothing renders yet — `credits` and `character` are still unread by
 controlled list and its hand-mirrored `ENUM` in the parser move together as
 before. The parser's one-credit condition on `character` is now the documented
 rule rather than a workaround, and it stays.
+
+## Amendment — the Credit is the render path (2026-09-08)
+
+AWK-68, triaged. The amendment above decided *what* a cast list is — the item's
+Credits, rendered as written. This one settles what that means for the sweep,
+and the answer is smaller than either record assumed: **`programItem.credits` is
+the only field the render path reads, and the `programItem.soloists` links are
+never resolved.**
+
+### What was measured
+
+From the parser's graph, regenerated 2026-09-06, across its 807 Program items:
+
+| | count |
+| --- | --- |
+| items with at least one `soloists` link | 258 |
+| items with at least one `credits` string | 260 |
+| links but **no** credit | **0** |
+| credits but no link | 2 |
+| link and credit counts disagree | 3 |
+
+`credits` is a strict superset. Nothing a link names is missing from the
+strings, so reading the strings alone loses nothing — and the transcribed LIYO
+Program items pair the two 1:1 as well, which is the case the graph does not
+cover.
+
+### The rule
+
+* The sweep resolves **no** new content type. `credits` is a string array on
+  `programItem`; it is passed through to the page as it stands.
+* The `soloists` links stay in the space as the relational record — they are
+  what makes a Soloist an entity with a Credited role rather than a name in a
+  sentence — and are simply not on the render path.
+* `programItem.character` is never rendered. It holds `Isolde` alone, on 1 of
+  866 items, and on a one-credit item the Credit string already says it.
+
+### Why this is worth a record
+
+It leaves `soloists: Link[]` declared on the sweep's field type, read from the
+Delivery API, and resolved by nothing — which reads as an oversight to the next
+person who looks, and is the exact shape of the bug AWK-68 was filed as. It is
+now a decision.
+
+The polymorphism is the other half of the reason. `soloists` links to both
+`soloist` and `ensemble`, whose display names are `fullName` and `name`, so
+resolving it means branching on content type at the one place the build's cost
+is measured. The strings need no branch: `'Grace Choral Society of Brooklyn'` is
+already what that Ensemble should render as.
+
+### Considered and rejected
+
+**An invariant tying each link to a credit that names it** was the one argument
+for resolving them — it would catch a Soloist linked but left out of the
+billing. Rejected because it cannot be stated cleanly. Three items already
+disagree on count, and each for a legitimate reason: `'3 Genii:'` is a group
+heading, `'-Ambassador of The Netherlands'` continues the line above it, and
+James Busby holds one link against two credits, `Director` and `Baritone`. An
+invariant loose enough to admit all three admits nearly anything.
+
+**Rendering `credits` in a table column** — the AWK-60 conductor precedent,
+where a column appears if any row needs it and every row then fills it in — was
+rejected on cardinality. A conductor is always exactly one name, which is what
+makes a column the right container. A Credit is one to fourteen: the *Serenade
+to Music* item of 2003-05-21 carries fourteen, and it is a played item, so that
+page exists. The credit therefore renders as a stacked list in the flow of the
+row it describes, in array order, unsorted — the array is the printed order, and
+that order is the only thing making the continuation line legible.
+
+### What this does not change
+
+The Surfaces decision stands: Soloist and Ensemble display and never filter, and
+there is no fourth routed surface. `soloist.instrument` is still the Credited
+role and still moves in step with its mirrored `ENUM`. And two of the 260 credit
+strings name nobody at all — `'unknown'` and
+`'with Puppets in Japanese Bunraku style'` — which are not Credits under
+`CONTEXT.md`'s definition but stray transcription lines in the field. Fixing
+them is data, not rendering, and is
+[AWK-88](https://linear.app/awkale/issue/AWK-88/two-programitemcredits-strings-name-nobody-and-are-not-credits)
+rather than a display rule here. Neither reaches a page in any case: both sit on
+Concerts with `attended` unset, one of them dateless and the other from 1975, so
+the page-set rule already excludes them.
