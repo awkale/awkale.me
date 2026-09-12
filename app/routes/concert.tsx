@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 
+import { CreditList } from '../components/credit-list'
 import { loadArchive } from '../lib/archive'
 import { byline, formatDate } from '../lib/format'
 import type { Route } from './+types/concert'
@@ -103,6 +104,9 @@ export default function Concert({ loaderData }: Route.ComponentProps) {
                   ) : (
                     item.label
                   )}
+                  {/* AWK-68. Under the work, INSIDE its cell — not a fifth
+                      column. CreditList carries the why. */}
+                  <CreditList credits={item.credits} className="mt-0.5" />
                 </td>
                 {conductorSplit ? (
                   <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">

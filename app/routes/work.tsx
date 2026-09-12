@@ -1,5 +1,7 @@
+import { Fragment } from 'react'
 import { Link } from 'react-router'
 
+import { CreditList } from '../components/credit-list'
 import { loadArchive } from '../lib/archive'
 import { arrangerCredit, formatDate, times } from '../lib/format'
 import type { Route } from './+types/work'
@@ -27,6 +29,13 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   return { work }
 }
+
+/**
+ * The performance table's columns, named once because the Credit row beneath each
+ * performance spans them. Inline, the two would drift the moment a fourth column
+ * lands and the cast would quietly stop reaching the end of the table.
+ */
+const COLUMNS = ['Date', 'Orchestra', 'Conductor']
 
 export default function Work({ loaderData }: Route.ComponentProps) {
   const { work } = loaderData
@@ -58,7 +67,7 @@ export default function Work({ loaderData }: Route.ComponentProps) {
         <table className="mt-4 w-full border-collapse text-[0.8rem]">
           <thead>
             <tr>
-              {['Date', 'Orchestra', 'Conductor'].map((h) => (
+              {COLUMNS.map((h) => (
                 <th key={h} className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">
                   {h}
                 </th>
@@ -66,19 +75,45 @@ export default function Work({ loaderData }: Route.ComponentProps) {
             </tr>
           </thead>
           <tbody>
-            {work.performances.map((p) => (
-              <tr key={p.slug} className="hover:bg-muted">
-                <td className="tabular border-b border-border-subtle px-2 py-1.5 align-baseline">
-                  <Link to={`/concerts/${p.slug}/`} className="no-underline hover:underline">
-                    {formatDate(p.date)}
-                  </Link>
-                </td>
-                <td className="border-b border-border-subtle px-2 py-1.5 align-baseline">{p.orchestra ?? '—'}</td>
-                <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
-                  {p.conductor ?? '—'}
-                </td>
-              </tr>
-            ))}
+            {work.performances.map((p) => {
+              // AWK-68. The Credits belong to the evening, not to any one column,
+              // so they hang beneath the row and span it. A run SHARES its
+              // program item, which is why the Act II Carmen cast renders under
+              // both of its nights rather than once under the table.
+              //
+              // The row's own bottom rule moves down to the Credit row when
+              // there is one — otherwise the line lands between a performance
+              // and its own cast and reads as if the cast belonged to the next
+              // date. A performance with no Credits is untouched by all of this.
+              const hasCredits = p.credits.length > 0
+              // Spelled out both ways rather than composed, so the credit-less
+              // row — 306 of the 429 published pairs — emits the exact class
+              // string it emitted before this ticket, order included.
+              const cellClass = hasCredits
+                ? 'px-2 py-1.5 align-baseline'
+                : 'border-b border-border-subtle px-2 py-1.5 align-baseline'
+
+              return (
+                <Fragment key={p.slug}>
+                  <tr className="hover:bg-muted">
+                    <td className={`tabular ${cellClass}`}>
+                      <Link to={`/concerts/${p.slug}/`} className="no-underline hover:underline">
+                        {formatDate(p.date)}
+                      </Link>
+                    </td>
+                    <td className={cellClass}>{p.orchestra ?? '—'}</td>
+                    <td className={`${cellClass} text-muted-foreground`}>{p.conductor ?? '—'}</td>
+                  </tr>
+                  {hasCredits ? (
+                    <tr>
+                      <td colSpan={COLUMNS.length} className="border-b border-border-subtle px-2 pb-1.5 align-baseline">
+                        <CreditList credits={p.credits} />
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
+              )
+            })}
           </tbody>
         </table>
       </div>

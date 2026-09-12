@@ -480,6 +480,160 @@ describe('the per-item conductor (AWK-60)', () => {
   })
 })
 
+describe('the Credit strings the pages render (AWK-68)', () => {
+  it('carries an item\u2019s credits through to the concert programme', async () => {
+    // pi-19930726-12: Willis Huang has been linked since AWK-59 and the site has
+    // never printed him. The string is what prints, not the link.
+    space.programItem[0].fields.credits = ['Willis Huang, Violin']
+    space.concert = [concert('cnc-1', '1993-07-26', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program[0].credits).toEqual(['Willis Huang, Violin'])
+  })
+
+  it('gives an item with no credits an empty array, never null', async () => {
+    // 306 of the 429 published pairs carry none, so this is the common case. One
+    // kind of absence, so no caller branches on two.
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program[0].credits).toEqual([])
+  })
+
+  it('keeps the stored order, including the lines that are not names', async () => {
+    // ADR-0006's amendment: the array is the PRINTED order. `3 Genii:` heads the
+    // three names under it and `-Ambassador of The Netherlands` continues the
+    // line above, so sorting or filtering either one destroys the other.
+    space.programItem[0].fields.credits = [
+      '3 Genii:',
+      'Thomas Jennings, Treble',
+      'Seth Abrams, Treble',
+      '-Ambassador of The Netherlands',
+    ]
+    space.concert = [concert('cnc-1', '2003-05-21', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program[0].credits).toEqual([
+      '3 Genii:',
+      'Thomas Jennings, Treble',
+      'Seth Abrams, Treble',
+      '-Ambassador of The Netherlands',
+    ])
+  })
+
+  it('reads an Ensemble credit with no branch on content type', async () => {
+    // Modelled on 2006-05-17, where `Grace Choral Society of Brooklyn` and
+    // `Spiritus et Anima` are Credit strings billed in a Soloist's place, beside
+    // an accompanist who is no Soloist link at all. Each is already the string it
+    // should render as, which is why the sweep resolves neither `soloist` nor
+    // `ensemble`. (Not 1993-07-26: its ensemble items carry links and NO credits
+    // — see the note on that in app/routes/concert.test.tsx.)
+    space.programItem[0].fields.credits = ['Grace Choral Society of Brooklyn', 'Janine Carstein, Accompanist']
+    space.concert = [concert('cnc-1', '2006-05-17', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program[0].credits).toEqual([
+      'Grace Choral Society of Brooklyn',
+      'Janine Carstein, Accompanist',
+    ])
+  })
+
+  it('renders a stray transcription line verbatim rather than suppressing it', async () => {
+    // `'unknown'` and the Bunraku line name nobody, and are wrong at the SOURCE
+    // (AWK-88). A display rule hiding them here would make the data fix
+    // invisible when it lands, so the sweep passes them through like any string.
+    space.programItem[0].fields.credits = ['with Puppets in Japanese Bunraku style']
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program[0].credits).toEqual(['with Puppets in Japanese Bunraku style'])
+  })
+
+  it("hangs the item's credits off the work's performance too", async () => {
+    space.programItem[0].fields.credits = ['Seth Abrams, Violin', 'Jessica Hull, Flute']
+    space.concert = [concert('cnc-1', '1995-06-11', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances[0]).toMatchObject({
+      date: '1995-06-11',
+      credits: ['Seth Abrams, Violin', 'Jessica Hull, Flute'],
+    })
+  })
+
+  it('repeats a shared cast on every night of a run', async () => {
+    // A run SHARES its program items, so the Act II Carmen cast is asserted for
+    // both nights and each performance row carries it.
+    space.programItem[0].fields.credits = ['Nicholle Bittlingmeyer, Carmen']
+    space.concert = [
+      concert('cnc-1', '2007-05-20', { attended: true }),
+      concert('cnc-2', '2007-05-23', { attended: true }),
+    ]
+
+    const archive = await sweepFixture()
+
+    // Ascending by date, as a work page lists them.
+    expect(archive.works[0].performances.map((p) => [p.date, p.credits])).toEqual([
+      ['2007-05-20', ['Nicholle Bittlingmeyer, Carmen']],
+      ['2007-05-23', ['Nicholle Bittlingmeyer, Carmen']],
+    ])
+  })
+
+  it('leaves a performance with no credits an empty array', async () => {
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances[0].credits).toEqual([])
+  })
+
+  it('takes the credits of the row that won the one-performance-per-concert rule', async () => {
+    // A concert listing the work twice is still one evening (see the per-pair
+    // rule above), so the second row's credits do not open a second performance
+    // and do not overwrite the first row's.
+    space.programItem.push(
+      entry('programItem', 'pi-2', {
+        label: 'Symphony No. 5, finale',
+        order: 2,
+        work: link('wrk-fifth'),
+        credits: ['Second row, Violin'],
+      })
+    )
+    space.programItem[0].fields.credits = ['First row, Violin']
+    space.concert = [concert('cnc-1', '2012-03-15', { attended: true, program: [link('pi-1'), link('pi-2')] })]
+
+    const archive = await sweepFixture()
+
+    expect(archive.works[0].performances).toHaveLength(1)
+    expect(archive.works[0].performances[0].credits).toEqual(['First row, Violin'])
+  })
+
+  it('drops the credits of an item he sat out, with the item', async () => {
+    // ADR-0006, per pair: a sat-out row is off the page, so its cast is too.
+    space.programItem.push(
+      entry('programItem', 'pi-2', {
+        label: 'Coriolan Overture',
+        order: 2,
+        work: link('wrk-fifth'),
+        credits: ['Someone He Did Not Play With, Violin'],
+      })
+    )
+    space.concert = [
+      concert('cnc-1', '2012-03-15', { attended: true, program: [link('pi-1'), link('pi-2')], satOut: [link('pi-2')] }),
+    ]
+
+    const archive = await sweepFixture()
+
+    expect(archive.concerts[0].program.map((i) => i.id)).toEqual(['pi-1'])
+    expect(archive.works[0].performances[0].credits).toEqual([])
+  })
+})
+
 describe("the orchestra on a work's performance list (AWK-72)", () => {
   it('names the orchestra by abbreviation', async () => {
     // THE ABBREVIATION, NOT THE NAME. This renders in a three-column table on a

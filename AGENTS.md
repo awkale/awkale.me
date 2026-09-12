@@ -220,6 +220,15 @@ Two gaps that older tickets still assume: there is **no CI** in this repo at all
 automatic; and route components taking loader data are untestable as written,
 because Vitest runs without the `reactRouter()` plugin.
 
+> **Corrected 2026-09-12 (AWK-68).** The second half is wrong, and `vite.config.ts`
+> already said so: *"Route components that take no loader data are testable; ones
+> that do will need their props passed by hand."* Passing them by hand is all it
+> takes. `app/routes/concert.test.tsx` and `app/routes/work.test.tsx` render both
+> loader-data routes, casting a hand-built `{ loaderData }` to the component's own
+> props and wrapping in `MemoryRouter` for the `<Link>`s. What stays untestable is
+> only what exists *because* of the plugin — typegen's `./+types/*`, prerendering,
+> the route manifest.
+
 `app/data/sample.ts` is still placeholder, because **none of the decided
 Contentful schema exists in the space** — `concert.attended`, `concert.satOut`,
 `composer.slug`, `composer.period`, `work.forms` / `period` and the `project` type

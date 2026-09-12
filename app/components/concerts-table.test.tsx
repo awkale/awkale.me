@@ -52,6 +52,7 @@ function blanks() {
     arrangementType: null,
     conductorName: null,
     conductorIsOwn: false,
+    credits: [],
   }
 }
 

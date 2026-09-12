@@ -68,7 +68,19 @@ type ConcertFields = {
   orchestra: Link[]
   attended: boolean
 }
-type ProgramItemFields = { label: string; order: number; work: Link; soloists: Link[]; conductor: Link }
+// `soloists` is read and RESOLVED BY NOTHING, deliberately — ADR-0006's
+// "the Credit is the render path" amendment (2026-09-08). The links are the
+// relational record; `credits` is what a page prints. `character` is absent for
+// the same reason: it holds `Isolde` alone, on 1 of 866 items, and that item's
+// Credit string already says so.
+type ProgramItemFields = {
+  label: string
+  order: number
+  work: Link
+  soloists: Link[]
+  credits: string[]
+  conductor: Link
+}
 type WorkFields = {
   title: string
   slug: string
@@ -140,6 +152,27 @@ export type ProgramEntry = {
   conductorName: string | null
   /** True when the item carried its own conductor rather than inheriting one. */
   conductorIsOwn: boolean
+  /**
+   * Who was billed on this item, verbatim and in the printed order.
+   *
+   * AWK-68. The strings, never the `soloists` links: measured across the parser's
+   * 807 items, `credits` is a strict superset — 0 items carry a link with no
+   * credit — so the strings lose nothing and the sweep resolves neither `soloist`
+   * nor `ensemble`. `'Grace Choral Society of Brooklyn'` is already what that
+   * Ensemble should render as, so no reader branches on content type.
+   *
+   * UNSORTED, and that is the rule rather than an omission. `'3 Genii:'` is a
+   * group heading for the three names beneath it and
+   * `'-Ambassador of The Netherlands'` continues the line above it; either one
+   * reordered is nonsense.
+   *
+   * Empty array when the item has none — 306 of the 429 published
+   * (concert, item) pairs, measured 2026-09-12 — so no caller distinguishes two
+   * kinds of absence. NOT the 256-of-404 figure ADR-0006 uses for the soloist
+   * facet: that counts items with no soloist LINK, and AWK-68 is the ticket that
+   * proved the two do not coincide.
+   */
+  credits: string[]
 }
 
 export type Concert = {
@@ -188,7 +221,14 @@ export type Concert = {
  * ABBREVIATION where one is set — a work page renders it in a narrow column, and
  * `BSO` is the whole of `Brooklyn Symphony Orchestra` in a sixth of the width.
  */
-export type Performance = { date: string; slug: string; orchestra: string | null; conductor: string | null }
+export type Performance = {
+  date: string
+  slug: string
+  orchestra: string | null
+  conductor: string | null
+  /** The item's Credits — see ProgramEntry. Empty array, never null. */
+  credits: string[]
+}
 
 export type Work = {
   id: string
@@ -664,6 +704,11 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
       // app/lib/invariants.ts, not a second field here.
       const ownConductor = name(conductorById.get(linkId(item.fields.conductor) ?? ''))
 
+      // AWK-68. Passed through as stored — no sort, no filter, no resolution of
+      // the `soloists` links beside it. Empty rather than null, so the two pages
+      // that read this ask one question instead of two.
+      const credits = item.fields.credits ?? []
+
       if (workId !== null && work) {
         qualifyingWorks.add(workId)
         const list = performances.get(workId) ?? []
@@ -674,7 +719,10 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
         if (!list.some((p) => p.date === date)) {
           // The ITEM's conductor, not the concert's: a work page names who
           // conducted that work, which on a split concert is the finer answer.
-          list.push({ date, slug: date, orchestra, conductor: ownConductor ?? conductor })
+          // The credits of the row that wins this rule, not of every row carrying
+          // the work. A concert listing it twice is one evening with one cast
+          // line, the same way it is one orchestra and one conductor.
+          list.push({ date, slug: date, orchestra, conductor: ownConductor ?? conductor, credits })
         }
         performances.set(workId, list)
       }
@@ -691,6 +739,7 @@ export async function sweep(config: ContentfulConfig): Promise<Archive> {
         arrangementType: work?.fields.arrangementType ?? null,
         conductorName: ownConductor ?? conductor,
         conductorIsOwn: ownConductor !== null,
+        credits,
       })
     }
 
