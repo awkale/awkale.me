@@ -5,7 +5,8 @@
     "",
     "Each entry under `addFields` is a VERBATIM Contentful field object, so the",
     "applier appends it as-is and never translates. Anything that is not a field",
-    "object lives at the group level, outside them.",
+    "object lives at the group level, outside them -- `helpText` is one such, and",
+    "why it is a map rather than a key inside a field object is set out below.",
     "",
     "ADDITIVE ONLY. Nothing here removes or retypes a field. The two destructive",
     "changes the spec calls for are deliberately absent:",
@@ -27,26 +28,54 @@
     "space against. A field belongs in exactly one of `addFields` or",
     "`pinnedFields`; archive-schema.test.ts asserts the two never overlap.",
     "",
-    "HELP TEXT CANNOT BE SET FROM HERE, and a field added by this pipeline ships",
-    "without any unless someone adds it afterwards. Contentful stores a field's",
-    "help text on the EDITOR INTERFACE, not on the content type:",
+    "HELP TEXT IS DECLARED HERE TOO (AWK-62), and it is the one thing in this",
+    "file that does not live on the content type. Contentful keeps it on the",
+    "EDITOR INTERFACE:",
     "",
-    "    /content_types/{id}                  <- this file, via migrate_schema.py",
-    "    /content_types/{id}/editor_interface <- controls[].settings.helpText",
+    "    /content_types/{id}                  <- `types`, via migrate_schema.py",
+    "    /content_types/{id}/editor_interface <- `helpText`, same script",
     "",
     "So the convention -- a field NAME is the label alone, and any explanation",
-    "goes in help text rather than in parentheses appended to the name -- is only",
-    "half enforceable here. The naming half is asserted in archive-schema.test.ts.",
-    "The help-text half is a manual step in the web app after the field lands.",
+    "goes in help text rather than in parentheses appended to the name -- is",
+    "enforceable in both halves now. archive-schema.test.ts asserts the naming",
+    "half and the declared texts; `migrate_schema.py --dry-run` asserts the space.",
     "",
-    "`season.orchestras` (AWK-59) is the field that found this: it was added with",
-    "a name and no help text, because nothing in this pipeline could give it one.",
+    "`helpText` IS A GROUP-LEVEL MAP keyed by field id, a sibling of `addFields`,",
+    "and never a key inside a field object. Three reasons, the first of which is",
+    "what decided it:",
+    "  * Half the fields carrying help text are not in `addFields` at all.",
+    "    `work.slug` is repurposed in place and appears only under `gated`, and",
+    "    `programItem.composer` and `programItem.credits` appear nowhere in this",
+    "    file. A key inside a field object can only carry help text for a field",
+    "    this pipeline creates.",
+    "  * A field object is sent to the Management API verbatim, so an unknown",
+    "    key would be refused or dropped.",
+    "  * `_differing_keys()` compares every key the spec sets against the live",
+    "    field, and a content type never holds `helpText` -- so every field",
+    "    carrying one would read as drift forever, on every run.",
     "",
-    "`programItem.conductor` (AWK-60) needs it more than any field here, because",
+    "IT IS ALSO THE ONE THING THE APPLIER CORRECTS RATHER THAN REPORTS. Everything",
+    "else here is additive: a field already present is left exactly as it is, so a",
+    "hand-edit in the web app survives. A help text that differs is OVERWRITTEN",
+    "with the text declared here, because this file is its source of truth --",
+    "AWK-62's third triage decision. The run prints the live text and the declared",
+    "text before it writes, and that is the only chance anyone gets to see what is",
+    "being replaced: Contentful records `updatedBy` as the token owner either way,",
+    "so a hand-edit is indistinguishable from a script write after the fact. A",
+    "field absent from this map is a field the applier does not manage, and",
+    "setting a text to empty is not in scope.",
+    "",
+    "`season.orchestras` (AWK-59) is the field that found the gap: it was added",
+    "with a name and no help text, because nothing in this pipeline could give it",
+    "one. It is declared here now, and its live control carries NO `widgetId` --",
+    "the applier merges into the controls the space returns rather than rebuilding",
+    "them, so it stays absent and the field keeps rendering as it does.",
+    "",
+    "`programItem.conductor` (AWK-60) needs one more than any field here, because",
     "LEAVING IT EMPTY MEANS SOMETHING: the item inherits `concert.conductor`. An",
     "empty reference field that carries a meaning is invisible in the web app, so",
     "the help text is the only place that rule can be read by the person entering",
-    "data. Set it by hand after the field lands."
+    "data. That is what makes this block load-bearing rather than decorative."
   ],
 
   "sources": {
@@ -216,7 +245,10 @@
           "disabled": false,
           "omitted": false
         }
-      ]
+      ],
+      "helpText": {
+        "slug": "Generated. Derived from the Filing name (sortName), so it reads surname-first: lloyd-webber-andrew. Run scripts/contentful/backfill_slugs.py — do not type one."
+      }
     },
 
     {
@@ -249,7 +281,12 @@
           "disabled": false,
           "omitted": false
         }
-      ]
+      ],
+      "helpText": {
+        "conductor": "Empty means this item inherits the Concert's Conductor. Set one only when this item had a different conductor. When any item on a concert carries one, the concert page shows a Conductor column and names a conductor on every row.",
+        "composer": "When no discrete work is named",
+        "credits": "Verbatim"
+      }
     },
 
     {
@@ -270,7 +307,10 @@
             "validations": [{ "linkContentType": ["orchestra"] }]
           }
         }
-      ]
+      ],
+      "helpText": {
+        "orchestras": "Which orchestra held this season. Two, in the order they held it, when a season straddles a renaming."
+      }
     },
 
     {
@@ -386,7 +426,10 @@
           "disabled": false,
           "omitted": false
         }
-      ]
+      ],
+      "helpText": {
+        "slug": "Generated. Derived from the title, plus the arranger's surname on an arrangement and a composer suffix where two composers share a title. Run scripts/contentful/backfill_slugs.py — do not type one."
+      }
     }
   ],
 

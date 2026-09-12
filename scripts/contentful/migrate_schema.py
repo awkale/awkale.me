@@ -30,6 +30,19 @@ Safety properties:
     field that pre-exists in the space — soloist.instrument — so the live shape
     can be compared with the repo's committed copy. A difference is reported as
     drift like any other and exits non-zero; nothing here changes it.
+  * ONE EXCEPTION TO "NEVER RESHAPED", AND IT IS HELP TEXT. The `helpText` maps
+    in archive-schema.json are declared state, and a live text that differs is
+    OVERWRITTEN rather than reported (AWK-62). Everything else here is additive
+    exactly so a hand-edit in the web app survives; help text is the one thing
+    the file owns outright, so a divergence is drift by definition rather than
+    an edit worth keeping. The run prints the live text AND the declared text
+    before it writes, because Contentful records `updatedBy` as the token owner
+    either way — there is no telling a hand-edit from a script write after the
+    fact, so that printout is the only chance anyone gets to see what goes.
+  * HELP TEXT IS NOT ON THE CONTENT TYPE. It lives on the editor interface,
+    /content_types/{id}/editor_interface, which is NOT published — so that
+    write has no activation step and cannot strand half-applied the way an
+    unactivated content type can.
   * Read-modify-write against X-Contentful-Version, so a concurrent edit in the
     web app loses the race loudly (409) rather than being silently overwritten.
 
@@ -489,6 +502,99 @@ def check_pinned(schema):
     return drift
 
 
+def reconcile_help_text(schema):
+    """Reconcile each group's `helpText` map against the live EDITOR INTERFACE.
+
+    THE ONE PLACE THIS SCRIPT OVERWRITES SOMETHING IT DID NOT WRITE. See the
+    exception in the module docstring: archive-schema.json owns help text
+    outright, so a live text that differs is corrected rather than reported.
+    Both texts are printed first, in full and as reprs, so trailing whitespace
+    and a swapped dash are visible; a count would hide exactly what is lost.
+
+    Alongside add_fields() and check_pinned(), never inside them — one adds,
+    one compares, this one reconciles — and AFTER add_fields(), because a field
+    added in the same run has no control until the type has been written.
+
+    MERGES INTO THE CONTROLS THE SPACE RETURNS, never rebuilds the list. A
+    control may legitimately carry no `widgetId` (season.orchestras is one) and
+    must keep it absent, and every other key under `settings` — the two
+    entryLinkEditor controls carry `showLinkEntityAction` and
+    `showCreateEntityAction` — has to survive untouched. The body is the
+    interface minus `sys`, for the same reason save() sends back what it read.
+
+    A field declared here but missing from the live type is drift and exits
+    non-zero. On a --dry-run that also describes a field this very run is about
+    to ADD: apply the fields first, then re-run, and the control will exist.
+
+    A field absent from the map is one this script does not manage. Setting a
+    text to empty is not expressible and is not in scope."""
+    changed = drift = 0
+    for group in schema["types"]:
+        want = group.get("helpText")
+        if not want:
+            continue
+        cid = group["id"]
+        ct = http("GET", f"/content_types/{cid}", ok404=True)
+        if ct is None:
+            sys.exit(f"content type {cid!r} does not exist in {SPACE}/{ENV}")
+        live_fields = {f["id"] for f in ct["fields"]}
+
+        interface = http("GET", f"/content_types/{cid}/editor_interface")
+        controls = interface.setdefault("controls", [])
+        by_field = {c["fieldId"]: c for c in controls}
+
+        print(f"\n{cid}  (help text: compared, and CORRECTED where it differs)")
+        pending = []
+        for fid, text in want.items():
+            if fid not in live_fields:
+                print(f"  ! {fid:<16} declared, but the live type has no such field")
+                drift += 1
+                continue
+            live = (by_field.get(fid, {}).get("settings") or {}).get("helpText")
+            if live == text:
+                print(f"  = {fid:<16} matches the spec ({len(text)} chars)")
+                continue
+            if live is None:
+                # Nothing is being replaced: the field carries no help text yet,
+                # so this is the `+` case the rest of the script uses for an
+                # addition. Reporting it as a replacement over `None` would
+                # describe a loss that is not happening.
+                print(f"  + {fid:<16} no help text yet; the declared text is set")
+                print(f"      declared: {text!r}")
+            else:
+                print(f"  ~ {fid:<16} differs; the declared text REPLACES the live one")
+                print(f"      live:     {live!r}")
+                print(f"      declared: {text!r}")
+            pending.append((fid, text))
+
+        if not pending:
+            continue
+        changed += len(pending)
+        if DRY:
+            continue
+
+        for fid, text in pending:
+            control = by_field.get(fid)
+            if control is None:
+                # A field can exist with no control of its own. Appending one
+                # carrying only `fieldId` and the text leaves the widget choice
+                # to Contentful's default, which is what it was rendering with.
+                control = {"fieldId": fid}
+                controls.append(control)
+            control.setdefault("settings", {})["helpText"] = text
+
+        body = {k: v for k, v in interface.items() if k != "sys"}
+        http(
+            "PUT",
+            f"/content_types/{cid}/editor_interface",
+            body,
+            {"X-Contentful-Version": str(interface["sys"]["version"])},
+        )
+        # No activate(): an editor interface is not published.
+        print(f"  -> wrote {len(pending)} help text(s) to {cid}'s editor interface")
+    return changed, drift
+
+
 def _items_in(field):
     """The `in` list under `items.validations`, or None. The field-level
     `validations` are deliberately not consulted: on an Array they hold `size`,
@@ -792,10 +898,16 @@ def main():
         run, gate_id = gates[asked[0]]
         changed, drift = run(gate_id), 0
     else:
+        schema = json.loads(SCHEMA.read_text())
         changed, drift = add_fields()
-        # Alongside the additions, not inside them: add_fields() adds, and this
-        # only compares. A gated step runs alone, so it skips this too.
-        drift += check_pinned(json.loads(SCHEMA.read_text()))
+        # Three steps, alongside each other and never inside each other:
+        # add_fields() adds, reconcile_help_text() corrects, check_pinned()
+        # only compares. A gated step runs alone, so it skips the last two.
+        # Help text comes after the additions because a field written in this
+        # same run has no editor-interface control until the type has been PUT.
+        text_changed, text_drift = reconcile_help_text(schema)
+        changed += text_changed
+        drift += text_drift + check_pinned(schema)
 
     print(f"\n{changed} change(s) {'pending' if DRY else 'applied'}"
           f" · {http.calls} API call(s)")
