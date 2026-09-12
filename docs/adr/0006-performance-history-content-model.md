@@ -432,6 +432,14 @@ why this one's help text is load-bearing rather than decorative.
 `archive-schema.json` cannot set help text — Contentful stores it on the editor
 interface — so it is a manual step, and the schema file's own `note` says so.
 
+> **Amended 2026-09-12.** "A manual step" no longer holds. `archive-schema.json`
+> now declares all six help texts the space carries and `migrate_schema.py`
+> writes them to the editor interface, under AWK-62. The sentence this qualifies
+> — that an empty field carrying a meaning makes its help text load-bearing — is
+> why that work was done. See
+> [the amendment](#amendment--help-text-is-declared-in-the-repo-2026-09-12) at
+> the foot of this record.
+
 ### Why not `credits`
 
 `programItem.credits` already holds 27 guest-choir conductors as
@@ -641,3 +649,56 @@ them is data, not rendering, and is
 rather than a display rule here. Neither reaches a page in any case: both sit on
 Concerts with `attended` unset, one of them dateless and the other from 1975, so
 the page-set rule already excludes them.
+
+## Amendment — help text is declared in the repo (2026-09-12)
+
+AWK-62. The conductor amendment above says `archive-schema.json` cannot set help
+text and that setting it is a manual step in the web app. That was true when it
+was written and is not true now: the file declares all six texts the space
+carries, and `migrate_schema.py` reconciles them against the live editor
+interface on every run.
+
+### What was actually wrong
+
+Not the mechanism — Contentful really does keep help text on
+`/content_types/{id}/editor_interface`, which the Delivery API does not serve, so
+`loadArchive()` cannot see it and no build invariant can assert it. ADR-0002
+still forbids a CMA token reaching CI, so that half is unchanged.
+
+What was wrong was concluding that nothing could therefore govern it. The
+applier already had the shape this needed — declare the desired state, diff it
+against the space, apply the difference — and it was being used for content-type
+fields only. Extending it to a second endpoint cost one function.
+
+The gap that argued for doing it: `programItem.conductor`'s text is the only
+place the inheritance rule is legible to the person entering data, and it lived
+in exactly one mutable place with nothing watching it. Deleting it in the web app
+failed no test and broke no build.
+
+### The shape
+
+* Six texts — `work.slug`, `composer.slug`, `programItem.conductor`,
+  `programItem.composer`, `programItem.credits`, `season.orchestras` — declared
+  as a `helpText` map at the type-group level, a sibling of `addFields`.
+* **Not a key inside a field object**, which is the shape that suggests itself
+  and does not work: three of the six fields are not in `addFields` at all,
+  a field object is sent to the Management API verbatim, and the applier's drift
+  check would report a permanent difference on every field carrying one.
+* `archive-schema.test.ts` asserts the file — the six keys and no others, and
+  that the conductor text states what empty means. `--dry-run` asserts the
+  space. Neither implies the other, which is the same split `pinnedFields` uses.
+
+### The property this gives up
+
+`migrate_schema.py` is additive: a field already present is left exactly as it
+is, so a hand-edit in the web app survives a run. **Help text is now the one
+exception** — a live text that differs from the declaration is overwritten. That
+is the point of making the file the source of truth, and it is recorded in the
+script's own docstring rather than only here.
+
+It is safe to give up because help text is documentation of a rule decided in
+this repo, not data. It is not safe to give up silently, so the run prints the
+live text and the declared text before replacing one with the other: Contentful
+records `updatedBy` as the token owner whether a person or a script wrote it, so
+after the fact there is no telling the two apart, and that printout is the only
+chance anyone gets to see what is about to go.
