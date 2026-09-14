@@ -170,6 +170,14 @@ describe('archive-schema.json', () => {
       // additive and never reshapes an existing field, so a value reaches
       // Contentful only via a hand edit in the web app, and the two can disagree
       // in either direction with nothing to catch it.
+      //
+      // ORDER IS THE LIVE DROPDOWN'S, NOT ALPHABETICAL, since AWK-62. The two had
+      // silently diverged — same 35 values, AWK-65's ten appended at the end in
+      // the space and sorted in here — and `--dry-run` reported `work.forms` as
+      // drift on every run, because it compares `items` whole. The file moved,
+      // because the applier cannot reshape a live field and because the sequence
+      // IS the editor's dropdown (the same argument AWK-74 made for
+      // soloist.instrument). Re-sorting this would re-open the drift.
       expect(inList(forms)).toEqual([
         'Aria',
         'Ballet',
@@ -179,33 +187,33 @@ describe('archive-schema.json', () => {
         'Concerto',
         'Concerto Grosso',
         'Dance',
-        'Essay',
         'Excerpt',
         'Fantasia',
         'Film music',
-        'Fugue',
-        'Hymn',
-        'Intermezzo',
         'March',
         'Mass',
-        'Melodrama',
         'Oratorio',
         'Overture',
-        'Pavane',
-        'Poem',
-        'Polka',
         'Prelude',
         'Rhapsody',
-        'Romance',
         'Serenade',
         'Sonata',
         'Song cycle',
         'Suite',
         'Symphony',
-        'Tango',
         'Tone Poem',
         'Variations',
         'Waltz',
+        'Essay',
+        'Fugue',
+        'Intermezzo',
+        'Pavane',
+        'Poem',
+        'Polka',
+        'Romance',
+        'Tango',
+        'Melodrama',
+        'Hymn',
       ])
     })
 
