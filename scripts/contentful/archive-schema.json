@@ -322,7 +322,7 @@
         }
       ],
       "helpText": {
-        "orchestras": "Which orchestra held this season. Two, in the order they held it, when a season straddles a renaming."
+        "orchestras": "The orchestra that held this season — usually one. When a renaming split the season between two, name both, earliest first."
       }
     },
 
