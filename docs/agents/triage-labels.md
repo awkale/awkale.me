@@ -31,6 +31,6 @@ Two things to remember when applying them, both detailed in `issue-tracker.md`:
 
 - **`save_issue`'s `labels` parameter replaces the whole set.** Read the current
   labels first, then write the complete new array.
-- **Each label has a paired workflow state** (`needs-triage` → `Backlog`,
+- **Each label has a paired workflow state** (`needs-triage` → `Triage`,
   `wontfix` → `Canceled`, and so on). Labels are the source of truth the skills
   read; set the state alongside so the Linear UI stays meaningful.

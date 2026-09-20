@@ -70,7 +70,7 @@ the workflow state in sync so the Linear UI stays honest.
 
 | Triage label | Linear state | Note |
 | --- | --- | --- |
-| `needs-triage` | `Backlog` | Linear's Triage inbox is **not enabled** on this team, so `Backlog` is the home for untriaged work. If Triage is enabled later, move this to `Triage` and update this row. |
+| `needs-triage` | `Triage` | Linear's Triage inbox. Untriaged work lives here, not in `Backlog`. |
 | `needs-info` | `Backlog` | Blocked on a human reply; not actionable. |
 | `ready-for-agent` | `Todo` | Fully specified, an AFK agent can pick it up. |
 | `ready-for-human` | `Todo` | Specified, needs human hands. |
@@ -88,6 +88,19 @@ with `parent: "triage"`.
 `state` accepts a state **type**, name, or ID. Prefer names from the table —
 this team has two `started`-type states (`In Progress`, `In Review`), so
 passing the bare type `"started"` is ambiguous.
+
+### The states the table doesn't write
+
+`list_issue_statuses` returns eight states. The mapping above covers the four a
+triage label writes (`Triage`, `Backlog`, `Todo`, `Canceled`); the rest are set
+by the work itself, and no triage label pairs with them.
+
+| Linear state | Type | Set when |
+| --- | --- | --- |
+| `In Progress` | `started` | Claimed — see the wayfinding section below. |
+| `In Review` | `started` | The work is up for review. |
+| `Done` | `completed` | Closed as finished. Not for `wontfix` — that's `Canceled`. |
+| `Duplicate` | `duplicate` | Closed as a duplicate; set `duplicateOf` alongside it. `duplicate` is its own state type, not a flavour of `canceled`. |
 
 ## Priority
 
@@ -128,9 +141,10 @@ fallbacks needed.
 - **Frontier query**: `list_issues` with `parentId: "<map>"`,
   `includeArchived: false`, and
   `fields: ["id", "title", "status", "statusType", "labels", "assignee"]`.
-  Drop anything with a `completed`/`canceled` `statusType`, anything already
-  `In Progress`, and anything with an unfinished blocker (check each candidate
-  with `get_issue` + `includeRelations: true`). First in sub-issue order wins.
+  Drop anything with a `completed`/`canceled`/`duplicate`/`triage`
+  `statusType`, anything already `In Progress` or `In Review`, and anything
+  with an unfinished blocker (check each candidate with `get_issue` +
+  `includeRelations: true`). First in sub-issue order wins.
 - **Claim**: `save_issue` with `id` and `state: "In Progress"` — the session's
   first write.
 
@@ -147,10 +161,12 @@ So the claim is the **workflow state**, and assignee stays what it naturally is
 
 | State | Frontier meaning |
 | --- | --- |
+| `Triage` | untriaged; off the frontier until a triage label is applied |
 | `Backlog` | has an unfinished blocker; not takeable |
 | `Todo` | unblocked and unclaimed — **this is the frontier** |
 | `In Progress` | claimed, or a human task underway |
-| `Done` / `Canceled` | closed, off the frontier |
+| `In Review` | claimed; the work is up for review |
+| `Done` / `Canceled` / `Duplicate` | closed, off the frontier |
 
 This also expresses something assignee could not: assignee is binary, but state
 separates **blocked** from **merely unclaimed**, which is exactly the
