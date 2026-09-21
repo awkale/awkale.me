@@ -74,7 +74,14 @@
       "and `afterMigration` holds the second: a completed run legitimately reports",
       "0 in scope and 12 archive-wide. Without that, a re-run of a migration that",
       "has already succeeded aborts on its own past work, which is exactly the",
-      "false alarm that teaches an operator to reach for --force."
+      "false alarm that teaches an operator to reach for --force.",
+      "",
+      "AWK-90, 2026-09-21: these five numbers are NOT to be refreshed. They record",
+      "the archive as this migration found it on 2026-08-19. The re-derivation the",
+      "paragraph above calls for is gated on deleting 25 records -- a delete that",
+      "has already happened, so there is nothing left to gate. `afterAwk23` below",
+      "owns that finding and carries the drifted counts; read it before treating",
+      "an abort here as work to do."
     ],
     "inScopeConcerts": 127,
     "inScopeProgramItems": 384,
