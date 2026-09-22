@@ -9,12 +9,12 @@
     "transitional composers under both, and `composer.period` is a single",
     "Symbol, so those are settled by hand in `composerPeriods`."
   ],
-  "harvestedAt": "2026-09-07",
+  "harvestedAt": "2026-09-22",
   "counts": {
     "worksInScope": 359,
     "composersInScope": 159,
-    "composersMatched": 117,
-    "composersWithOneEra": 112,
+    "composersMatched": 118,
+    "composersWithOneEra": 113,
     "composersWithSeveralEras": [
       "Hindemith, Paul",
       "Schubert, Franz",
@@ -22,9 +22,9 @@
       "Sibelius, Jean",
       "Strauss, Richard"
     ],
-    "composersUnmatched": 2,
-    "worksMatched": 121,
-    "worksWithHarvestedForms": 33
+    "composersUnmatched": 1,
+    "worksMatched": 122,
+    "worksWithHarvestedForms": 115
   },
   "composers": {
     "1fMmco9iSJOaiQpUxfUqG8": {
@@ -623,9 +623,9 @@
     },
     "cmp-moncayo-garcia-jose-pablo": {
       "sortName": "Moncayo Garcia, Jose Pablo",
-      "imslpPage": null,
-      "eras": [],
-      "canonicalName": null
+      "imslpPage": "Moncayo, José Pablo",
+      "eras": ["Early 20th century"],
+      "canonicalName": "Moncayo, José Pablo"
     },
     "cmp-mozart-wolfgang-amadeus": {
       "sortName": "Mozart, Wolfgang Amadeus",
@@ -986,14 +986,14 @@
     "1Cva2FLz9JFZZpXbirUj0C": {
       "title": "Violin Concerto in D Minor, Opus 47",
       "imslpPage": "Violin Concerto, Op.47 (Sibelius, Jean)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "1bekmLr5ElXHL4CsrZiEwF": {
       "title": "Piano Concerto No. 3 in C Minor",
       "imslpPage": "Piano Concerto No.3, Op.37 (Beethoven, Ludwig van)",
-      "styles": [],
-      "forms": []
+      "styles": ["Classical"],
+      "forms": ["Concerto"]
     },
     "1jF38x6cYrqEdw3npBVijA": {
       "title": "The William Tell Overture",
@@ -1016,8 +1016,8 @@
     "3cjJ7GQv5TRLyeFXhgZffH": {
       "title": "Rosen aus dem Süden",
       "imslpPage": "Rosen aus dem Süden, Op.388 (Strauss Jr., Johann)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Dance", "Waltz"]
     },
     "3dSEdscwQ5DP6GdWJwF87M": {
       "title": "Happy Hoedown",
@@ -1052,8 +1052,8 @@
     "5F837chIXNxZHPRLSJol9D": {
       "title": "Symphony No. 5 in B-flat Major",
       "imslpPage": "Symphony No.5, D.485 (Schubert, Franz)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "5YEj92lOrzdwen2auHp0JP": {
       "title": "Petite Overture",
@@ -1076,8 +1076,8 @@
     "7FdM6FH19h52lHS8EnFx1B": {
       "title": "Tzigane",
       "imslpPage": "Tzigane, M.76 (Ravel, Maurice)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Rhapsody"]
     },
     "7LcFfaOQJpSeO8OvHw7sCm": {
       "title": "Piano Concerto No. 10",
@@ -1094,8 +1094,8 @@
     "ThS0y701SHY16ofNcPmEW": {
       "title": "Symphony No. 5 in D Major",
       "imslpPage": "Symphony No.5 in D major (Vaughan Williams, Ralph)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Symphony"]
     },
     "X1UuIEiFfFl5Qr9WnnnVH": {
       "title": "Variations on a Hungarian Theme (\"Peacock\")",
@@ -1106,14 +1106,14 @@
     "ZP4k1djlvR7XeCAHhqKEQ": {
       "title": "Pomp and Circumstance March No. 1 in D Major, Opus 39",
       "imslpPage": "Pomp and Circumstance March No.1, Op.39 No.1 (Elgar, Edward)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["March"]
     },
     "wrk-a-carol-symphony-248c94": {
       "title": "A Carol Symphony",
       "imslpPage": "A Carol Symphony (Hely-Hutchinson, Victor)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Symphony"]
     },
     "wrk-a-child-of-our-time-189af2": {
       "title": "A Child of Our Time",
@@ -1280,7 +1280,7 @@
     "wrk-battle-hymn-of-the-republic": {
       "title": "Battle Hymn of the Republic",
       "imslpPage": "Battle Hymn of the Republic (Steffe, William)",
-      "styles": [],
+      "styles": ["Romantic"],
       "forms": []
     },
     "wrk-belshazzar-s-feast-e793e7": {
@@ -1304,8 +1304,8 @@
     "wrk-brandenburg-concerto-no-1-in-f-c174aa": {
       "title": "Brandenburg Concerto No. 1 in F Major",
       "imslpPage": "Brandenburg Concerto No.1 in F major, BWV 1046 (Bach, Johann Sebastian)",
-      "styles": [],
-      "forms": []
+      "styles": ["Baroque"],
+      "forms": ["Concerto"]
     },
     "wrk-brook-green-suite": {
       "title": "Brook Green Suite",
@@ -1352,8 +1352,8 @@
     "wrk-carmen-suite-no-2-32f913": {
       "title": "Carmen Suite No. 2",
       "imslpPage": "Carmen Suite No.2 (Bizet, Georges)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Suite"]
     },
     "wrk-carnival-overture-b8652b": {
       "title": "Carnival Overture",
@@ -1412,14 +1412,14 @@
     "wrk-christmas-eve-suite-1410ba": {
       "title": "Christmas Eve Suite",
       "imslpPage": "Christmas Eve (suite) (Rimsky-Korsakov, Nikolay)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Excerpt", "Suite"]
     },
     "wrk-clarinet-concerto-5d733a": {
       "title": "Clarinet Concerto",
       "imslpPage": "Clarinet Concerto, Op.31 (Finzi, Gerald)",
-      "styles": [],
-      "forms": []
+      "styles": ["Modern"],
+      "forms": ["Concerto"]
     },
     "wrk-clarinet-concerto-in-a-major-a95fdf": {
       "title": "Clarinet Concerto in A major, K. 622",
@@ -1442,8 +1442,8 @@
     "wrk-concert-waltz-no-2-in-f-major-ca0c50": {
       "title": "Concert Waltz No. 2 in F Major",
       "imslpPage": "Concert Waltz No.2, Op.51 (Glazunov, Aleksandr)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Dance", "Waltz"]
     },
     "wrk-concertino-for-trombone-and-orchestra": {
       "title": "Concertino, for trombone and orchestra",
@@ -1484,8 +1484,8 @@
     "wrk-concerto-for-violin-piano-and-3b5cb9": {
       "title": "Concerto for Violin, Piano and Strings",
       "imslpPage": "Concerto for Violin, Piano and Strings (Mendelssohn, Felix)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-concierto-de-aranjuez-b2315c": {
       "title": "Concierto de Aranjuez",
@@ -1508,8 +1508,8 @@
     "wrk-cuban-overture-0a0867": {
       "title": "Cuban Overture",
       "imslpPage": "Cuban Overture (Gershwin, George)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Dance", "Overture"]
     },
     "wrk-dance-of-the-seven-veils-from-d76fbe": {
       "title": "Dance of the Seven Veils, from Salome",
@@ -1526,8 +1526,8 @@
     "wrk-danzas-fantasticas-d73571": {
       "title": "Danzas Fantasticas",
       "imslpPage": "Danzas fantásticas, Op.22 (Turina, Joaquín)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Dance"]
     },
     "wrk-danzon-no-2-a544d0": {
       "title": "Danzon No. 2",
@@ -1544,8 +1544,8 @@
     "wrk-daphnis-et-chloe-suite-no-2-c2583e": {
       "title": "Daphnis et Chloe Suite No. 2",
       "imslpPage": "Daphnis et Chloé Suite No.2, M.57b (Ravel, Maurice)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Ballet", "Suite"]
     },
     "wrk-das-lied-von-der-erde-86e602": {
       "title": "Das Lied von der Erde",
@@ -1562,8 +1562,8 @@
     "wrk-der-rosenkavalier-suite-7c9459": {
       "title": "Der Rosenkavalier Suite",
       "imslpPage": "Der Rosenkavalier, suite, TrV 227d (Strauss, Richard)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Excerpt", "Suite"]
     },
     "wrk-divertimento-the-fairy-s-kiss-4b4e6c": {
       "title": "Divertimento, The Fairy's Kiss Suite",
@@ -1640,13 +1640,13 @@
     "wrk-festive-overture-814ca6": {
       "title": "Festive Overture",
       "imslpPage": "Festive Overture, Op.96 (Shostakovich, Dmitry)",
-      "styles": [],
-      "forms": []
+      "styles": ["Modern"],
+      "forms": ["Overture"]
     },
     "wrk-fiddle-faddle": {
       "title": "Fiddle Faddle",
       "imslpPage": "Fiddle Faddle (Anderson, Leroy)",
-      "styles": [],
+      "styles": ["Early 20th century"],
       "forms": []
     },
     "wrk-first-essay-5f6ea3": {
@@ -1664,8 +1664,8 @@
     "wrk-flute-concerto-in-d-major-d203c7": {
       "title": "Flute Concerto in D Major",
       "imslpPage": "Flute Concerto, Op.283 (Reinecke, Carl)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-fountains-of-rome-1afa0e": {
       "title": "Fountains of Rome",
@@ -1700,14 +1700,14 @@
     "wrk-hary-janos-suite-7fade5": {
       "title": "Hary Janos Suite",
       "imslpPage": "Háry János (suite) (Kodály, Zoltán)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Suite"]
     },
     "wrk-horn-concerto-in-b-flat-major-f973ca": {
       "title": "Horn Concerto in B-flat Major",
       "imslpPage": "Horn Concerto, Op.91 (Glière, Reinhold)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-horn-concerto-no-1-in-e-flat-m-b1037f": {
       "title": "Horn Concerto No. 1 in E-flat Major",
@@ -1735,9 +1735,9 @@
     },
     "wrk-huapango-7422ba": {
       "title": "Huapango",
-      "imslpPage": null,
-      "styles": [],
-      "forms": []
+      "imslpPage": "Huapango (Moncayo, José Pablo)",
+      "styles": ["Early 20th century"],
+      "forms": ["Dance"]
     },
     "wrk-hummingbirds-for-orchestra-wor-d97c31": {
       "title": "Hummingbirds for Orchestra",
@@ -1772,8 +1772,8 @@
     "wrk-imperial-march": {
       "title": "Imperial March",
       "imslpPage": "Imperial March, Op.32 (Elgar, Edward)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["March"]
     },
     "wrk-introduction-and-rondo-capriccioso": {
       "title": "Introduction and Rondo Capriccioso",
@@ -1856,8 +1856,8 @@
     "wrk-les-preludes-d-apres-lamartine-2a1468": {
       "title": "Les Preludes (d'apres Lamartine)",
       "imslpPage": "Les préludes, S.97 (Liszt, Franz)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Tone Poem"]
     },
     "wrk-les-sylphides-ballet-suite-e0ae28": {
       "title": "Les Sylphides Ballet Suite",
@@ -1946,8 +1946,8 @@
     "wrk-nobilissima-visione-b3313c": {
       "title": "Nobilissima Visione",
       "imslpPage": "Nobilissima Visione (Hindemith, Paul)",
-      "styles": [],
-      "forms": []
+      "styles": ["Modern"],
+      "forms": ["Ballet"]
     },
     "wrk-norfolk-rhapsody-no-1-a75c93": {
       "title": "Norfolk Rhapsody No. 1",
@@ -2108,8 +2108,8 @@
     "wrk-parade-d31ba2": {
       "title": "Parade",
       "imslpPage": "Parade (Satie, Erik)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Ballet"]
     },
     "wrk-pavane-for-orchestra-f79d04": {
       "title": "Pavane for Orchestra",
@@ -2132,14 +2132,14 @@
     "wrk-perpetuum-mobile-5eeb0c": {
       "title": "Perpetuum Mobile",
       "imslpPage": "Perpetuum mobile, Op.257 (Strauss Jr., Johann)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Dance"]
     },
     "wrk-peter-and-the-wolf-6fd0cb": {
       "title": "Peter and the Wolf",
       "imslpPage": "Peter and the Wolf, Op.67 (Prokofiev, Sergey)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Tone Poem"]
     },
     "wrk-petite-suite-c2bd76": {
       "title": "Petite Suite",
@@ -2156,14 +2156,14 @@
     "wrk-piano-concerto-in-a-minor-99b742": {
       "title": "Piano Concerto in A Minor",
       "imslpPage": "Piano Concerto, Op.54 (Schumann, Robert)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-piano-concerto-in-a-minor-ca2d07": {
       "title": "Piano Concerto in A Minor",
       "imslpPage": "Piano Concerto, Op.16 (Grieg, Edvard)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-piano-concerto-no-1-in-b-flat-d48783": {
       "title": "Piano Concerto No. 1 in B-flat Minor",
@@ -2180,8 +2180,8 @@
     "wrk-piano-concerto-no-1-in-e-minor-850457": {
       "title": "Piano Concerto No. 1 in E Minor",
       "imslpPage": "Piano Concerto No.1, Op.11 (Chopin, Frédéric)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-piano-concerto-no-2-in-c-minor-dedeb8": {
       "title": "Piano Concerto No. 2 in C Minor",
@@ -2192,20 +2192,20 @@
     "wrk-piano-concerto-no-20-in-d-mino-9548f6": {
       "title": "Piano Concerto No. 20 in D Minor",
       "imslpPage": "Piano Concerto No.20 in D minor, K.466 (Mozart, Wolfgang Amadeus)",
-      "styles": [],
-      "forms": []
+      "styles": ["Classical"],
+      "forms": ["Concerto"]
     },
     "wrk-piano-concerto-no-4-in-g-minor-ca3644": {
       "title": "Piano Concerto No. 4 in G Minor",
       "imslpPage": "Piano Concerto No.4, Op.40 (Rachmaninoff, Sergei)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-piano-concerto-no-5-in-e-flat-82f96f": {
       "title": "Piano Concerto No. 5 in E-flat Major (\"Emperor\")",
       "imslpPage": "Piano Concerto No.5, Op.73 (Beethoven, Ludwig van)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-piano-quartet-in-g-minor-6ef24c": {
       "title": "Piano Quartet in G Minor",
@@ -2282,8 +2282,8 @@
     "wrk-rapsodie-espagnole-584920": {
       "title": "Rapsodie Espagnole",
       "imslpPage": "Rapsodie espagnole, M.54 (Ravel, Maurice)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Rhapsody"]
     },
     "wrk-redline-tango-6f46e6": {
       "title": "Redline Tango",
@@ -2294,8 +2294,8 @@
     "wrk-rhapsody-in-blue": {
       "title": "Rhapsody in Blue",
       "imslpPage": "Rhapsody in Blue (Gershwin, George)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Rhapsody"]
     },
     "wrk-ricercar-for-sonorous-instrume-ed9460": {
       "title": "Ricercar for Sonorous Instruments",
@@ -2360,13 +2360,13 @@
     "wrk-scheherazade-7b23e4": {
       "title": "Scheherazade",
       "imslpPage": "Scheherazade, Op.35 (Rimsky-Korsakov, Nikolay)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Suite"]
     },
     "wrk-sea-pictures-0fdd4c": {
       "title": "Sea Pictures",
       "imslpPage": "Sea Pictures, Op.37 (Elgar, Edward)",
-      "styles": [],
+      "styles": ["Romantic"],
       "forms": []
     },
     "wrk-selections-carmen-4f94b5": {
@@ -2414,8 +2414,8 @@
     "wrk-serenade-to-music-3646f2": {
       "title": "Serenade to Music",
       "imslpPage": "Serenade to Music (Vaughan Williams, Ralph)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Serenade"]
     },
     "wrk-sinfonia-concertante-for-4-win-a805b1": {
       "title": "Sinfonia Concertante for 4 Winds in E-flat Major",
@@ -2438,7 +2438,7 @@
     "wrk-sinfonietta-ae8e7c": {
       "title": "Sinfonietta",
       "imslpPage": "Sinfonietta (Janáček, Leoš)",
-      "styles": [],
+      "styles": ["Early 20th century"],
       "forms": []
     },
     "wrk-sinfonietta-for-string-orchest-6a7a52": {
@@ -2468,8 +2468,8 @@
     "wrk-songs-and-dances-of-death-b552b9": {
       "title": "Songs and Dances of Death",
       "imslpPage": "Songs and Dances of Death (Mussorgsky, Modest)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Dance"]
     },
     "wrk-southern-exposure-c49a53": {
       "title": "Southern Exposure",
@@ -2528,20 +2528,20 @@
     "wrk-suite-no-2-in-c-major-9aff9e": {
       "title": "Suite No. 2 in C Major",
       "imslpPage": "Suite No.2, Op.53 (Tchaikovsky, Pyotr)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Suite"]
     },
     "wrk-suite-no-4-in-g-major-mozartia-054ffb": {
       "title": "Suite No. 4 in G Major (\"Mozartiana\")",
       "imslpPage": "Suite No.4, Op.61 (Tchaikovsky, Pyotr)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Suite"]
     },
     "wrk-symphonic-dances-7e6195": {
       "title": "Symphonic Dances",
       "imslpPage": "Symphonic Dances, Op.45 (Rachmaninoff, Sergei)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Dance"]
     },
     "wrk-symphonic-dances-from-west-sid-9ffa7f": {
       "title": "Symphonic Dances, from West Side Story",
@@ -2582,8 +2582,8 @@
     "wrk-symphony-in-c-major-cf9331": {
       "title": "Symphony in C Major",
       "imslpPage": "Symphony in C major (Dukas, Paul)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-in-c-major-f36730": {
       "title": "Symphony in C Major",
@@ -2594,8 +2594,8 @@
     "wrk-symphony-in-d-minor-b515c4": {
       "title": "Symphony in D Minor",
       "imslpPage": "Symphony in D minor (Franck, César)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-in-f-major-the-cotswo-ebcd4d": {
       "title": "Symphony in F Major (\"The Cotswolds\")",
@@ -2618,14 +2618,14 @@
     "wrk-symphony-no-1-in-f-minor-13ad3e": {
       "title": "Symphony No. 1 in F Minor",
       "imslpPage": "Symphony No.1, Op.10 (Shostakovich, Dmitry)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-10-in-e-minor-08da51": {
       "title": "Symphony No. 10 in E Minor",
       "imslpPage": "Symphony No.10, Op.93 (Shostakovich, Dmitry)",
-      "styles": [],
-      "forms": []
+      "styles": ["Modern"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-104-in-d-major-lon-39c37a": {
       "title": "Symphony No. 104 In D Major (\"London\")",
@@ -2642,14 +2642,14 @@
     "wrk-symphony-no-2-in-b-minor-0f16d7": {
       "title": "Symphony No. 2 in B Minor",
       "imslpPage": "Symphony No.2 (Borodin, Aleksandr)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-2-in-d-major-005e31": {
       "title": "Symphony No. 2 in D Major",
       "imslpPage": "Symphony No.2, Op.43 (Sibelius, Jean)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-2-in-d-major-be1ace": {
       "title": "Symphony No. 2 in D Major",
@@ -2660,8 +2660,8 @@
     "wrk-symphony-no-2-in-e-minor-16692a": {
       "title": "Symphony No. 2 in E Minor",
       "imslpPage": "Symphony No.2, Op.27 (Rachmaninoff, Sergei)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-2-in-f-major-847589": {
       "title": "Symphony No. 2 in F Major",
@@ -2672,20 +2672,20 @@
     "wrk-symphony-no-3-in-a-minor-scott-27ddd0": {
       "title": "Symphony No. 3 in A Minor (\"Scottish\")",
       "imslpPage": "Symphony No.3, Op.56 (Mendelssohn, Felix)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-3-in-c-minor-organ-8117b5": {
       "title": "Symphony No. 3 in C Minor (\"Organ\")",
       "imslpPage": "Symphony No.3, Op.78 (Saint-Saëns, Camille)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-3-in-e-flat-major-4dabf8": {
       "title": "Symphony No. 3 in E-flat Major (\"Eroica\")",
       "imslpPage": "Symphony No.3, Op.55 (Beethoven, Ludwig van)",
       "styles": ["Classical"],
-      "forms": []
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-3-in-f-major-4ab5f4": {
       "title": "Symphony No. 3 in F Major",
@@ -2702,8 +2702,8 @@
     "wrk-symphony-no-4-in-a-major-itali-b32651": {
       "title": "Symphony No. 4 in A Major (\"Italian\")",
       "imslpPage": "Symphony No.4, Op.90 (Mendelssohn, Felix)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-4-in-b-flat-major-707fa7": {
       "title": "Symphony No. 4 in B-flat Major",
@@ -2714,8 +2714,8 @@
     "wrk-symphony-no-4-in-d-minor-1851-ae3a97": {
       "title": "Symphony No. 4 in D Minor (1851)",
       "imslpPage": "Symphony No.4, Op.120 (Schumann, Robert)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-4-in-d-minor-d457cd": {
       "title": "Symphony No. 4 in D Minor",
@@ -2726,14 +2726,14 @@
     "wrk-symphony-no-4-in-e-flat-major-2b96eb": {
       "title": "Symphony No. 4 in E-flat Major",
       "imslpPage": "Symphony No.4, Op.48 (Glazunov, Aleksandr)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-4-in-e-minor-f7ac03": {
       "title": "Symphony No. 4 in E Minor",
       "imslpPage": "Symphony No.4, Op.98 (Brahms, Johannes)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-41-in-c-major-jupi-0ced8e": {
       "title": "Symphony No. 41 in C Major (\"Jupiter\")",
@@ -2744,8 +2744,8 @@
     "wrk-symphony-no-5-in-b-flat-major-0b7c14": {
       "title": "Symphony No. 5 in B-flat Major",
       "imslpPage": "Symphony No.5, Op.100 (Prokofiev, Sergey)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-5-in-c-minor-f3d024": {
       "title": "Symphony No. 5 in C Minor",
@@ -2762,68 +2762,68 @@
     "wrk-symphony-no-5-in-d-major-refor-a77430": {
       "title": "Symphony No. 5 in D Major (\"Reformation\")",
       "imslpPage": "Symphony No.5, Op.107 (Mendelssohn, Felix)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-5-in-d-minor-a7204a": {
       "title": "Symphony No. 5 in D Minor",
       "imslpPage": "Symphony No.5, Op.47 (Shostakovich, Dmitry)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-5-in-e-flat-major-33d806": {
       "title": "Symphony No. 5 in E-flat Major",
       "imslpPage": "Symphony No.5, Op.82 (Sibelius, Jean)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-5-in-e-minor-fbf72f": {
       "title": "Symphony No. 5 in E Minor",
       "imslpPage": "Symphony No.5, Op.64 (Tchaikovsky, Pyotr)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-6-in-b-minor-pathe-966199": {
       "title": "Symphony No. 6 in B Minor (\"Pathetique\")",
       "imslpPage": "Symphony No.6, Op.74 (Tchaikovsky, Pyotr)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-6-in-d-major-f97e17": {
       "title": "Symphony No. 6 in D Major",
       "imslpPage": "Symphony No.6, Op.60 (Dvořák, Antonín)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-6-in-f-major-pasto-be45eb": {
       "title": "Symphony No. 6 in F Major (\"Pastoral\")",
       "imslpPage": "Symphony No.6, Op.68 (Beethoven, Ludwig van)",
       "styles": ["Classical"],
-      "forms": []
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-7-in-a-major-75ecbc": {
       "title": "Symphony No. 7 in A Major",
       "imslpPage": "Symphony No.7, Op.92 (Beethoven, Ludwig van)",
-      "styles": [],
-      "forms": []
+      "styles": ["Classical"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-7-in-d-minor-1ae1d1": {
       "title": "Symphony No. 7 in D Minor",
       "imslpPage": "Symphony No.7, Op.70 (Dvořák, Antonín)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-8-in-f-major-471b0d": {
       "title": "Symphony No. 8 in F Major",
       "imslpPage": "Symphony No.8, Op.93 (Beethoven, Ludwig van)",
-      "styles": [],
-      "forms": []
+      "styles": ["Classical"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-8-in-g-major-0dcd5d": {
       "title": "Symphony No. 8. in G Major",
       "imslpPage": "Symphony No.8, Op.88 (Dvořák, Antonín)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-9-in-d-minor-chora-124d49": {
       "title": "Symphony No. 9 in D Minor (\"Choral\")",
@@ -2834,14 +2834,14 @@
     "wrk-symphony-no-9-in-e-flat-major-975280": {
       "title": "Symphony No. 9 in E-flat Major",
       "imslpPage": "Symphony No.9, Op.70 (Shostakovich, Dmitry)",
-      "styles": [],
-      "forms": []
+      "styles": ["Modern"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-9-in-e-minor-from-10cec6": {
       "title": "Symphony No. 9 in E Minor (\"From the New World\")",
       "imslpPage": "Symphony No.9, Op.95 (Dvořák, Antonín)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Symphony"]
     },
     "wrk-symphony-no-94-in-g-major-surp-925fa1": {
       "title": "Symphony No. 94 in G Major (\"Surprise\")",
@@ -2906,8 +2906,8 @@
     "wrk-the-firebird-suite-1919-84f2ad": {
       "title": "The Firebird Suite (1919)",
       "imslpPage": "The Firebird (suite), K010 (Stravinsky, Igor)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Suite"]
     },
     "wrk-the-hebrides-overture-8c387c": {
       "title": "The Hebrides Overture",
@@ -2918,7 +2918,7 @@
     "wrk-the-lark-ascending-cd5f4e": {
       "title": "The Lark Ascending",
       "imslpPage": "The Lark Ascending (Vaughan Williams, Ralph)",
-      "styles": [],
+      "styles": ["Early 20th century"],
       "forms": []
     },
     "wrk-the-miraculous-manadrin-suite-86d4bb": {
@@ -2930,14 +2930,14 @@
     "wrk-the-nutcracker-suite-65bec1": {
       "title": "The Nutcracker Suite",
       "imslpPage": "The Nutcracker (suite), Op.71a (Tchaikovsky, Pyotr)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Ballet", "Suite"]
     },
     "wrk-the-nutcracker-suite-c5dabb": {
       "title": "The Nutcracker Suite",
       "imslpPage": "The Nutcracker (suite), Op.71a (Tchaikovsky, Pyotr)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Ballet", "Suite"]
     },
     "wrk-the-perfect-fool-ballet-b48e56": {
       "title": "The Perfect Fool Ballet",
@@ -3020,8 +3020,8 @@
     "wrk-trombone-concertino-in-b-flat-2bd1ab": {
       "title": "Trombone Concertino in B-flat Major",
       "imslpPage": "Trombone Concertino (Sachse, Ernst)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-trumpet-concerto-3da901": {
       "title": "Trumpet Concerto",
@@ -3044,26 +3044,26 @@
     "wrk-valses-nobles-et-sentimentales-51832b": {
       "title": "Valses Nobles et Sentimentales",
       "imslpPage": "Valses nobles et sentimentales, M.61 (Ravel, Maurice)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Dance", "Waltz"]
     },
     "wrk-variations-on-a-theme-by-haydn-297bd3": {
       "title": "Variations on a Theme by Haydn",
       "imslpPage": "Variations on a Theme by Haydn, Op.56 (Brahms, Johannes)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Variations"]
     },
     "wrk-variations-on-america-f29980": {
       "title": "Variations on \"America\"",
       "imslpPage": "Variations on 'America', S.140 (Ives, Charles)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Variations"]
     },
     "wrk-variations-on-an-original-them-741a3d": {
       "title": "Variations on an Original Theme, \"Enigma\"",
       "imslpPage": "Variations on an Original Theme 'Enigma', Op.36 (Elgar, Edward)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Variations"]
     },
     "wrk-ventanas-e3f856": {
       "title": "Ventanas",
@@ -3074,8 +3074,8 @@
     "wrk-viola-concerto-c4a31b": {
       "title": "Viola Concerto",
       "imslpPage": "Viola Concerto (Bartók, Béla)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Concerto"]
     },
     "wrk-violin-concerto-in-a-minor-mvt-0976ef": {
       "title": "Violin Concerto in A Minor, mvt I",
@@ -3092,8 +3092,8 @@
     "wrk-violin-concerto-in-d-major-3cbe5e": {
       "title": "Violin Concerto in D Major, Opus 35",
       "imslpPage": "Violin Concerto, Op.35 (Korngold, Erich Wolfgang)",
-      "styles": [],
-      "forms": []
+      "styles": ["Early 20th century"],
+      "forms": ["Concerto"]
     },
     "wrk-violin-concerto-in-d-major-df97b3": {
       "title": "Violin Concerto in D Major, Opus 35",
@@ -3104,8 +3104,8 @@
     "wrk-violin-concerto-in-e-minor-99f7c3": {
       "title": "Violin Concerto in E Minor",
       "imslpPage": "Violin Concerto, Op.64 (Mendelssohn, Felix)",
-      "styles": [],
-      "forms": []
+      "styles": ["Romantic"],
+      "forms": ["Concerto"]
     },
     "wrk-violin-concerto-no-5-in-a-majo-39368c": {
       "title": "Violin Concerto No. 5 in A Major",
@@ -3141,10 +3141,6 @@
   "unmatched": [
     {
       "sortName": "Diamond, David",
-      "candidates": []
-    },
-    {
-      "sortName": "Moncayo Garcia, Jose Pablo",
       "candidates": []
     }
   ]

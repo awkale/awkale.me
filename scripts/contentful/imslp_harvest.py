@@ -191,6 +191,66 @@ def _continue_token(payload, module, key):
     return payload.get("continue", {}).get(key)
 
 
+def fetch_categories(titles, batch, label):
+    """Read every category off each of `titles`, in batches, completely.
+
+    `cllimit` IS A BUDGET FOR THE WHOLE REQUEST, shared across every title in
+    it -- not a per-page cap, which is what the name suggests and what this
+    script assumed until AWK-87. One IMSLP work page carries up to ~150
+    categories, so a 20-title batch spends the 500 on its first three or four
+    pages and EVERY REMAINING PAGE COMES BACK WITH AN EMPTY LIST. Measured:
+    20 real work titles at `cllimit=500` returned 12 pages with nothing at all,
+    and `cllimit=max` returned exactly the same -- IMSLP caps at 500 either way.
+
+    That failure is invisible downstream, because a page whose categories were
+    never sent looks exactly like a page that has none. Which works got their
+    forms was therefore arbitrary, and it MOVED when the work list changed:
+    adding Huapango reordered every batch behind it and silently took the styles
+    and forms off eight unrelated works.
+
+    The continuation is the whole fix, and it was there all along -- under
+    `query-continue`, the legacy key `_continue_token` exists to read. The
+    ticket that found this bug reported "no continue token" because the modern
+    `continue` key is absent, which is the very trap that docstring documents.
+    Looping on `clcontinue` returns all 20 pages complete in two requests, and
+    is complete BY CONSTRUCTION rather than by calibration: a batch small enough
+    to fit today's largest page is a number that decays the moment the wiki
+    grows one.
+
+    TITLES ARE DEDUPED FIRST, because this accumulates where the two call sites
+    it replaced assigned. `fetch_eras` is handed `resolved.values()`, which is
+    NOT a set -- two archive names may resolve to one IMSLP page through
+    `composerAliases` -- and a repeat straddling a batch boundary would collect
+    that page twice, turning one era into `[Romantic, Romantic]` and planning a
+    composer nobody can give a period to. Stage 3 dedupes for its own reasons;
+    this does it here so no caller has to remember.
+
+    Returns title -> {"categories": [...], "missing": bool}.
+    """
+    titles = list(dict.fromkeys(titles))
+    found = {}
+    for offset in range(0, len(titles), batch):
+        chunk = titles[offset : offset + batch]
+        token = None
+        while True:
+            query = dict(prop="categories", cllimit=500, titles="|".join(chunk))
+            if token:
+                query["clcontinue"] = token
+            payload = api(**query)
+            for page in payload.get("query", {}).get("pages", {}).values():
+                record = found.setdefault(page["title"], {"categories": [], "missing": "missing" in page})
+                record["categories"] += [c["title"][len("Category:"):] for c in page.get("categories", [])]
+            token = _continue_token(payload, "categories", "clcontinue")
+            # Per REQUEST rather than per batch: a batch is several requests now,
+            # and IMSLP is a volunteer wiki that rate-limits by mood.
+            time.sleep(0.2)
+            if not token:
+                break
+        sys.stderr.write(f"\r  {label}: {len(found)}/{len(titles)}")
+    sys.stderr.write("\n")
+    return found
+
+
 # --------------------------------------------------------------------------
 # Cache
 # --------------------------------------------------------------------------
@@ -346,24 +406,18 @@ def match_composers(archive, composer_ids, index, aliases):
 
 
 def fetch_eras(page_names):
-    """Read `People from the X era` off each matched composer page."""
-    eras = {}
+    """Read `People from the X era` off each matched composer page.
+
+    A composer page carries ~10 categories against a work page's ~150, so this
+    stage was not yet truncating when AWK-87 found the bug in stage 4 -- 421 of
+    the 500 at 40 titles a batch, which is 15% of headroom and not a design.
+    It goes through the same paginating helper, so the margin stops mattering.
+    """
     titles = [f"Category:{name}" for name in page_names]
-    for offset in range(0, len(titles), 40):
-        payload = api(prop="categories", cllimit=500, titles="|".join(titles[offset : offset + 40]))
-        for page in payload.get("query", {}).get("pages", {}).values():
-            found = []
-            for category in page.get("categories", []):
-                match = ERA_CATEGORY.match(category["title"][len("Category:"):])
-                if match:
-                    found.append(match.group(1))
-            eras[page["title"][len("Category:"):]] = {
-                "eras": sorted(found),
-                "missing": "missing" in page,
-            }
-        sys.stderr.write(f"\r  eras: {len(eras)}/{len(titles)}")
-        time.sleep(0.2)
-    sys.stderr.write("\n")
+    eras = {}
+    for title, record in fetch_categories(titles, 40, "eras").items():
+        found = [m.group(1) for m in (ERA_CATEGORY.match(c) for c in record["categories"]) if m]
+        eras[title[len("Category:"):]] = {"eras": sorted(found), "missing": record["missing"]}
     return eras
 
 
@@ -420,15 +474,11 @@ def title_key(title):
 
 
 def fetch_work_categories(titles):
-    categories = {}
-    for offset in range(0, len(titles), 20):
-        payload = api(prop="categories", cllimit=500, titles="|".join(titles[offset : offset + 20]))
-        for page in payload.get("query", {}).get("pages", {}).values():
-            categories[page["title"]] = [c["title"][len("Category:"):] for c in page.get("categories", [])]
-        sys.stderr.write(f"\r  work categories: {len(categories)}/{len(titles)}")
-        time.sleep(0.2)
-    sys.stderr.write("\n")
-    return categories
+    """Every category on each matched work page, which is where the forms are."""
+    return {
+        title: record["categories"]
+        for title, record in fetch_categories(titles, 20, "work categories").items()
+    }
 
 
 # --------------------------------------------------------------------------

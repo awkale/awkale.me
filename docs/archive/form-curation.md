@@ -1,4 +1,4 @@
-# Form curation — the 115 works nothing can answer for
+# Form curation — the 102 works nothing can answer for
 
 Generated under AWK-37 from the live space, and regenerated under AWK-64, which
 added five: the new Works of the three Tilles Center LIYO programs that no
@@ -28,7 +28,37 @@ and the applier writes it on the next `--apply` with no judgement from anyone.
 That is the first time a row here has gone stale by being *answered* rather than
 by being curated — AWK-64's regeneration checked for exactly this and found
 none — and it is worth expecting again, because the wiki churns in both
-directions: the same re-harvest withdrew Tzigane's `Rhapsody`.
+directions: the same re-harvest withdrew Tzigane's `Rhapsody`. **That reading
+was wrong, and AWK-87 corrects it below** — the wiki had not moved at all.
+
+Corrected again under AWK-87 (2026-09-22), which **removed thirteen rows** and
+took the list from 115 to 102. None of them was curated away; all thirteen were
+answered by IMSLP, which had been answering for them all along. `imslp_harvest.py`
+asked for 20 work pages per request under a `cllimit` it read as a per-page cap
+and which is in fact a budget for the whole request, so the first three or four
+pages spent it and every page behind them came back carrying no categories at
+all — silently, because a page whose categories were never sent looks exactly
+like a page that has none. Which works were affected depended on nothing but
+their position in a batch, and adding one work reordered every batch behind it.
+
+So the wiki never churned. Tzigane's `Rhapsody`, both Nutcracker Suites' `Ballet`
+and `Suite`, Parade's `Ballet` and the Haydn Variations' `Variations` are all on
+their pages today and were throughout; the re-harvest that appeared to withdraw
+them had simply stopped being lucky. The rows those corrections added stay
+declared, because a row that names what it depends on is right either way — but
+the reason recorded for adding them is not.
+
+The thirteen, with what the wiki says: Elgar's *Imperial March* and *Pomp and
+Circumstance No. 1* (`March`), Gershwin's *Rhapsody in Blue* and Ravel's
+*Rapsodie Espagnole* (`Rhapsody`), Hindemith's *Nobilissima Visione* (`Ballet`),
+Liszt's *Les Preludes* and Prokofiev's *Peter and the Wolf* (`Tone Poem`),
+Mussorgsky's *Songs and Dances of Death*, Rachmaninoff's *Symphonic Dances*,
+Strauss's *Perpetuum Mobile* and Moncayo's *Huapango* (`Dance`), Ravel's *Valses
+Nobles et Sentimentales* (`Dance`, `Waltz`) and Rimsky-Korsakov's *Scheherazade*
+(`Suite`). Across the whole harvest 87 works gained a style or a form and none
+lost one — 85 of them going from nothing at all to something, and two more that
+already carried a style gaining a form beside it. That is the coverage the bug
+had been quietly costing since AWK-37.
 
 **A reference, no longer the place you work** — nothing reads this file and the
 seed does not consult it, which was true before and still is. What changed under
@@ -40,22 +70,31 @@ as the readable index — composer, work, id in one place — but the row it
 describes lives in the JSON.
 
 **The backlog this table lists is closed.** Every one of the 115 has been ruled
-on — the 114 in two review rounds on 2026-09-07, and Huapango the same day. Of the 155 rows in
-`workForms`, **126 carry a form and 29 are** `settled` — looked at, and
+on — the 114 in two review rounds on 2026-09-07, and Huapango the same day. Of the 156 rows in
+`workForms`, **127 carry a form and 29 are** `settled` — looked at, and
 deliberately carrying none. **Nothing is blank and unsettled.** Twelve rows sat
 decided-but-unwritable for two days, because their forms were among the nine
 this file adds to `archive-schema.json` and the live Contentful `in` validation
 did not carry them yet; they went in on 2026-09-08 once that web-app edit
-landed.
+landed. The 156th row is AWK-87's and belongs to no backlog: *Danzas Fantasticas*
+holds `Fantasia` in the space, typed in the web app and declared nowhere, and the
+recovered page says `Dance` — not a superset, so the applier refused the field
+until the row named `Fantasia` itself.
 
 **Huapango joined this list and left it the same day.** AWK-57 declared the two
 Mexico 2020 tour Concerts — both attended, both programming it — so a Work that
 had existed since 2026-07-30 and sat out of scope, reachable only from the
-unattended 2000-12-16 BHO date, came into scope behind them. IMSLP holds no page
-for Moncayo, so nothing automatic could answer for it; it was curated by hand as
-`Dance`, a huapango being a Mexican folk dance form. That also makes it the third
-time a transcription has dragged an *existing* Work into scope rather than adding
-a new one.
+unattended 2000-12-16 BHO date, came into scope behind them. It was curated by
+hand as `Dance`, a huapango being a Mexican folk dance form. That also makes it
+the third time a transcription has dragged an *existing* Work into scope rather
+than adding a new one.
+
+The reason given for curating it by hand — that IMSLP holds no page for Moncayo —
+was false. The wiki files him as `Moncayo, José Pablo` against the archive's
+`Moncayo Garcia, Jose Pablo`, which no fold can bridge, and his `Huapango` page
+carries `Dances` — so the ruling Alex made by hand is the one the wiki would have
+made. It is the row's removal below, and the only one of the thirteen where the
+hand answer and the recovered one were already the same word.
 
 So a row appearing here no longer means "nobody has reached it". It means the
 work reached this list once, by the route described below. What the work carries
@@ -65,7 +104,7 @@ now is in the JSON, and `guards.workFormsFilled`, `workFormsSettled` and
 These are the works that end up with **zero** forms after every automatic route
 has run: the retired `genre` mapping, the IMSLP harvest, and the derived
 `Excerpt` rule. ADR-0007 is explicit that assigning them is taste rather than
-data entry — doing it is "inventing a category for *Boléro*", 115 times — and
+data entry — doing it is "inventing a category for *Boléro*", once for each row below — and
 equally explicit that **nothing in the spec is blocked on them**. Period carries
 the browse load and Form is permitted to stay incomplete, so a blank row is a
 decided state, not a defect. A work you look at and decide keeps no form takes
@@ -131,14 +170,11 @@ rather than dropped.
 | Dukas, Paul | The Sorcerer's Apprentice | `wrk-the-sorcerer-s-apprentice-f55d91` |
 | Earnest, John David | Southern Exposure | `wrk-southern-exposure-c49a53` |
 | Elgar, Edward | "Enigma" Variation No. 9, Nimrod | `wrk-enigma-variation-no-9-nimrod-08dbf4` |
-| Elgar, Edward | Imperial March | `wrk-imperial-march` |
-| Elgar, Edward | Pomp and Circumstance March No. 1 in D Major, Opus 39 | `ZP4k1djlvR7XeCAHhqKEQ` |
 | Elgar, Edward | Sea Pictures | `wrk-sea-pictures-0fdd4c` |
 | Falla, Manuel de | The Three-Cornered Hat | `wrk-the-three-cornered-hat-1b74f1` |
 | Faure, Gabriel | Pavane for Orchestra | `wrk-pavane-for-orchestra-f79d04` |
 | Frank, Gabriela Lena | Three Latin American Dances | `wrk-three-latin-american-dances-964215` |
 | Gershwin, George | Porgy and Bess: A Symphonic Picture | `wrk-porgy-and-bess-a-symphonic-pic-26550e` |
-| Gershwin, George | Rhapsody in Blue | `wrk-rhapsody-in-blue` |
 | Greenhoe, Eli | "Sojourn" for Chamber Orchestra | `wrk-sojourn-for-chamber-orchestra-e590c7` |
 | Greenhoe, Eli | Learning to Dance | `wrk-learning-to-dance-f76f89` |
 | Griffes, Charles | Poem for Flute and Orchestra | `wrk-poem-for-flute-and-orchestra-62bdc2` |
@@ -146,7 +182,6 @@ rather than dropped.
 | Gustavson, Mark | Hymn to the Vanished | `542oxPwDnDOCKEQ7pDIXJr` |
 | Handel, George Frideric | Overture to The Messiah | `wrk-overture-to-the-messiah` |
 | Haydn, Franz Joseph | The Creation | `wrk-the-creation-fd7c46` |
-| Hindemith, Paul | Nobilissima Visione | `wrk-nobilissima-visione-b3313c` |
 | Hindemith, Paul | Symphonic Metamorphosis on Themes of Carl Maria von Weber | `wrk-symphonic-metamorphosis-on-themes-of-carl-maria-von-weber` |
 | Holst, Gustav | Brook Green Suite | `wrk-brook-green-suite` |
 | Holst, Gustav | The Planets, 5 mvts | `wrk-the-planets-5-mvts-ce17cb` |
@@ -154,7 +189,6 @@ rather than dropped.
 | Kempton, Jeremy Niles | Ricercar for Sonorous Instruments | `wrk-ricercar-for-sonorous-instrume-ed9460` |
 | Kennan, Kent | Night Soliloquy | `wrk-night-soliloquy-507f8a` |
 | Liszt, Franz | Hungarian Rhapsody No. 1 | `wrk-hungarian-rhapsody-no-1` |
-| Liszt, Franz | Les Preludes (d'apres Lamartine) | `wrk-les-preludes-d-apres-lamartine-2a1468` |
 | Mackey, John | Redline Tango | `wrk-redline-tango-6f46e6` |
 | Mahler, Gustav | Das Lied von der Erde | `wrk-das-lied-von-der-erde-86e602` |
 | Mahler, Gustav | Kindertotenlieder | `wrk-kindertotenlieder-59801d` |
@@ -162,28 +196,21 @@ rather than dropped.
 | Marquez, Arturo | Danzon No. 2 | `wrk-danzon-no-2-a544d0` |
 | Marquez, Arturo | Danzon No. 4 | `wrk-danzon-no-4-e6645c` |
 | Minotto, Paul | The Persistence of Memory | `wrk-the-persistence-of-memory-a7a439` |
-| Moncayo Garcia, Jose Pablo | Huapango | `wrk-huapango-7422ba` |
 | Mozart, Wolfgang Amadeus | Andante in C Major | `wrk-andante-in-c-major-aa83cd` |
 | Mussorgsky, Modest | Pictures at an Exhibition | `wrk-pictures-at-an-exhibition-981048` |
-| Mussorgsky, Modest | Songs and Dances of Death | `wrk-songs-and-dances-of-death-b552b9` |
 | Ng, Ian | How Fair Thou Dost Shine | `wrk-how-fair-thou-dost-shine-180160` |
 | Piazzolla, Astor | Tangazo | `wrk-tangazo-7304a0` |
 | Price, Florence | String Quartet No. 2 in A Minor for String Orchestra, mvt II | `wrk-string-quartet-no-2-in-a-minor-30870f` |
-| Prokofiev, Sergei | Peter and the Wolf | `wrk-peter-and-the-wolf-6fd0cb` |
 | Puccini, Giacomo | Act I, Tosca | `wrk-act-i-tosca-a29b2e` |
 | Puccini, Giacomo | Messa a Quattro Voci | `wrk-messa-a-quattro-voci-602909` |
 | Purcell, Henry | Voluntary and March | `5EW1K5eENrxVd4NkjkeTOC` |
-| Rachmaninoff, Sergei | Symphonic Dances | `wrk-symphonic-dances-7e6195` |
 | Rastegar, Nicholas | Ode to Youth | `wrk-ode-to-youth-c4edd2` |
 | Ravel, Maurice | Le Tombeau de Couperin | `wrk-le-tombeau-de-couperin-4a9a87` |
-| Ravel, Maurice | Rapsodie Espagnole | `wrk-rapsodie-espagnole-584920` |
-| Ravel, Maurice | Valses Nobles et Sentimentales | `wrk-valses-nobles-et-sentimentales-51832b` |
 | Respighi, Ottorino | Ancient Airs and Dances, Suite No. 3 | `wrk-ancient-airs-and-dances-suite-no-3` |
 | Respighi, Ottorino | Fountains of Rome | `wrk-fountains-of-rome-1afa0e` |
 | Respighi, Ottorino | Pines of Rome | `wrk-pines-of-rome-262724` |
 | Revueltas, Silvestre | Sensemaya ("The Snake Killing Ritual") | `wrk-sensemaya-the-snake-killing-ri-4096c8` |
 | Revueltas, Silvestre | Ventanas | `wrk-ventanas-e3f856` |
-| Rimsky-Korsakov, Nikolai | Scheherazade | `wrk-scheherazade-7b23e4` |
 | Rodrigo, Joaquin | Concierto de Aranjuez | `wrk-concierto-de-aranjuez-b2315c` |
 | Rossini, Gioachino | Act I Finale, L'Italiana in Algeri | `wrk-act-i-finale-l-italiana-in-alg-ad9781` |
 | Saint-Saens, Camille | Introduction and Rondo Capriccioso | `wrk-introduction-and-rondo-capriccioso` |
@@ -192,7 +219,6 @@ rather than dropped.
 | Silverman, Eric | Windup | `wrk-windup-6fac65` |
 | Steffe, William | Battle Hymn of the Republic | `wrk-battle-hymn-of-the-republic` |
 | Stookey, Nathaniel | The Composer is Dead | `wrk-the-composer-is-dead-e0ea20` |
-| Strauss, Johann II | Perpetuum Mobile | `wrk-perpetuum-mobile-5eeb0c` |
 | Strauss, Josef | Spharenklange Waltzer ("Music of the Spheres") | `wrk-spharenklange-waltzer-music-of-29fe4d` |
 | Strauss, Richard | Death and Transfiguration | `wrk-death-and-transfiguration-9b791c` |
 | Strauss, Richard | Four Last Songs | `wrk-four-last-songs-5c975a` |

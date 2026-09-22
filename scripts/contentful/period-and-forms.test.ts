@@ -333,7 +333,7 @@ describe('the work curations address real rows', () => {
       decisions.guards.workFormsRows
     )
     // THERE IS NO RESIDUE. Every row in this file is either formed or settled:
-    // 126 carry a form, 29 record a considered decision to carry none, and the
+    // 127 carry a form, 29 record a considered decision to carry none, and the
     // backlog ADR-0007 opened — 104 works at AWK-37, 115 by the time it closed
     // — is empty. A blank-and-unsettled row appearing here again means a NEW
     // work entered scope, which is the only way one can now arise, and it is
@@ -363,20 +363,31 @@ describe('the work curations address real rows', () => {
     //
     // THE TWO NUTCRACKER SUITE ROWS ARE NO LONGER EXCEPTED. They used to be,
     // because their Ballet + Suite pair arrived through the harvest — and on
-    // 2026-09-07 IMSLP withdrew BOTH categories from the Nutcracker suite page,
-    // so the computed set fell to the row's bare `Ballet` while the space still
-    // held Suite. That is the AWK-80 conflict, arriving by a different route
-    // than the genre delete. Both rows now name the pair themselves and join
-    // the count, which is why it reads 16 rather than 14.
+    // 2026-09-07 the harvest read the Nutcracker suite page as carrying NEITHER
+    // category, so the computed set fell to the row's bare `Ballet` while the
+    // space still held Suite. That is the AWK-80 conflict, arriving by a
+    // different route than the genre delete. Both rows now name the pair
+    // themselves and join the count, which is why it reads 16 rather than 14.
+    //
+    // THE WIKI HAD NOT TOUCHED THE PAGE. AWK-87 found the cause on 2026-09-22:
+    // `cllimit` budgets a whole request rather than each page in it, so pages
+    // behind the first few in a batch came back empty, and adding Huapango
+    // reordered the batches. Both categories are on the page and always were.
+    // The rows stay anyway — declaring what a row depends on is right whether
+    // or not the source turned out to be volatile, which is AWK-80's point.
     const suites = ballets.filter(([, row]) => /Suite/.test(row.title))
     expect(suites).toHaveLength(16)
     for (const [id, row] of suites) expect(row.forms, `${id} lost the Suite half`).toContain('Suite')
   })
 
   it('settles Tzigane as a Rhapsody and not a Concerto (AWK-80)', () => {
-    // Ravel's own subtitle is `rapsodie de concert`. The harvest carried
-    // Rhapsody until the wiki withdrew it; Concerto was the hand-set genre.
-    // Declared here so the decision outlives the next re-harvest.
+    // Ravel's own subtitle is `rapsodie de concert`. Concerto was the hand-set
+    // genre. Declared here so the decision outlives the next re-harvest.
+    //
+    // AWK-80 recorded that the harvest carried Rhapsody "until the wiki
+    // withdrew it", and AWK-87 corrects that: the category never moved, the
+    // harvest was truncating its own requests, and Tzigane stopped being lucky.
+    // The declaration was right; its stated reason was not.
     expect(decisions.workForms['7FdM6FH19h52lHS8EnFx1B']).toEqual({ title: 'Tzigane', forms: ['Rhapsody'] })
   })
 
@@ -437,11 +448,50 @@ describe('the Excerpt rule reads titles rather than judging them', () => {
   )
 })
 
+describe('the harvest read whole pages, not the first few of each batch (AWK-87)', () => {
+  // THE BUG THIS CATCHES RETURNED EMPTY LISTS, NOT ERRORS. `cllimit` budgets a
+  // whole request rather than each page in it, so a 20-title batch spent its
+  // 500 categories on the first three or four pages and every page behind them
+  // came back carrying none — indistinguishable, downstream, from a page that
+  // genuinely has none. Which works were affected moved whenever the work list
+  // did, so the harvest's own numbers drifted on an unchanged corpus.
+  //
+  // Both assertions below held at 0 violations on 2026-09-22 and would have
+  // read 84 and 0 the day before. They are exact rather than thresholded on
+  // purpose: a page legitimately carrying no style is possible, and the right
+  // response is to record it here, not to leave slack the bug can hide in.
+
+  it('reads a style off every work page it matched', () => {
+    const matched = Object.values(harvest.works).filter((row) => row.imslpPage)
+    expect(matched).toHaveLength(harvest.counts.worksMatched as number)
+    const styleless = matched.filter((row) => row.styles.length === 0)
+    expect(styleless.map((row) => row.title)).toEqual([])
+  })
+
+  it('reads an era off every composer page it matched', () => {
+    // The same request shape, one stage earlier. This one was NOT truncating —
+    // a composer page carries ~10 categories against a work page's ~150, so 40
+    // titles spent 421 of the 500 — but 15% of headroom was luck rather than
+    // design, and it now goes through the same paginating helper.
+    const matched = Object.values(harvest.composers).filter((row) => row.imslpPage)
+    expect(matched).toHaveLength(harvest.counts.composersMatched as number)
+    expect(matched.filter((row) => row.eras.length === 0).map((row) => row.sortName)).toEqual([])
+  })
+})
+
 describe('the guards match what the harvest measured', () => {
   it('agrees with the harvest on scope', () => {
     expect(decisions.guards.worksInScope).toBe(harvest.counts.worksInScope)
     expect(decisions.guards.composersInScope).toBe(harvest.counts.composersInScope)
     expect(decisions.guards.composersMatchedToImslp).toBe(harvest.counts.composersMatched)
+  })
+
+  it('counts the hand periods it declares', () => {
+    // AWK-87 added this because the guard had gone stale unnoticed: deleting
+    // Moncayo's row took `composerPeriods` to 46 while the number still read
+    // 47. It was the ONE key in `guards` that nothing asserted and nothing
+    // read, which is exactly why it was the one that drifted.
+    expect(entries(decisions.composerPeriods)).toHaveLength(decisions.guards.composersWithHandPeriod)
   })
 
   it('leaves headroom above the writes it expects, and not much', () => {
