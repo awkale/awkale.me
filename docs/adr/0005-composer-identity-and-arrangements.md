@@ -340,11 +340,29 @@ including all four bare `(arr.)` records.
 > the guard working as designed, not a bug to patch out. And separately, this
 > record's cleanup lives only in Contentful: `parse_archive.py` still emits the
 > contaminated forms from the spreadsheet, so **a re-import would undo this
-> migration**. See AWK-58. All three auto-id canonical targets
-resolved correctly through cleaned `sortName`: Mahler `2xlZPpzsieUWQMguPlmRip`,
-Rossini `6jOSl95P8vp0ng2xvHFeTz`, R. Strauss `5b96GjJ5laY9p8n8cLz6Pi`. Exactly 25
-works linked the 25 targets, one each, with **no pre-tenure work and no
-`programItem` among them**, so all 25 deleted with zero inbound links.
+> migration**. See AWK-58.
+
+> **Amended 2026-09-22 (AWK-90).** The figure above is superseded. **128 was
+> correct on 2026-08-29 and is not the live count**: concerts transcribed and
+> entered by hand since took the in-scope slice to **140 concerts, 448 program
+> items and 395 works** by 2026-09-21, and it moves again with the next
+> transcription. `contaminatedArchiveWide` has drifted as well — AWK-79 merged
+> the Stokowski record by hand, leaving **11**, which matches neither the 37
+> before the migration nor the 12 after it. So `merge_composers.py` aborts on
+> **four** thresholds today, not the one the amendment above anticipated.
+>
+> The thresholds are **not** re-derived, and these figures stay as measured for
+> the reason the amendment above already gives. The migration is spent: a dry
+> run on 2026-09-21 built a plan of **0 creates, 0 relinks and 0 deletes**.
+> `merge-composers.json`'s `scopeGuard` now carries a dated note saying its five
+> numbers are not to be refreshed, so a reader who meets the abort is no longer
+> sent to re-derive a scope that gated a delete which has already run.
+
+All three auto-id canonical targets resolved correctly through cleaned
+`sortName`: Mahler `2xlZPpzsieUWQMguPlmRip`, Rossini `6jOSl95P8vp0ng2xvHFeTz`,
+R. Strauss `5b96GjJ5laY9p8n8cLz6Pi`. Exactly 25 works linked the 25 targets, one
+each, with **no pre-tenure work and no `programItem` among them**, so all 25
+deleted with zero inbound links.
 
 The build now publishes **147 composers**, which is
 [ADR-0008](0008-archive-slug-source.md)'s predicted figure reached from the other
