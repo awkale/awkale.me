@@ -1,0 +1,120 @@
+/* ===========================================================================
+   view-menu — the one control on an archive page that opens onto the view:
+   /concerts/'s two browse facets and its column set, and a composer page's
+   column set on its own.
+   ---------------------------------------------------------------------------
+   Same convention as facet-select, mode-toggle and site-search: semantic classes
+   consume local variables, and React Aria's own data attributes remap them. No
+   JS-driven classes.
+
+   WAS the `.facet-filters-*` block of facet-select.css until AWK-67. It moved
+   whole rather than being copied: the panel stopped being only about filters, so
+   the word on its face widened from `Filters` to `View`, and a composer page
+   needed the same shell — its first interactive control of any kind. What stayed
+   behind in facet-select.css is what is genuinely about the facets: the clear
+   control and the live region.
+
+   Attributes React Aria sets, and what they mean here:
+     [data-hovered]         pointer over the trigger
+     [data-pressed]         the trigger is being pressed
+     [data-focus-visible]   keyboard focus specifically
+   =========================================================================== */
+
+/* --- the row -------------------------------------------------------------- */
+/* On /concerts/ it holds the trigger and the status line; on a composer page the
+   trigger alone. `min-height` so the row does not change height when the live
+   region's text arrives one tick after hydration. */
+.view-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  min-height: 1.7rem;
+}
+
+.view-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.view-menu-trigger[data-hovered] {
+  background: var(--muted);
+}
+
+.view-menu-trigger[data-pressed] {
+  /* Momentary, so it reads as a press rather than a state change. */
+  transform: translateY(0.5px);
+}
+
+.view-menu-trigger[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* How many FILTER VALUES are applied — not how many facets, and NOT how many
+   columns are hidden. Below 40rem the column set hides columns by default, so a
+   badge counting those would light up on every phone load; hidden columns go in
+   the trigger's aria-label instead. See view-menu.tsx. Duplicated into that label,
+   because a badge alone is silent. */
+.view-menu-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  /* --primary-strong: the count is 0.68rem, and white on --primary is 3.76:1.
+     Being duplicated into the trigger's aria-label does NOT make it decorative —
+     a sighted reader with low vision reads this glyph, not the label. */
+  background: var(--primary-strong);
+  color: var(--primary-strong-foreground);
+  font-size: 0.68rem;
+}
+
+.view-menu-popover {
+  width: min(22rem, calc(100vw - 2 * var(--gutter)));
+  max-height: 70vh;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 45%);
+}
+
+.view-menu-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  /* `inherit` rather than a value of its own: the popover owns the height, and
+     the dialog scrolls inside whatever it is given. */
+  max-height: inherit;
+  overflow: auto;
+  padding: 0.9rem;
+  outline: none;
+}
+
+.view-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.view-menu-title {
+  margin: 0;
+  font-family: var(--face-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+}

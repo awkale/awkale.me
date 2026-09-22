@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { Concert } from '../lib/archive'
+import { CONCERT_COLUMNS } from '../lib/columns'
 import { DEFAULT_SORT } from '../lib/sorting'
 import { ConcertsTable } from './concerts-table'
 
@@ -59,7 +60,12 @@ function blanks() {
 function renderTable(concerts: Concert[], onSortChange = () => {}) {
   return render(
     <MemoryRouter>
-      <ConcertsTable concerts={concerts} sort={DEFAULT_SORT} onSortChange={onSortChange} />
+      <ConcertsTable
+        concerts={concerts}
+        columns={CONCERT_COLUMNS.all}
+        sort={DEFAULT_SORT}
+        onSortChange={onSortChange}
+      />
     </MemoryRouter>
   )
 }
@@ -207,7 +213,14 @@ describe('ConcertsTable — filtering down to nothing', () => {
     const Page = () => {
       const [mounted, setMounted] = useState(false)
       useEffect(() => setMounted(true), [])
-      return <ConcertsTable concerts={mounted ? [] : [concert()]} sort={DEFAULT_SORT} onSortChange={() => {}} />
+      return (
+        <ConcertsTable
+          concerts={mounted ? [] : [concert()]}
+          columns={CONCERT_COLUMNS.all}
+          sort={DEFAULT_SORT}
+          onSortChange={() => {}}
+        />
+      )
     }
 
     const markup = renderToStaticMarkup(
@@ -250,6 +263,7 @@ describe('ConcertsTable — filtering down to nothing', () => {
       <MemoryRouter>
         <ConcertsTable
           concerts={[concert(), concert({ id: 'cnc-2', slug: '2018-04-22', date: '2018-04-22' })]}
+          columns={CONCERT_COLUMNS.all}
           sort={DEFAULT_SORT}
           onSortChange={() => {}}
         />
@@ -259,7 +273,7 @@ describe('ConcertsTable — filtering down to nothing', () => {
 
     rerender(
       <MemoryRouter>
-        <ConcertsTable concerts={[]} sort={DEFAULT_SORT} onSortChange={() => {}} />
+        <ConcertsTable concerts={[]} columns={CONCERT_COLUMNS.all} sort={DEFAULT_SORT} onSortChange={() => {}} />
       </MemoryRouter>
     )
 
@@ -291,6 +305,7 @@ describe('ConcertsTable — sorting (AWK-71)', () => {
       <MemoryRouter>
         <ConcertsTable
           concerts={[concert()]}
+          columns={CONCERT_COLUMNS.all}
           sort={{ column: 'hall', direction: 'ascending' }}
           onSortChange={() => {}}
         />
@@ -339,6 +354,7 @@ describe('ConcertsTable — sorting (AWK-71)', () => {
       <MemoryRouter>
         <ConcertsTable
           concerts={[concert(), concert({ id: 'cnc-2', slug: '2018-04-22', date: '2018-04-22' })]}
+          columns={CONCERT_COLUMNS.all}
           sort={{ column: 'date', direction: 'ascending' }}
           onSortChange={() => {}}
         />
@@ -346,5 +362,122 @@ describe('ConcertsTable — sorting (AWK-71)', () => {
     )
 
     expect(screen.getAllByRole('rowheader').map((c) => c.textContent)).toEqual(['2012-03-15', '2018-04-22'])
+  })
+})
+
+describe('ConcertsTable — the column set (AWK-67)', () => {
+  afterEach(cleanup)
+
+  function renderColumns(columns: readonly (typeof CONCERT_COLUMNS.all)[number][]) {
+    return render(
+      <MemoryRouter>
+        <ConcertsTable concerts={[concert()]} columns={columns} sort={DEFAULT_SORT} onSortChange={() => {}} />
+      </MemoryRouter>
+    )
+  }
+
+  it('renders only the columns it is given, in the order it is given them', () => {
+    // The narrow default: Date + Programme. Which columns those are is
+    // app/lib/columns.ts's decision — this asserts the table honours it.
+    renderColumns(['date', 'programme'])
+
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Date↓', 'Programme'])
+  })
+
+  it('leaves a hidden column OUT OF THE COLLECTION rather than merely out of sight', () => {
+    // The acceptance criterion, and the reason this is not a CSS fix: a cell that
+    // is `display: none` still takes part in `table-layout: fixed`, still costs
+    // its minWidth, and is still read by a screen reader walking the grid.
+    renderColumns(['date', 'programme'])
+
+    expect(screen.queryByText('Nicholas Armstrong')).toBeNull()
+    expect(screen.queryByText('Walt Whitman Hall')).toBeNull()
+    expect(screen.getAllByRole('gridcell')).toHaveLength(1)
+  })
+
+  it('re-renders every cell correctly when a column is added back', () => {
+    // THE REGRESSION TEST FOR `dependencies` ON <TableBody>, and the ONE stable row
+    // object below is the whole test. React Aria caches the rendered <Row> ELEMENT
+    // against the row object, so when the columns change and the rows do not, the
+    // cache hits, the stale two-cell row is reused, and the `dependencies` written
+    // on that Row are never read. The header rebuilds to five columns over rows
+    // that still hold two cells, and RAC throws `Cell count must match column
+    // count` — measured on the built page at /concerts/, where React Router caught
+    // it and swapped the page for the error boundary.
+    //
+    // A fixture calling concert() again on the re-render passes against that broken
+    // code, because a fresh object misses the cache. That is the live shape this has
+    // to imitate: /concerts/ re-derives its array every render, but the Concerts
+    // inside it are the loader's and identical across renders.
+    const row = concert()
+    const { rerender } = render(
+      <MemoryRouter>
+        <ConcertsTable concerts={[row]} columns={['date', 'programme']} sort={DEFAULT_SORT} onSortChange={() => {}} />
+      </MemoryRouter>
+    )
+
+    rerender(
+      <MemoryRouter>
+        <ConcertsTable
+          concerts={[row]}
+          columns={['date', 'programme', 'orchestra', 'conductor', 'hall']}
+          sort={DEFAULT_SORT}
+          onSortChange={() => {}}
+        />
+      </MemoryRouter>
+    )
+
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual([
+      'Date↓',
+      'Programme',
+      'Orchestra',
+      'Conductor',
+      'Hall',
+    ])
+    expect(screen.getAllByRole('gridcell').map((c) => c.textContent)).toEqual([
+      'Symphony No. 5, Coriolan Overture',
+      'BSO',
+      'Nicholas Armstrong',
+      'Walt Whitman Hall',
+    ])
+  })
+
+  it('keeps the date a real link when every other column is hidden', () => {
+    // Why columns.ts refuses to hide this one: /concerts/ is the only page
+    // linking the concert pages, and React Aria's Row href is not adopted.
+    renderColumns(['date'])
+
+    expect(screen.getByRole('link', { name: '2012-03-15' }).getAttribute('href')).toBe('/concerts/2012-03-15/')
+  })
+
+  it('spans the empty state across the visible columns, not across all five', () => {
+    // The colSpan AWK-70 retired would have been wrong the moment a column was
+    // hidden. React Aria derives it from the collection, so it cannot be.
+    const { container } = render(
+      <MemoryRouter>
+        <ConcertsTable concerts={[]} columns={['date', 'programme']} sort={DEFAULT_SORT} onSortChange={() => {}} />
+      </MemoryRouter>
+    )
+
+    expect(container.querySelector('tbody td')?.getAttribute('colspan')).toBe('2')
+  })
+
+  it('still sorts by a column that is on screen', () => {
+    // The sort and the column set are independent keys in the same query string.
+    const onSortChange = vi.fn()
+    render(
+      <MemoryRouter>
+        <ConcertsTable
+          concerts={[concert()]}
+          columns={['date', 'programme']}
+          sort={DEFAULT_SORT}
+          onSortChange={onSortChange}
+        />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(columnHeader('Date'))
+
+    expect(onSortChange).toHaveBeenCalledWith({ column: 'date', direction: 'ascending' })
   })
 })

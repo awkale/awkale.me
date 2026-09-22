@@ -1,0 +1,97 @@
+/* ===========================================================================
+   column-select — AWK-67's Columns section inside the View popover, on
+   /concerts/ and on each of the 159 composer pages.
+   ---------------------------------------------------------------------------
+   Same convention as facet-select, mode-toggle and site-search: semantic classes
+   consume local variables, and React Aria's own data attributes remap them. No
+   JS-driven classes.
+
+   Attributes React Aria sets, and what they mean here:
+     [data-selected]        the column is on screen
+     [data-hovered]         pointer over the row
+     [data-focus-visible]   keyboard focus on the checkbox
+
+   The row-header column is not rendered at all rather than rendered disabled —
+   see column-select.tsx for why — so there is no [data-disabled] rule here, and
+   adding one would style a state nothing can reach.
+   =========================================================================== */
+
+.column-select {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* `.eyebrow` (app/app.css) owns the size, tracking and case, exactly as the facet
+   labels carry it, so the two sections of the popover head the same way. */
+.column-select-label {
+  color: var(--muted-foreground);
+}
+
+/* A wrapping row rather than a list: four or five short words fit two or three to
+   a line in a 22rem popover, and a column per line would make the section taller
+   than the facets above it for no gain. */
+.column-select-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.65rem;
+}
+
+.column-select-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  outline: none;
+}
+
+/* The box React Aria does not draw. `::after` carries the tick so the mark can be
+   scaled independently of the box, and the box keeps its size whether ticked or
+   not — a control that changes size on selection makes the row reflow under the
+   pointer that just hit it. */
+.column-select-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 0.95rem;
+  height: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--card);
+}
+
+.column-select-box::after {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 0.1rem;
+  background: transparent;
+}
+
+.column-select-option[data-selected] .column-select-button,
+.column-select-button[data-hovered] {
+  color: var(--foreground);
+}
+
+.column-select-option[data-selected] .column-select-box {
+  border-color: var(--primary-strong);
+}
+
+.column-select-option[data-selected] .column-select-box::after {
+  background: var(--primary-strong);
+}
+
+.column-select-button[data-hovered] .column-select-box {
+  border-color: var(--foreground);
+}
+
+/* On the button, not the box: the whole row is the control, and a ring around a
+   0.95rem square is easy to miss beside a label that is not part of it. */
+.column-select-button[data-focus-visible] {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 0.2rem;
+}

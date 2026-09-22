@@ -1,108 +1,65 @@
 import type { ReactNode } from 'react'
-import {
-  Cell,
-  Column,
-  ColumnResizer,
-  ResizableTableContainer,
-  Row,
-  Table,
-  TableBody,
-  TableHeader,
-} from 'react-aria-components'
 import { Link } from 'react-router'
 
 import type { Concert } from '../lib/archive'
+import { type ConcertColumnId, CONCERT_COLUMNS } from '../lib/columns'
 import { type ConcertSort, isSortColumn, toConcertSort } from '../lib/sorting'
+import { Absent, type ArchiveColumn, ArchiveTable } from './archive-table'
 
 /**
- * The Performance history's 127-row index, as a resizable React Aria table.
+ * The Performance history's 133-row index on /concerts/.
  *
- * WHY A COLLECTION COMPONENT AND NOT A `<table>`. It was a plain table until
- * AWK-70, and the recut that ticket asked for — orchestra in, items out, and the
- * programme moved from last to second — is entirely a statement about columns. In
- * RAC a column IS an object, so the order lives in COLUMNS below and nowhere else;
- * the old markup stated it three times over (a `<Th>` row, a `<Td>` row, and a
- * hard-coded `colSpan={5}` the ticket flagged as the next thing to go silently
- * wrong). Resizing is what made the migration worth doing rather than a reorder in
- * place, and sorting landed on the same seam under AWK-71: `allowsSorting` on
- * three of the five columns, with the Table CONTROLLED — `sortDescriptor` in,
- * `onSortChange` out — because the query string is the state and nothing here
- * mirrors it. Which columns sort is app/lib/sorting.ts's to say; this file only
- * asks. Note the header is not a `<button>` inside the `<th>`: in React Aria's
- * grid pattern the `<th>` itself is the pressable, focusable control, operated
- * with Enter or Space, and it is the library that writes `aria-sort` — the
- * direction on the sorted column, `none` on the other sortable ones, nothing on
- * a column that cannot sort.
+ * Everything mechanical is archive-table.tsx's — the collection, the empty-state
+ * `key`, the resizers, the inline-width override, and why `Row`'s `href` is not
+ * adopted. Read that file before editing this one. What is left here is the three
+ * things only this table knows: which columns it has, how each cell reads, and
+ * which of them sort.
  *
- * WHAT IT COSTS, both accepted deliberately:
- *
- *   1. This is a GRID, not a static table. RAC goes through `useTable`, so the
- *      rendered role is `grid` with focusable rows and arrow-key cell navigation.
- *      A resizer has to be keyboard-operable, so there was no version of this that
- *      kept the static-table reading.
- *   2. Column widths are a CLIENT MEASUREMENT. `ResizableTableContainer` feeds
- *      `tableWidth` from a resize observer, and RAC then forces
- *      `table-layout: fixed; width: min-content` on the table with a pixel width on
- *      every `th`. Those DO reach the prerendered HTML (ADR-0004, `ssr: false`) —
- *      measured, not assumed: 104/180/96/150/168, summing to 698px, with Programme
- *      collapsed to its `minWidth` because a resize observer that has never run
- *      reports a table width of 0. So the table sizes itself properly one tick
- *      after hydration, and concerts-table.css has to override that inline
- *      `min-content` for the frame before it — and for a reader with no JS at all,
- *      who would otherwise get a 698px table on an 80rem page.
- *
- * WHAT IS NOT ADOPTED, and this one matters: `Row`'s `href`. React Aria's own docs
- * are explicit that a row cannot be an `<a>` — it navigates with JavaScript — and
- * `/concerts/` is the ONLY page that links the 127 concert pages. Moving the link
- * to the row would empty every `href` out of the prerendered HTML and de-link the
- * whole section for crawlers and for a reader with no JS. So the `<Link>` stays
- * inside the Date cell, a real anchor, exactly where it was. Arrow-key navigation
- * reaches it as a focusable child.
- *
- * Widths are NOT persisted. `onResizeEnd` plus localStorage is the documented
- * pattern and it is deliberately skipped: nothing on this site persists UI state,
- * and a width that survives a reload was not asked for.
+ * WHICH COLUMNS ARE ON SCREEN IS NOT DECIDED HERE either — it arrives as
+ * `columns`, from the route, from app/lib/columns.ts, from the query string
+ * (AWK-67). This file states every column that COULD be shown; that module states
+ * which are, and refuses to let Date be hidden because the link lives in it.
  */
 
 /**
- * THE COLUMN ORDER, and the only place it is stated.
+ * THE COLUMN ORDER comes from CONCERT_COLUMNS.all — Date · Programme · Orchestra ·
+ * Conductor · Hall (AWK-70) — and this record only says how each one looks.
+ * Programme leads because it is what the row is about; it was last only because
+ * that is where a variable-width string is free.
  *
- * Date · Programme · Orchestra · Conductor · Hall (AWK-70). Programme leads
- * because it is what the row is about; it was last only because that is where a
- * variable-width string is free.
+ * A `Record<ConcertColumnId, …>` rather than a second ordered array: it is
+ * exhaustive by type, so a column added to the set without a look here fails the
+ * build, and the order cannot drift between the two the way the old `<Th>`/`<Td>`
+ * pair could.
  *
  * `1fr` on Programme is the width treatment: the four short columns take fixed
- * defaults and Programme absorbs every remaining pixel, which at the page's
- * 80rem ceiling is enough for the longest real value (93 characters) on one line.
- * Below that it truncates — and truncation is honest here in a way it would not
- * have been before, because the reader can now drag the column wider.
+ * defaults and Programme absorbs every remaining pixel, which at the page's 80rem
+ * ceiling is enough for the longest real value (93 characters) on one line. Below
+ * that it truncates — and truncation is honest here in a way it would not have
+ * been before, because the reader can now drag the column wider.
  *
- * The `minWidth`s sum to 520px, which fits inside the 40rem breakpoint where
- * concerts-table.css hands horizontal scrolling to the container. Changing one
- * means re-checking that sum.
+ * The `minWidth`s sum to 520px across all five, which no longer has to fit a phone
+ * now that AWK-67 shows two of them there — Date + Programme is 272px inside a
+ * 312px container. It still has to fit the 40rem breakpoint where archive-table.css
+ * hands horizontal scrolling to the container, for the reader who adds every column
+ * back. Changing one means re-checking that sum.
  */
-const COLUMNS = [
-  { id: 'date', label: 'Date', defaultWidth: 104, minWidth: 92 },
-  { id: 'programme', label: 'Programme', defaultWidth: '1fr', minWidth: 180 },
-  { id: 'orchestra', label: 'Orchestra', defaultWidth: 96, minWidth: 64 },
-  { id: 'conductor', label: 'Conductor', defaultWidth: 150, minWidth: 96 },
-  { id: 'hall', label: 'Hall', defaultWidth: 168, minWidth: 88 },
-] as const
-
-type ColumnId = (typeof COLUMNS)[number]['id']
-
-const LAST = COLUMNS[COLUMNS.length - 1].id
+const LOOK: Record<ConcertColumnId, Omit<ArchiveColumn<ConcertColumnId>, 'id'>> = {
+  date: { label: 'Date', defaultWidth: 104, minWidth: 92 },
+  programme: { label: 'Programme', defaultWidth: '1fr', minWidth: 180 },
+  orchestra: { label: 'Orchestra', defaultWidth: 96, minWidth: 64 },
+  conductor: { label: 'Conductor', defaultWidth: 150, minWidth: 96 },
+  hall: { label: 'Hall', defaultWidth: 168, minWidth: 88 },
+}
 
 /**
- * Honest defensive rendering, not a known gap — the same em dash the plain table
- * used, now carrying its own class so no cell needs a conditional one.
- *
- * A comment on the old conductor cell used to claim 2007-12-16 had no conductor
- * and was therefore invisible to the filter. That was never true in production:
- * `cnc-20071216` is published with conductor Nicholas Armstrong. The blank existed
- * only in the derived bso-graph.json, and the site builds from the Delivery API.
+ * The headers, for the Columns control — so a checkbox and the column it turns on
+ * are never two different words. Derived from LOOK rather than restated.
  */
-const Absent = () => <span className="concerts-absent">—</span>
+export const CONCERT_LABELS = Object.fromEntries(CONCERT_COLUMNS.all.map((id) => [id, LOOK[id].label])) as Record<
+  ConcertColumnId,
+  string
+>
 
 /** The first two item labels, and an ellipsis when the evening ran longer. */
 function programme(concert: Concert) {
@@ -113,11 +70,16 @@ function programme(concert: Concert) {
 /**
  * One renderer per column, keyed by id.
  *
- * A `Record<ColumnId, …>` rather than a `switch`: it is exhaustive the same way —
- * adding an id to COLUMNS without a renderer fails the build — and it does not
- * trip `default-case`, which oxlint treats as an error rather than a warning.
+ * A `Record<ConcertColumnId, …>` rather than a `switch`: it is exhaustive the same
+ * way — adding an id to the set without a renderer fails the build — and it does
+ * not trip `default-case`, which oxlint treats as an error rather than a warning.
+ *
+ * A comment on the old conductor cell used to claim 2007-12-16 had no conductor
+ * and was therefore invisible to the filter. That was never true in production:
+ * `cnc-20071216` is published with conductor Nicholas Armstrong. The blank existed
+ * only in the derived bso-graph.json, and the site builds from the Delivery API.
  */
-const CELL: Record<ColumnId, (concert: Concert) => ReactNode> = {
+const CELL: Record<ConcertColumnId, (concert: Concert) => ReactNode> = {
   date: (concert) => (
     <Link to={`/concerts/${concert.slug}/`} className="no-underline hover:underline">
       {concert.date}
@@ -139,103 +101,30 @@ const CELL: Record<ColumnId, (concert: Concert) => ReactNode> = {
 
 type Props = {
   concerts: Concert[]
+  /** The columns to show, in order — app/lib/columns.ts's answer, not this file's. */
+  columns: readonly ConcertColumnId[]
   /** The sort the rows ARE in — the table does not reorder them, it reports them. */
   sort: ConcertSort
   onSortChange: (sort: ConcertSort) => void
 }
 
-export function ConcertsTable({ concerts, sort, onSortChange }: Props) {
+export function ConcertsTable({ concerts, columns, sort, onSortChange }: Props) {
   return (
-    <ResizableTableContainer className="concerts-table">
-      {/*
-        THE `key` IS A BUG FIX, NOT A HABIT, and removing it silently breaks the
-        empty state in production while every unit test still passes.
-
-        React Aria builds its collection once and updates it; on the HYDRATION path
-        the update that empties the table does not reach `renderEmptyState`. The
-        tbody ends up with no rows, no `data-empty` and no message — headers over a
-        void. That is exactly the path this page takes, and only that path: ADR-0004
-        prerenders `/concerts/` unfiltered, so `?conductor=X` hydrates 127 rows and
-        THEN applies the selection. Mounting empty works, and re-rendering to empty
-        after a plain client mount works, which is why this survived a passing test
-        that asserted the message and its colSpan.
-        Measured on the built site at `/concerts/?conductor=Nobody%20At%20All`:
-        "Showing 0 of 127 concerts" beside an empty tbody.
-
-        Keying on emptiness alone rebuilds the collection across that one transition.
-        `dependencies` on TableBody does not fix it and neither does a key on
-        TableBody — the collection belongs to the Table. The cost is that column
-        widths reset when the table empties and refills; widths are not persisted
-        anyway, and filtering to nothing and back is not the common path.
-      */}
-      <Table
-        key={concerts.length === 0 ? 'empty' : 'rows'}
-        aria-label="Concerts"
-        className="concerts-grid"
-        sortDescriptor={sort}
-        // React Aria hands back a `Key`; the narrowing to the three sortable
-        // columns lives in sorting.ts. A press on a column without `allowsSorting`
-        // never reaches here at all, so the null branch is belt and braces.
-        onSortChange={(descriptor) => {
-          const next = toConcertSort(descriptor)
-          if (next) onSortChange(next)
-        }}
-      >
-        <TableHeader columns={COLUMNS}>
-          {(column) => (
-            <Column
-              isRowHeader={column.id === 'date'}
-              allowsSorting={isSortColumn(column.id)}
-              defaultWidth={column.defaultWidth}
-              minWidth={column.minWidth}
-              className="eyebrow concerts-th"
-            >
-              {({ sortDirection }) => (
-                <>
-                  <span className="concerts-th-content">
-                    <span className="concerts-th-label">{column.label}</span>
-                    {/* Decorative: `aria-sort` on the th is what assistive tech
-                        reads, and the status line announces the change. Present
-                        on the sorted column only — an idle arrow on every sortable
-                        header is the busier reading this page keeps declining. */}
-                    {sortDirection && (
-                      <span className="concerts-sort-indicator" aria-hidden="true">
-                        {sortDirection === 'ascending' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </span>
-                  {/* Rendering the resizer is what makes a column resizable — there
-                      is no `allowsResizing` prop on React Aria's own Column, only on
-                      the starter template's wrapper around it. None on the last
-                      column: with no scroll container above the breakpoint there is
-                      nothing to its right to give width back, so dragging it would
-                      widen the table past the page. */}
-                  {column.id !== LAST && <ColumnResizer className="concerts-resizer" />}
-                </>
-              )}
-            </Column>
-          )}
-        </TableHeader>
-
-        {/* `renderEmptyState` rather than a full-width row of our own, which is what
-            retires the hard-coded colSpan: React Aria spans the cell across the
-            collection's own column count. A selection that yields nothing is
-            reachable on purpose — an unknown `?conductor=` value matches nothing and
-            is honoured rather than dropped (app/lib/facets.ts) — so the headers stay
-            on screen with the message under them. The clear control is NOT on screen
-            here, contrary to what the comment this replaced said: it lives inside
-            the Filters popover and is absent from the DOM until that opens. The
-            status line above the table is what tells the reader nothing matched. */}
-        <TableBody items={concerts} renderEmptyState={() => 'No concerts match these filters.'}>
-          {(concert) => (
-            <Row id={concert.id} columns={COLUMNS} className="concerts-row">
-              {(column) => (
-                <Cell className={`concerts-cell concerts-cell-${column.id}`}>{CELL[column.id](concert)}</Cell>
-              )}
-            </Row>
-          )}
-        </TableBody>
-      </Table>
-    </ResizableTableContainer>
+    <ArchiveTable
+      label="Concerts"
+      columns={columns.map((id) => ({ id, ...LOOK[id], allowsSorting: isSortColumn(id) }))}
+      rowHeader={CONCERT_COLUMNS.rowHeader}
+      rows={concerts}
+      cell={(concert, id) => CELL[id](concert)}
+      emptyState="No concerts match these filters."
+      sort={sort}
+      // React Aria hands back a `Key`; the narrowing to the three sortable columns
+      // lives in sorting.ts. A press on a column without `allowsSorting` never
+      // reaches here at all, so the null branch is belt and braces.
+      onSortChange={(descriptor) => {
+        const next = toConcertSort(descriptor)
+        if (next) onSortChange(next)
+      }}
+    />
   )
 }

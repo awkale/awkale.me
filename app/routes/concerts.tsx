@@ -1,12 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Dialog, DialogTrigger, Heading, Popover } from 'react-aria-components'
+import { Button } from 'react-aria-components'
 import { useSearchParams } from 'react-router'
 
-import { ConcertsTable } from '../components/concerts-table'
+import { ColumnSelect } from '../components/column-select'
+import { CONCERT_LABELS, ConcertsTable } from '../components/concerts-table'
 import { FacetSelect } from '../components/facet-select'
+import { ViewMenu } from '../components/view-menu'
 import { loadArchive } from '../lib/archive'
+import {
+  type ConcertColumnId,
+  CONCERT_COLUMNS,
+  describeColumns,
+  readColumns,
+  visibleColumns,
+  writeColumns,
+} from '../lib/columns'
 import { filterConcerts, readFacet } from '../lib/facets'
 import { type ConcertSort, DEFAULT_SORT, describeSort, readSort, sortConcerts, writeSort } from '../lib/sorting'
+import { useNarrow } from '../lib/use-narrow'
 import type { Route } from './+types/concerts'
 
 /**
@@ -88,14 +99,27 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
     shared `?sort=` link therefore shows the default order for one frame, exactly
     as a shared `?conductor=` link shows every row for one; the same cost, taken
     for the same reason.
+
+    AND SO DOES THE COLUMN SET (AWK-67), which needs the gate TWICE over: once
+    for `?columns=`, like every other key, and once for the viewport itself —
+    there is no viewport in a prerendered page, so `useNarrow` starts `false` and
+    reports the real width one tick later. Both halves are why a phone reader
+    sees all five columns for one frame.
   */
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => setHydrated(true), [])
+
+  const isNarrow = useNarrow()
 
   const selection = hydrated
     ? { conductors: readFacet(searchParams, CONDUCTOR), halls: readFacet(searchParams, HALL) }
     : { conductors: [], halls: [] }
   const sort = hydrated ? readSort(searchParams) : DEFAULT_SORT
+  const columns = visibleColumns(
+    CONCERT_COLUMNS,
+    hydrated ? readColumns(searchParams, CONCERT_COLUMNS) : null,
+    isNarrow
+  )
 
   /*
     How many values are applied, across both facets — the number on the trigger's
@@ -166,6 +190,16 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
     setSearchParams(writeSort(searchParams, next), NAVIGATE)
   }
 
+  /*
+    Same navigation again, and it composes with both of the above: writeColumns
+    touches only its own key, and drops it when the set is already this viewport's
+    default — so a phone reader who never opens this control leaves `/concerts/`
+    exactly as they found it.
+  */
+  function setColumns(next: readonly ConcertColumnId[]) {
+    setSearchParams(writeColumns(searchParams, CONCERT_COLUMNS, next, isNarrow), NAVIGATE)
+  }
+
   function clearFacets() {
     const next = new URLSearchParams(searchParams)
     next.delete(CONDUCTOR)
@@ -203,62 +237,55 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
         </p>
 
         {/*
-          Both browse filters live behind ONE control, after the shape of React
-          Aria's own filterable-table example: a single trigger carrying a count
-          of what is applied, a popover holding every filter, and a clear control
-          inside it. Two facets do not need a whole row of the page, and the set
-          is fixed at two (ADR-0006) only until it isn't — this shape absorbs a
-          third without redesigning the header.
+          Both browse filters AND the column set live behind ONE control, after
+          the shape of React Aria's own filterable-table example: a single trigger
+          carrying a count of what is applied, a popover holding everything about
+          the view, and a clear control inside it. Two facets do not need a whole
+          row of the page, and the set is fixed at two (ADR-0006) only until it
+          isn't — this shape absorbs a third without redesigning the header, and
+          it absorbed AWK-67's Columns section without one either.
 
           The cost, and it is a real one: with the popover shut the reader sees
           HOW MANY filters are applied but not WHICH. The count and the status
           line below carry it; the names are one click away. Inline chips showed
           them at all times, which is what this trades for a quiet page.
         */}
-        <div className="facet-bar">
-          <DialogTrigger>
-            <Button
-              className="facet-filters-trigger"
-              // The badge is a visual count; the label has to say it too, or a
-              // screen reader hears "Filters" whether two are applied or none.
-              aria-label={isFiltered ? `Filters, ${appliedCount} applied` : 'Filters'}
-            >
-              Filters
-              {isFiltered && <span className="facet-filters-badge tabular">{appliedCount}</span>}
-            </Button>
+        <div className="view-bar">
+          <ViewMenu
+            applied={appliedCount}
+            columnsNote={describeColumns(CONCERT_COLUMNS, columns)}
+            headAction={
+              isFiltered && (
+                // "Clear filters", not "Clear". It sat in a panel called Filters
+                // and now sits in one called View, which also holds the column
+                // set — and it still clears only the facets, deliberately. The
+                // word has to say which, or the reader has to press it to find out.
+                <Button className="facet-clear" onPress={clearFacets}>
+                  Clear filters
+                </Button>
+              )
+            }
+          >
+            <FacetSelect
+              label="Conductor"
+              plural="conductors"
+              inputRef={conductorField}
+              items={facets.conductors}
+              selected={selection.conductors}
+              onChange={(next) => setFacet(CONDUCTOR, next)}
+            />
+            <FacetSelect
+              label="Hall"
+              plural="halls"
+              items={facets.halls}
+              selected={selection.halls}
+              onChange={(next) => setFacet(HALL, next)}
+            />
 
-            <Popover className="facet-filters-popover" offset={6}>
-              <Dialog className="facet-filters-dialog" aria-label="Filters">
-                <div className="facet-filters-head">
-                  <Heading slot="title" className="facet-filters-title">
-                    Filters
-                  </Heading>
-
-                  {isFiltered && (
-                    <Button className="facet-clear" onPress={clearFacets}>
-                      Clear
-                    </Button>
-                  )}
-                </div>
-
-                <FacetSelect
-                  label="Conductor"
-                  plural="conductors"
-                  inputRef={conductorField}
-                  items={facets.conductors}
-                  selected={selection.conductors}
-                  onChange={(next) => setFacet(CONDUCTOR, next)}
-                />
-                <FacetSelect
-                  label="Hall"
-                  plural="halls"
-                  items={facets.halls}
-                  selected={selection.halls}
-                  onChange={(next) => setFacet(HALL, next)}
-                />
-              </Dialog>
-            </Popover>
-          </DialogTrigger>
+            {/* Last in the panel, under the two filters: it changes what the rows
+                SHOW rather than which rows there are, so it reads after them. */}
+            <ColumnSelect set={CONCERT_COLUMNS} labels={CONCERT_LABELS} visible={columns} onChange={setColumns} />
+          </ViewMenu>
 
           {/*
             OUTSIDE the popover, and permanently mounted with empty text when
@@ -273,7 +300,7 @@ export default function Concerts({ loaderData }: Route.ComponentProps) {
           </p>
         </div>
 
-        <ConcertsTable concerts={visible} sort={sort} onSortChange={setSort} />
+        <ConcertsTable concerts={visible} columns={columns} sort={sort} onSortChange={setSort} />
       </div>
     </main>
   )

@@ -1,5 +1,7 @@
 /* ===========================================================================
-   concerts-table — the Performance history's 127-row index on /concerts/.
+   archive-table — BOTH of the archive's collection tables: the Performance
+   history's 133-row index on /concerts/, and the works table on each of the 159
+   composer pages.
    ---------------------------------------------------------------------------
    Same convention as facet-select, mode-toggle and site-search: semantic classes
    consume local variables, and React Aria's own data attributes remap them. No
@@ -9,6 +11,13 @@
    Tailwind utilities on a plain `<table>`; resizable columns need a React Aria
    collection, and its state surface is data attributes, which is exactly what this
    layer is for.
+
+   WAS concerts-table.css until AWK-67, which put the composer page's works table
+   on the same component. Nothing below is table-specific except the three
+   `.archive-cell-<id>` rules at the bottom, which key on COLUMN ids — and the two
+   tables' id sets do not overlap, so one namespace holds both. If a future column
+   id is ever shared between them with different styling, that is the rule to
+   split, not this file.
 
    Attributes React Aria sets, and what they mean here:
      [data-hovered]           pointer over a sortable column header or a resizer
@@ -30,11 +39,18 @@
    So it is split at the breakpoint, deliberately:
 
      >= 40rem   no scroll container; the header pins to the page under the site
-                header. The columns' minWidths (520px, see COLUMNS in the .tsx)
-                fit here, so the table never needs to scroll.
+                header. The columns' minWidths fit here, so the table never needs
+                to scroll.
      <  40rem   the container scrolls sideways and the header gives up pinning.
                 A page that scrolls horizontally is a bug; a header that scrolls
                 away on a phone is a shrug.
+
+   THE 40rem BELOW IS THE SAME 40rem AS `NARROW` IN app/lib/columns.ts, and the
+   two are load-bearing together. That module hides columns below it so the table
+   fits without scrolling at all; this file keeps the container able to scroll for
+   the two readers that module cannot serve — one who has added every column back,
+   and one with no JavaScript, for whom the hydration gate never opens and the
+   full set is all there is. Change the number and you must change both.
 
    React Aria forces `table-layout: fixed` and `width: min-content` on the table
    inside a ResizableTableContainer, computing every column width from the
@@ -42,15 +58,15 @@
    =========================================================================== */
 
 /* --- the container -------------------------------------------------------- */
-.concerts-table {
-  --concerts-header-offset: 3.6rem; /* clears the site header. */
+.archive-table {
+  --archive-header-offset: 3.6rem; /* clears the site header. */
 
   margin-block-start: 1.25rem;
   width: 100%;
 }
 
 @media (width < 40rem) {
-  .concerts-table {
+  .archive-table {
     /* Nothing sticks in here — see the header note above, and the `th` rule that
        gives up `position: sticky` at this same breakpoint. */
     overflow-x: auto;
@@ -61,7 +77,7 @@
 /* `separate` rather than `collapse`: a collapsed border belongs to the table
    rather than to the cell, and it detaches from a sticky header when it scrolls.
    typeset.css makes the same choice for the same reason. */
-.concerts-grid {
+.archive-grid {
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.8rem;
@@ -86,7 +102,7 @@
    0.8rem in mixed case instead of 0.66rem uppercase — so the two travel together.
    Sticky lives on the `th`, not the `thead`: that is what the plain table did, and
    it is the better-supported of the two. */
-.concerts-th {
+.archive-th {
   background-color: var(--color-background);
   border-block-end: 1px solid var(--color-border);
   font-weight: 500;
@@ -94,7 +110,7 @@
   padding: 0.375rem 0.5rem;
   position: sticky;
   text-align: start;
-  top: var(--concerts-header-offset);
+  top: var(--archive-header-offset);
   z-index: 1;
 }
 
@@ -105,13 +121,13 @@
    which is the horizontal page scroll this breakpoint exists to prevent.
    Measured at 390px: offsetParent went to BODY and every resizer sat at x=366. */
 @media (width < 40rem) {
-  .concerts-th {
+  .archive-th {
     position: relative;
     top: auto;
   }
 }
 
-.concerts-th[data-focus-visible] {
+.archive-th[data-focus-visible] {
   outline: 2px solid var(--color-ring);
   outline-offset: -2px;
 }
@@ -121,13 +137,13 @@
    changes height as they drag reads as breakage. Flex on an inner span rather
    than on the th — a `th` that is `display: flex` leaves the table layout — so
    the label gives way and the sort arrow never does. */
-.concerts-th-content {
+.archive-th-content {
   align-items: baseline;
   display: flex;
   gap: 0.3rem;
 }
 
-.concerts-th-label {
+.archive-th-label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -140,20 +156,20 @@
    and the hover, on the three columns that sort and nowhere else. `[data-hovered]`
    is reliable here, unlike on the row: a column with `allowsSorting` is pressable,
    so React Aria tracks its hover. */
-.concerts-th[data-allows-sorting] {
+.archive-th[data-allows-sorting] {
   cursor: pointer;
   user-select: none;
 }
 
-.concerts-th[data-allows-sorting][data-hovered] .concerts-th-label,
-.concerts-th[data-sort-direction] .concerts-th-label {
+.archive-th[data-allows-sorting][data-hovered] .archive-th-label,
+.archive-th[data-sort-direction] .archive-th-label {
   color: var(--color-foreground);
 }
 
 /* Present only on the sorted column (see the .tsx). Not an eyebrow glyph: it
    keeps the header's colour but not its tracking, which would space an arrow
    away from its label. */
-.concerts-sort-indicator {
+.archive-sort-indicator {
   flex: none;
   letter-spacing: 0;
 }
@@ -162,13 +178,13 @@
 /* Sits on the column's trailing edge, one pixel wide with a padded hit area behind
    it — `padding` plus `background-clip: content-box` is what separates the target
    from the mark, so the mark stays hairline.
-   ENTIRELY INSIDE ITS OWN COLUMN, which is not fussiness: every `.concerts-th` is
+   ENTIRELY INSIDE ITS OWN COLUMN, which is not fussiness: every `.archive-th` is
    `position: sticky` with a `z-index`, so each header is its own stacking context
    and the next one — later in the DOM, same z-index — paints and hit-tests over
    anything that hangs past the boundary. A symmetric `padding-inline: 8px` with
    `right: -8px` therefore advertises a 17px target and delivers 9px. All 12 sit to
    the left of the edge instead, where they are reachable. */
-.concerts-resizer {
+.archive-resizer {
   background-clip: content-box;
   background-color: var(--color-border);
   box-sizing: content-box;
@@ -181,23 +197,23 @@
   width: 1px;
 }
 
-.concerts-resizer[data-resizable-direction='both'] {
+.archive-resizer[data-resizable-direction='both'] {
   cursor: ew-resize;
 }
-.concerts-resizer[data-resizable-direction='left'] {
+.archive-resizer[data-resizable-direction='left'] {
   cursor: e-resize;
 }
-.concerts-resizer[data-resizable-direction='right'] {
+.archive-resizer[data-resizable-direction='right'] {
   cursor: w-resize;
 }
 
-.concerts-resizer[data-hovered],
-.concerts-resizer[data-resizing] {
+.archive-resizer[data-hovered],
+.archive-resizer[data-resizing] {
   background-color: var(--color-foreground);
   width: 2px;
 }
 
-.concerts-resizer[data-focus-visible] {
+.archive-resizer[data-focus-visible] {
   background-color: var(--color-ring);
   outline: 2px solid var(--color-ring);
   outline-offset: -1px;
@@ -210,7 +226,7 @@
    stickiness. */
 
 /* --- rows and cells ------------------------------------------------------- */
-.concerts-row {
+.archive-row {
   outline: none;
 }
 
@@ -220,11 +236,11 @@
    three, deliberately: the row carries no action because the link lives in the Date
    cell. So the data attribute never appears and styling it silently drops the
    highlight the plain table had. Plain CSS hover is the whole behaviour here. */
-.concerts-row:hover {
+.archive-row:hover {
   background-color: var(--color-muted);
 }
 
-.concerts-row[data-focus-visible] {
+.archive-row[data-focus-visible] {
   outline: 2px solid var(--color-ring);
   outline-offset: -2px;
 }
@@ -232,7 +248,7 @@
 /* One line per row, always. This is a dense index — its own comment says a column
    of 127 dates lines up — so a wrapping cell that makes one row three lines tall
    costs more than the ellipsis does, and resizing is the recovery. */
-.concerts-cell {
+.archive-cell {
   border-block-end: 1px solid var(--color-border-subtle);
   outline: none;
   overflow: hidden;
@@ -242,19 +258,64 @@
   white-space: nowrap;
 }
 
-.concerts-cell[data-focus-visible] {
+.archive-cell[data-focus-visible] {
   outline: 2px solid var(--color-ring);
   outline-offset: -2px;
 }
 
-.concerts-cell-date {
+/* The only table-specific rules in the file, keyed on COLUMN ids. `date` is the
+   concerts index's; `performances` is a works table's count and takes the same
+   tabular figures the plain table gave it, minus the mono face — it is a one- or
+   two-digit number, not a date whose columns have to line up. */
+.archive-cell-date {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
-.concerts-cell-programme,
-.concerts-absent {
+.archive-cell-performances {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Secondary readings, all of them muted the way the plain tables had them:
+   the truncated programme join, and a works table's Period and Forms. */
+.archive-cell-programme,
+.archive-cell-period,
+.archive-cell-forms,
+.archive-absent {
   color: var(--color-muted-foreground);
+}
+
+/* The arranger credit that follows a work's title inside the Work cell — outside
+   the link, because the link addresses the work and the credit describes it.
+
+   IT MUST SURVIVE THE CELL'S ELLIPSIS, and getting that wrong is not cosmetic. The
+   credit is the ONLY thing that tells the two Nutcracker Suites apart on the one
+   page listing them side by side — the merge put them under one composer with
+   character-identical titles — so a cell that truncates it shows what reads as the
+   same row twice, pointing at two different URLs.
+
+   `.archive-cell` is `nowrap` with `text-overflow: ellipsis`, and a trailing span
+   is the FIRST thing that eats. So the title and the credit are laid out as a flex
+   pair inside the cell: the title gives way, the credit never does. Same shape, and
+   the same reason, as `.archive-th-content` above — flex on an inner span rather
+   than on the cell, because a `td` that is `display: flex` leaves the table layout
+   and takes the fixed column widths with it. */
+.archive-work {
+  align-items: baseline;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.archive-work-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-work-credit {
+  color: var(--color-muted-foreground);
+  flex: none;
 }
 
 /* --- the empty state ------------------------------------------------------ */
@@ -265,11 +326,11 @@
    the cell inside it, because padding on a `tbody` is inert and the message would
    otherwise sit flush against the header rule. Colour can stay on the body and
    inherit down. */
-.concerts-grid [data-empty] {
+.archive-grid [data-empty] {
   color: var(--color-muted-foreground);
   text-align: start;
 }
 
-.concerts-grid [data-empty] td {
+.archive-grid [data-empty] td {
   padding: 0.375rem 0.5rem;
 }

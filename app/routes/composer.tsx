@@ -1,7 +1,19 @@
-import { Link } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
 
+import { ColumnSelect } from '../components/column-select'
+import { ViewMenu } from '../components/view-menu'
+import { WORK_LABELS, WorksTable } from '../components/works-table'
 import { loadArchive } from '../lib/archive'
-import { arrangerCredit } from '../lib/format'
+import {
+  describeColumns,
+  readColumns,
+  visibleColumns,
+  WORK_COLUMNS,
+  type WorkColumnId,
+  writeColumns,
+} from '../lib/columns'
+import { useNarrow } from '../lib/use-narrow'
 import type { Route } from './+types/composer'
 
 /**
@@ -37,6 +49,42 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export default function Composer({ loaderData }: Route.ComponentProps) {
   const { composer, works } = loaderData
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  /*
+    AWK-67's column set, behind the same hydration gate /concerts/ uses — and for
+    the same reason, twice over. ADR-0004's `ssr: false` prerenders this page with
+    no viewport and identical markup for every visitor, so neither `?columns=` nor
+    the viewport width can be read during the first client render without the two
+    disagreeing; React 19 answers that by discarding the server HTML. So the first
+    frame is every column, and one tick later the reader's set or the viewport's
+    default applies. See app/lib/use-narrow.ts.
+
+    Thirty of these 159 pages pushed the DOCUMENT sideways at 375px before this —
+    worst 51px on Mahler — because four headers are 364px in a 360px column. The
+    narrow default takes every one of them to zero; archive-table.css's container
+    scroll is the backstop for a reader who adds the columns back, or who has no
+    JavaScript at all and never opens the gate.
+  */
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => setHydrated(true), [])
+
+  const isNarrow = useNarrow()
+  const columns = visibleColumns(WORK_COLUMNS, hydrated ? readColumns(searchParams, WORK_COLUMNS) : null, isNarrow)
+
+  /*
+    REPLACE, never push, and `preventScrollReset` — the same navigation
+    /concerts/ makes, for the same two reasons: Back should leave the composer
+    page rather than unwind a column at a time, and `<ScrollRestoration />` in
+    app/root.tsx would otherwise send the reader to the top of the page each time
+    they ticked a box in a popover they are still working down.
+  */
+  function setColumns(next: readonly WorkColumnId[]) {
+    setSearchParams(writeColumns(searchParams, WORK_COLUMNS, next, isNarrow), {
+      replace: true,
+      preventScrollReset: true,
+    })
+  }
 
   return (
     <main className="px-[var(--gutter)] py-[var(--space-section)]">
@@ -52,57 +100,17 @@ export default function Composer({ loaderData }: Route.ComponentProps) {
           played
         </p>
 
-        <table className="mt-6 w-full border-collapse text-[0.8rem]">
-          <thead>
-            <tr>
-              {['Work', 'Period', 'Forms', 'Performances'].map((h) => (
-                <th key={h} className="eyebrow border-b border-border px-2 py-1.5 text-left font-medium">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {works.map((w) => {
-              const credit = arrangerCredit({ arranger: w.arrangerName, arrangementType: w.arrangementType })
+        {/* The page's FIRST piece of interactive chrome (AWK-67). It holds one
+            section where /concerts/ holds three, and says `View` anyway — the two
+            surfaces are the same section of the site and a trigger that changes
+            its word with its contents reads as two different controls. */}
+        <div className="view-bar">
+          <ViewMenu applied={null} columnsNote={describeColumns(WORK_COLUMNS, columns)}>
+            <ColumnSelect set={WORK_COLUMNS} labels={WORK_LABELS} visible={columns} onChange={setColumns} />
+          </ViewMenu>
+        </div>
 
-              return (
-                <tr key={w.id} className="hover:bg-muted">
-                  <td className="border-b border-border-subtle px-2 py-1.5 align-baseline">
-                    <Link
-                      to={`/concerts/composers/${w.composerSlug}/works/${w.slug}/`}
-                      className="no-underline hover:underline"
-                    >
-                      {w.title}
-                    </Link>
-                    {/* The third place the credit has to appear, and the one it is
-                      easiest to forget: this page is the ONLY view listing both
-                      Nutcracker Suites side by side, since the merge put them
-                      under one composer with character-identical titles. Without
-                      it the table shows the same row twice, pointing at two
-                      different URLs. Outside the Link because the link addresses
-                      the work and the credit describes it. */}
-                    {credit && <span className="text-muted-foreground"> {credit}</span>}
-                  </td>
-                  {/* AWK-37 filled both. Period is the work's own or its composer's,
-                    already resolved by loadArchive() — every row on this page shows
-                    the same value unless a work overrides it, which is the point of
-                    inheriting. Forms may legitimately be empty on 104 works, so the
-                    em dash stays the honest rendering there (ADR-0007). */}
-                  <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
-                    {w.period ?? '—'}
-                  </td>
-                  <td className="border-b border-border-subtle px-2 py-1.5 align-baseline text-muted-foreground">
-                    {w.forms.length > 0 ? w.forms.join(', ') : '—'}
-                  </td>
-                  <td className="tabular border-b border-border-subtle px-2 py-1.5 align-baseline">
-                    {w.performances.length}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <WorksTable works={works} columns={columns} />
       </div>
     </main>
   )

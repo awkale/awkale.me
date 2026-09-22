@@ -805,3 +805,59 @@ This is the same silent-divergence shape as
 [AWK-48](https://linear.app/awkale/issue/AWK-48)'s sixteen drifted eyebrow copies,
 one layer further out: there the fix was to extract a single rule, here no such
 extraction is possible, so the mitigation is documentation rather than deduplication.
+
+## Amendment — AWK-67 (2026-09-22)
+
+### The archive's tables keep their tabular reading on a phone, by showing fewer columns
+
+[AWK-67](https://linear.app/awkale/issue/AWK-67) asked the question this record had
+not answered: what a wide table does at 375px. It listed four directions and said
+the implementer should "decide whether the tabular reading is worth preserving on a
+phone at all, and say so, because that is the actual question."
+
+**It is preserved, and the mechanism is a reader-controlled column set.** Below
+40rem each table defaults to two columns — Date + Programme on the Performance
+history, Work + Performances on a composer page — and the reader can add any hidden
+column back from the View popover. At 40rem and above every column shows, exactly as
+before. The rule is `app/lib/columns.ts`; the choice rides in the query string, like
+the facets and the sort.
+
+Restacking each row as a block (the ticket's option 3) was rejected, and the reason
+is the one `app/routes/concerts.tsx` already gives for choosing a table: a column of
+133 dates lines up, and that alignment is the whole argument for tabulating a
+chronology. Stacking gives it up on the device where the archive is most often read.
+Dropping columns keeps the alignment and gives up breadth, which is recoverable —
+the reader can ask for a column back, and cannot ask for a column of dates back.
+
+### Three consequences, and the third is the one to remember
+
+**The narrow default is a default, not a ceiling.** An explicit set wins at every
+width, so a reader who adds three columns back on a phone keeps them. Which means
+the table can still be wider than the viewport by request.
+
+That holds for as long as the set *is* explicit, and the boundary is worth stating
+because it is not where it first appears. `writeColumns` drops `?columns=` the
+moment the chosen set equals the viewport's own default — the site's standing rule
+that a default view carries no query string, already applied to the facets and to
+the sort so `/concerts/` keeps one address. So ticking back to the default is how a
+reader returns to automatic, and "every column, on a desktop" is not a statement:
+it is what a desktop does anyway, so it writes no key and does not survive a
+narrowing. On a phone the same choice *is* a statement, and it does.
+
+**So `overflow-x: auto` on the table's container stays, and is not redundant.** It
+serves the reader above, and — the case that actually matters — the reader with no
+JavaScript, for whom the hydration gate never opens and the full column set is all
+there is. `archive-table.css` and `app/lib/columns.ts` both carry the 40rem number
+and each says the other does.
+
+**The page must never be what scrolls sideways.** That is the invariant this whole
+amendment serves, and it is the thing to re-measure after any change to either
+table: `document.documentElement.scrollWidth - clientWidth` is `0` at 375px on
+`/concerts/` and on all 159 composer pages, with JavaScript and without it.
+
+### What this does not settle
+
+`/projects/` renders a table too and has zero rows until
+[AWK-43](https://linear.app/awkale/issue/AWK-43) seeds the Project entries, so it
+has never been measured. Five headers alone are 327px. When it seeds, measure it and
+give it a column set the same way — the module is generic over a table already.
