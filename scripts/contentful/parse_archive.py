@@ -291,6 +291,11 @@ def get_performer(credit):
         rec["instrument"] = sorted(set((rec.get("instrument") or []) + enum_vals))
     return pid, "soloist", (others[0] if others else None)
 
+def append_note(item, text):
+    """Add a remark to an item's `note`, after any it already carries. Capped at
+    255 because `note` is a Symbol field."""
+    item["note"] = " ".join(filter(None, [item.get("note"), text]))[:255]
+
 def split_credits(raw):
     """The sheet puts exactly one credit per cell -- verified: no cell uses
     ';', ' and ', or a newline as a separator, and the only ' & ' is inside
@@ -518,8 +523,7 @@ for i, row in enumerate(sheet):
     is_cont = has_piece and piece_s[:1].isspace() and is_blank(comp) and cur_item is not None
 
     if is_cont:
-        cur_item["note"] = " ".join(filter(None, [cur_item.get("note"),
-                                                  piece_s.strip()]))[:255]
+        append_note(cur_item, piece_s.strip())
     elif has_piece:
         t = piece_s.strip()
         if re.fullmatch(r"(works|records) not available", t, re.I):
@@ -549,6 +553,16 @@ for i, row in enumerate(sheet):
         else:
             for credit in split_credits(sol):
                 credit = credit.strip()
+                # AWK-88: a Credit names somebody. A placeholder ('unknown') is
+                # no billing line, and a stage direction ('with Puppets in
+                # Japanese Bunraku style') is a remark about the performance --
+                # the same kind the `note` already holds. get_performer knows
+                # both are not performers; this keeps them out of `credits` too.
+                if is_blank(credit):
+                    continue
+                if credit.lower().startswith("with "):
+                    append_note(cur_item, credit)
+                    continue
                 cur_item["credits"].append(credit)
                 pid, kind, char = get_performer(credit)
                 if pid:
@@ -559,7 +573,7 @@ for i, row in enumerate(sheet):
                     if char:
                         cur_item["character"] = (char if len(cur_item["credits"]) == 1
                                                  else None)
-                elif not is_blank(credit):
+                else:
                     report["credit_not_linked"].append(f"row {rn}: {credit!r}")
 
 # ---------------------------------------------------------------- finalize concerts

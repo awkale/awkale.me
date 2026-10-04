@@ -30,7 +30,7 @@ type Graph = {
 
 // The two tables the routing tests below read, typed once. Each block used to
 // cast its own slice of `programItem`, three shapes of one table.
-type ProgramItem = { soloists: string[]; credits: string[]; character: string | null }
+type ProgramItem = { soloists: string[]; credits: string[]; character: string | null; note: string | null }
 type Soloist = { instrument: string[] | null }
 const programItems = graph.types.programItem as Record<string, ProgramItem>
 const soloists = graph.types.soloist as Record<string, Soloist>
@@ -132,5 +132,32 @@ describe('Dancer and Filmmaker are Credited roles, not Characters — AWK-86', (
     // The one Character left once the other two moved, so the AWK-75 block
     // above is now one item wide. Pinned by id so that width is deliberate.
     expect(items['pi-19950328-3']?.character).toBe('Isolde')
+  })
+})
+
+describe('a Credit names somebody — AWK-88', () => {
+  /**
+   * CONTEXT.md's Credit is the line a Soloist — or a group linked in its place —
+   * was billed under. Before AWK-88 the parser appended every Soloists-column
+   * string to `credits` BEFORE asking `get_performer` whether it named anyone, so
+   * a placeholder and a staging note landed there with nobody linked. The parser
+   * already knew both were not performers; it just kept the string anyway.
+   */
+  it('leaves no item with a Credit and no soloist link', () => {
+    const unlinked = Object.entries(programItems)
+      .filter(([, item]) => item.credits.length > 0 && item.soloists.length === 0)
+      .map(([id]) => id)
+    expect(unlinked).toEqual([])
+  })
+
+  it('drops a placeholder rather than filing it anywhere', () => {
+    expect(programItems['pi-s1-unknown-1']).toMatchObject({ credits: [], note: null })
+  })
+
+  it('routes a staging line to the note, verbatim', () => {
+    expect(programItems['pi-19750429-2']).toMatchObject({
+      credits: [],
+      note: 'with Puppets in Japanese Bunraku style',
+    })
   })
 })

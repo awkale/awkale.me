@@ -1,0 +1,16 @@
+{
+  "note": "AWK-88. Two programItem.credits strings that name nobody. CONTEXT.md's Credit is the line a Soloist -- or a group linked in its place -- was billed under; these two are a placeholder and a staging note that the parser filed as Credits because it appended every Soloists-column string before asking whether it named anyone. parse_archive.py now routes them (a blank to nothing, a 'with ...' line to `note`), and credit-corrections.test.ts asserts each `set` below equals what the parser emits, so this file and a re-import cannot disagree. DECIDED, NEVER REGENERATED: `expect` pins the live values as read on 2026-10-04, and correct_credits.py refuses to write an entry that no longer holds them. A null means the field is absent -- Contentful stores no empty array, so clearing `credits` is removing the key.",
+  "contentType": "programItem",
+  "corrections": {
+    "pi-s1-unknown-1": {
+      "note": "cnc-s1-unknown, the undated Season 1 chamber block. 'unknown' is a placeholder for missing data and carries nothing, so it goes rather than moving.",
+      "expect": { "credits": ["unknown"], "note": null },
+      "set": { "credits": null, "note": null }
+    },
+    "pi-19750429-2": {
+      "note": "cnc-19750429, L'Histoire du Soldat. A staging note about the performance, kept verbatim in `note` -- the field the parser already uses for remarks of this kind. Decided by Alex on 2026-10-04.",
+      "expect": { "credits": ["with Puppets in Japanese Bunraku style"], "note": null },
+      "set": { "credits": null, "note": "with Puppets in Japanese Bunraku style" }
+    }
+  }
+}

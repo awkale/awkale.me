@@ -846,6 +846,36 @@ of the declaration and runs the build's own `findViolations` over it, so the
 transcription is checked by the same code that would fail the build — and a rule
 added to `app/lib/invariants.ts` later starts guarding this file for free.
 
+## Credits that name nobody — AWK-88
+
+| Declaration | Applier | Ticket | Does |
+| --- | --- | --- | --- |
+| `credit-corrections.json` | `correct_credits.py` | AWK-88 | Clears `credits` on 2 Program items; moves 1 staging note to `note` |
+
+```bash
+# report what would change -- writes nothing, and this is the safe default
+python3 scripts/contentful/correct_credits.py
+
+# write and republish both entries
+python3 scripts/contentful/correct_credits.py --apply
+```
+
+`pi-s1-unknown-1` carried `['unknown']` and `pi-19750429-2` carried `['with
+Puppets in Japanese Bunraku style']` — a placeholder and a staging note, each
+with no soloist linked. The parser filed them as Credits because it appended
+every Soloists-column string before asking whether it named anyone; it now drops
+a blank and routes a `with …` line to `note`, so a re-import agrees.
+
+**It empties a populated field, which is why it is not `transcribe_programs.py`**
+— that applier merges and never clobbers. To make that safe it is pinned: each
+entry must hold its declared `expect` values, be published, and carry no draft
+edits, or pre-flight aborts before anything is written. An entry already holding
+its `set` values reads `already`, so a re-run is a no-op.
+
+`credit-corrections.test.ts` asserts each `set` equals what `bso-graph.json`
+holds for the same item, and `bso-graph.test.ts` pins the rule itself: no Program
+item carries a Credit with no soloist link.
+
 ## Usage
 
 ```bash
